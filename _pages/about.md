@@ -7,6 +7,8 @@ redirect_from:
   - /about.html
 ---
 
+WARNING: The website has not been ready yet, and the content is not correct. This warning will be removed whenever the webpage is ready!
+
 
 ### Sohrab Namazi Nia – AI Enthusiast!
 
@@ -21,10 +23,6 @@ While Sohrab is my formal name, I'm known as **Spencer** among friends. Outside 
 On a different note, **football (soccer)** has always been a big part of my life. I played competitively until the age of 18 and still enjoy playing casually today. **Football** has always remained one of my greatest passions in life. I also like swimming!
 
 ---
-
-
-
-WARNING: The website has not been ready yet, and the content is not correct. This warning will be removed whenever the webpage is ready!
 
 
 
