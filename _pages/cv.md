@@ -73,6 +73,24 @@ redirect_from:
 
 ## Publications
 
+Please check the Teching Tab on the webpage
+
+---
+
+## Teaching Experience
+
+Please check the Teching Tab on the webpage
+
+---
+
+## Projects
+
+Please check the Teching Tab on the webpage
+
+---
+
+## Publications
+
 - **Personalized Recommendation using LLMs and Human-in-the-loop**  
   *In Progress*  
 - **X-ray Image Enhancement using G-CLAHE**  
