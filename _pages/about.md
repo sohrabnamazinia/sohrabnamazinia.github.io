@@ -7,9 +7,6 @@ redirect_from:
   - /about.html
 ---
 
-WARNING: The website has not been ready yet, and the content is not correct. This warning will be removed whenever the webpage is ready!
-
-
 ### Sohrab Namazi Nia – AI Enthusiast!
 
 Hey there! I'm **Sohrab Namazi Nia**, a **PhD candidate in Computer Science** at **New Jersey Institute of Technology (NJIT)**. I work as a Research Assistant in **Big Data Analytics Laboratory (BDAL)**, where my primary focus is applying **Artificial Intelligence (AI)** and **Large Language Models (LLMs)** to data science applications, including **recommendation systems**, **ranking algorithms**, and more. My interests also extend into **reinforcement learning**, **deep learning**, and optimizing **graph search algorithms** for efficiency.
