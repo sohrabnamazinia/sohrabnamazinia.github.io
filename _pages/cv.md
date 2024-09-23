@@ -93,30 +93,6 @@ redirect_from:
 
 ---
 
-## Teaching Experience
-
-- **BNFO135 (NJIT) TA (Jan 2024 - May 2024)**  
-- **CS113 (NJIT) Teacher (Jan 2023 - May 2023)**  
-- **Artificial Intelligence TA (IUST) (Sep 2021 - Jan 2022)**  
-- **Operating Systems TA (IUST) (Sep 2021 - Jan 2022)**  
-
----
-
-## Projects
-
-- **X-ray Image Enhancement using G-CLAHE (2024)**  
-  [GitHub](https://github.com/sohrabnamazinia/X-ray-Image-Enhancement-using-G-CLAHE)  
-- **Big Data - Flight Analysis using Hadoop (2023)**  
-  [GitHub](https://github.com/sohrabnamazinia/Flight-Analysis-Hadoop)  
-- **Anomaly-based IDS for IoT Networks (2023)**  
-  [GitHub](https://github.com/sohrabnamazinia/Anomaly-based-IDS-for-IoT-Networks)  
-- **Facial Emotion Recognition using AlexNet (2023)**  
-  [GitHub](https://github.com/sohrabnamazinia/Facial-Emotion-Recognition)  
-- **Policy Reusability in Reinforcement Learning (2023)**  
-  [GitHub](https://github.com/sohrabnamazinia/Policy-Reusablity-In-RL)  
-
----
-
 ## Languages
 
 - **English**: Full Professional Proficiency (TOEFL IBT: 107)  
