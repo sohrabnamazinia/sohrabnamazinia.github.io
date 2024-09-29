@@ -9,7 +9,7 @@ redirect_from:
 
 ### Sohrab Namazi Nia – AI Enthusiast!
 
-Hey there! I'm **Sohrab Namazi Nia**, a **PhD candidate in Computer Science** at **New Jersey Institute of Technology (NJIT)**. I work as a Research Assistant in **Big Data Analytics Laboratory (BDAL)**, where my primary focus is applying **Artificial Intelligence (AI)** and **Large Language Models (LLMs)** to data science applications, including **recommendation systems**, **ranking algorithms**, and more. My interests also extend into **reinforcement learning**, **deep learning**, and optimizing **graph search algorithms** for efficiency.
+Hey there! I'm **Sohrab Namazi Nia**, a **PhD candidate in Computer Science** at **New Jersey Institute of Technology (NJIT)**. I work as a Research Assistant in **Big Data Analytics Laboratory (BDAL)**, where my primary focus is on Leveraging Artificial Intelligence (AI) and Large Language Models (LLMs) for data science applications, including recommendation systems, ranking algorithms, top-k selection and beyond. My work also extends into reinforcement learning, deep learning, and optimizing graph search algorithms for improved efficiency.
 
 I earned my **Bachelor's degree in Computer Engineering** from **Iran University of Science and Technology (IUST)** in 2018. Located in Tehran, IUST is ranked among the top-4 universities in Iran, and my time there was filled with both great personal and collaborative projects centered on **AI**, **Machine Learning (ML)**, **Deep Learning (DL)**, **algorithm design**. I also ventured into **backend development** as part of my work in **software engineering**. I was honored to be named the **Top Student of the Year in 2019**, and graduated with a **GPA of 4.0**.
 
