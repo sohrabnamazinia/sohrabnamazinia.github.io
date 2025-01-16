@@ -57,7 +57,7 @@ redirect_from:
 ### Machine Learning Intern  
 **Tiva System, Tehran, Iran (2020 - 2022)**  
 - Analyzed and adapted machine learning algorithms for classification and regression tasks, enhancing model performance through experimentation.
-- Developed a concrete strength prediction model using multi-linear regression and KNN, \textbf{achieving an approximate MAE between 0.5 and 1 on industrial data.}   
+- Developed a concrete strength prediction model using multi-linear regression and KNN, achieving an approximate MAE between 0.5 and 1 on industrial data.  
 
 ### Full-Stack Developer  
 **Tiva System, Tehran, Iran (2020 - 2021)**  
