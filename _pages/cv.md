@@ -13,15 +13,15 @@ redirect_from:
 
 ### New Jersey Institute of Technology, New Jersey, USA  
 **Direct-PhD of Computer Science (2022-Present)**  
-- Cumulative GPA: 3.84  
-- Research Assistant in Big Data Analytics Laboratory (BDaL)  
-- Focused on Machine Learning and Data Analysis  
+- Research Assistant in Big Data Analytics Laboratory (BDAL)  
+- Focused on using AI for large-scale data science applications
+- Developed a framework for optimizing personalized multi-modal data ranking using LLMs, achieving 45% speedup and 15-20 times cost reduction compared to state-of-the-art approach.  
 
 ### Iran University of Science and Technology, Tehran, Iran  
 **B.S. of Computer Engineering (2018-2022)**  
 - GPA: 4.0  
 - Focused on Artificial Intelligence, Data Structures, Algorithms, Machine Learning, and Deep Learning  
-- Awarded "Best CE Student of IUST" in 2019
+- Awarded as the "Best CE Student of IUST" in 2019
 
 ---
 
@@ -33,7 +33,6 @@ redirect_from:
 - Computer Vision & Image Processing
 - Natural Language Processing
 - Optimizations of Graph Search Algorithms
-- Software Engineering
 
 ---
 
@@ -52,22 +51,18 @@ redirect_from:
 
 ### Research Assistant  
 **Big Data Analytics Laboratory (BDaL), NJIT (2022 - Present)**  
-- Optimized large-scale data analytics problems  
-- Focused on Machine Learning, Reinforcement Learning, and Graph Search Optimization
+- Designing computational frameworks for query answering in large-scale data science applications leveraging ML models
+- Implementing cloud computing solutions using AWS
 
 ### Machine Learning Intern  
 **Tiva System, Tehran, Iran (2020 - 2022)**  
-- Enhanced and analyzed Machine Learning algorithms for classification and regression problems  
+- Analyzed and adapted machine learning algorithms for classification and regression tasks, enhancing model performance through experimentation.
+- Developed a concrete strength prediction model using multi-linear regression and KNN, \textbf{achieving an approximate MAE between 0.5 and 1 on industrial data.}   
 
 ### Full-Stack Developer  
 **Tiva System, Tehran, Iran (2020 - 2021)**  
 - Web developer using ASP.Net Core  
 - Managed databases with SQLServer, PostgreSQL, SQLite  
-
-### Freelance Android and Backend Developer  
-**(2019 - 2022)**  
-- Developed Android apps with Android Studio  
-- Backend development using Entity Framework and ASP.Net Core
 
 ---
 
