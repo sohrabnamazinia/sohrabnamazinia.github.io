@@ -9,6 +9,11 @@ redirect_from:
 
 {% include base_path %}
 
+- **Personalized Top-k set queries**
+  *2025*
+  Developed a framework for finding the top-k set query answer using Large Language Models while minimizing the cost associated with them.
+  [Github](https://github.com/sohrabnamazinia/Personalized-Top-K-Set-Queries)
+
 - **X-ray Image Enhancement using G-CLAHE**  
   *2024*  
   Developed a novel method for medical X-ray image enhancement using Global Contrast-Limited Adaptive Histogram Equalization (G-CLAHE).  
