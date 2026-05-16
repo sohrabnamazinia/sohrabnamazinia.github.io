@@ -1,6 +1,6 @@
 ---
 layout: archive
-title: "Publications"
+title: ""
 permalink: /publications/
 author_profile: true
 redirect_from:
@@ -9,20 +9,104 @@ redirect_from:
 
 {% include base_path %}
 
-- **Personalized Top-K Set Queries Over Predicted Scores**  
-  *VLDB Conference, Dec 2024 (Under Review)*  
-  This work studies the applicability of expensive external oracles such as large language models in answering top-$k$ queries over predicted scores. Such scores are incurred by user-defined functions to answer personalized queries over multi-modal data. We propose a generic computational framework that handles arbitrary set-based scoring functions, as long as the functions could be decomposed into constructs, each of which sent to an oracle (in our case an LLM) to predict partial scores. At a given point in time, the framework assumes a set of responses and their partial predicted scores, and it maintains a collection of possible sets that are likely to be the true top-$k$. Since calling oracles is costly, our framework judiciously identifies the next construct, i.e., the next best question to ask the oracle so as to maximize the likelihood of identifying the true top-$k$. We present a principled probabilistic model that quantifies that likelihood. We study efficiency opportunities in designing algorithms. We run an evaluation with three large scale datasets, scoring functions, and baselines.  Experiments indicate the efficacy of our framework, as it achieves an order of magnitude improvement over baselines in requiring LLM calls while ensuring result accuracy. Scalability experiments further indicate that our framework could be used in large-scale applications.
+<div class="edu-page">
 
-- **X-ray Image Enhancement using G-CLAHE**  
-  *IJPRAI, June 2024*  
-  In the field of medical imaging, accurate diagnosis heavily relies on effective image enhancement tech- niques, particularly for X-ray images. Existing methods often suffer from various challenges in enhancing such images. These methods either must sacrifice global image characteristics over local image charac- teristics or vice versa. This study introduces a novel approach, called G-CLAHE (Global Contrast-Limited Adaptive Histogram Equalization), that perfectly suits medical imaging, with a focus on X-rays. Conceptu- ally, this novel method adapts both Global Histogram Equalization (GHE) and Limited Adaptive Histogram Equalization (CLAHE) to preserve both local and global image characteristics after enhancement. G- CLAHE demonstrates significant improvements over current state-of-the-art algorithms, effectively ad- dressing their limitations and enhancing the quality of X-ray images for enhanced diagnostic accuracy.
+<div class="page-title-block">
+  <h1 class="page-title">Publications</h1>
+  <p class="page-subtitle">Peer-reviewed journals, conference proceedings, and preprints</p>
+</div>
 
-- **Model Reusability in Reinforcement Learning**  
-  *VLDB Journal, June 2024 (Under Revision)*  
-  The ability to reuse trained models in Reinforcement Learning (RL) holds substantial practical value in particular for complex tasks. While model reusability is widely studied for supervised models in data management, to the best of our knowledge, this is the first ever principled study that is proposed for RL. To capture trained policies, we develop a framework based on an expressive and lossless graph data model that accommodates Temporal Difference Learning (TDL) and Deep-RL based RL algorithms. Our framework is able to capture arbitrary reward functions that can be composed at inference time. The framework comes with theoretical guarantees and shows that it yields the same result as policies trained from scratch.
-  We design a parameterized algorithm that strikes a balance between efficiency and quality wrt cumulative reward. Our experiments with two common RL tasks (query refinement and robot movement) corroborate our theory and show the effectiveness and efficiency of our algorithms.
+<!-- ========== PUBLISHED ========== -->
+<div class="exp-section-label">Published</div>
 
+<div class="pub-card">
+  <div class="pub-status pub-status--published">Published</div>
+  <div class="pub-venue">International Journal of Pattern Recognition and Artificial Intelligence <span class="pub-venue-tag">IJPRAI</span></div>
+  <h3 class="pub-title">Medical X-Ray Image Enhancement Using G-CLAHE</h3>
+  <p class="pub-authors"><strong>Sohrab Namazi Nia</strong> et al. &nbsp;·&nbsp; 2024</p>
+  <p class="pub-abstract">Proposed G-CLAHE combining global and local histogram equalization for medical X-rays, achieving <strong>17% improvement</strong> in diagnostic accuracy for chest X-ray abnormality detection and outperforming state-of-the-art methods across multiple quality metrics.</p>
+  <div class="pub-tags"><span class="proj-tag">Healthcare</span><span class="proj-tag">Image Processing</span><span class="proj-tag">Deep Learning</span></div>
+</div>
 
-- **Edge Landmarks for Answering Lower Bound Distance Queries**  
-  *KDD 2024 (Submitted)*  
-  Given a metric space graph 𝐺 (𝑉 , 𝐸) with 𝑚 edges that have their distances known and the remaining edge distances being unknown, we study the problem of answering lower bound distance queries over the unknown edges, when no blackbox function (distance oracle) is available to return any additional distances. Given one of the unknown edge between a pair of objects as a query, the lower bound of distance denotes the minimum possible distance between that pair of objects while satisfying all other constraints. Such lower bound computations stand to benefit a variety of proximity problems considering data coming from compelling application do- mains. We propose a suite of algorithmic techniques with provable guarantees that trade-off between pre-processing time query processing time and quality, as long as the distances satisfy the metric property (in particular, triangular inequality). Our work advances the state-of-the-art solutions both analytically and empirically that we demonstrate by conducting exhaustive experimentation using multiple large scale real world datasets.
+<div class="pub-card">
+  <div class="pub-status pub-status--published">Published</div>
+  <div class="pub-venue">ACM SIGMOD 2026 <span class="pub-venue-tag">SIGMOD</span></div>
+  <h3 class="pub-title">AEGIS: A Correlation-Based Data Masking Advisor for Data Sharing Ecosystems</h3>
+  <p class="pub-authors">Laskar, Ramezani, Nankani, <strong>Sohrab Namazi Nia</strong>, Basu Roy, Beedkar &nbsp;·&nbsp; 2025</p>
+  <div class="pub-tags"><span class="proj-tag">Data Privacy</span><span class="proj-tag">Data Sharing</span></div>
+</div>
+
+<div class="pub-card">
+  <div class="pub-status pub-status--published">Published</div>
+  <div class="pub-venue">VLDB Journal <span class="pub-venue-tag">VLDB</span></div>
+  <h3 class="pub-title">Model Reusability in Reinforcement Learning</h3>
+  <p class="pub-authors">Nikookar, <strong>Sohrab Namazi Nia</strong> et al. &nbsp;·&nbsp; 2024</p>
+  <p class="pub-abstract">Proposed the first principled study of RL model reusability, developing a graph-based framework for Temporal Difference Learning and Deep-RL algorithms. Demonstrated same-quality results as policies trained from scratch with significant efficiency gains.</p>
+  <div class="pub-tags"><span class="proj-tag">Reinforcement Learning</span><span class="proj-tag">Model Reusability</span></div>
+</div>
+
+<!-- ========== ACCEPTED ========== -->
+<div class="exp-section-label">Accepted / To Appear</div>
+
+<div class="pub-card">
+  <div class="pub-status pub-status--accepted">Accepted</div>
+  <div class="pub-venue">NE AI Agents Day Workshop 2026 <span class="pub-venue-tag">Workshop</span></div>
+  <h3 class="pub-title">Utility-Aware Human–LLM Agent Orchestration for Data Science Pipelines</h3>
+  <p class="pub-authors"><strong>Sohrab Namazi Nia</strong> et al. &nbsp;·&nbsp; 2026</p>
+  <p class="pub-abstract">Novel framework for agentic collaboration between humans and LLMs across the data science pipeline to maximize utility of downstream ML tasks.</p>
+  <div class="pub-tags"><span class="proj-tag">Agentic AI</span><span class="proj-tag">LLMs</span><span class="proj-tag">Data Science</span></div>
+</div>
+
+<!-- ========== UNDER REVIEW ========== -->
+<div class="exp-section-label">Under Review / Revision</div>
+
+<div class="pub-card">
+  <div class="pub-status pub-status--review">Under Review</div>
+  <div class="pub-venue">KDD 2026 <span class="pub-venue-tag">KDD</span></div>
+  <h3 class="pub-title">LLM-Powered Best Set Recommendation</h3>
+  <p class="pub-authors"><strong>Sohrab Namazi Nia</strong> et al. &nbsp;·&nbsp; 2024</p>
+  <div class="pub-tags"><span class="proj-tag">LLMs</span><span class="proj-tag">Recommendation</span></div>
+</div>
+
+<div class="pub-card">
+  <div class="pub-status pub-status--review">Under Review</div>
+  <div class="pub-venue">VLDB 2026 <span class="pub-venue-tag">VLDB</span></div>
+  <h3 class="pub-title">Probabilistic Package Selection on Multi-Modal Data</h3>
+  <p class="pub-authors"><strong>Sohrab Namazi Nia</strong>, Senjuti Basu Roy, Sihem Amer-Yahia &nbsp;·&nbsp; 2026</p>
+  <p class="pub-abstract">Introduces algorithms that minimize expensive LLM oracle calls while guaranteeing optimal or near-optimal solutions for probabilistic package selection over multi-modal data.</p>
+  <div class="pub-tags"><span class="proj-tag">LLMs</span><span class="proj-tag">Multi-modal</span><span class="proj-tag">Algorithms</span></div>
+</div>
+
+<div class="pub-card">
+  <div class="pub-status pub-status--revision">Under Revision</div>
+  <div class="pub-venue">Expert Systems with Applications <span class="pub-venue-tag">Journal</span></div>
+  <h3 class="pub-title">Exploring Humans and LLMs in the Data Science Pipeline</h3>
+  <p class="pub-authors"><strong>Sohrab Namazi Nia</strong> and Senjuti Basu Roy &nbsp;·&nbsp; 2026</p>
+  <div class="pub-footer">
+    <a href="https://doi.org/10.2139/ssrn.5340363" target="_blank" class="pub-link"><i class="fas fa-external-link-alt"></i> SSRN Preprint</a>
+  </div>
+  <div class="pub-tags"><span class="proj-tag">Agentic AI</span><span class="proj-tag">LLMs</span><span class="proj-tag">Human-in-the-Loop</span></div>
+</div>
+
+<div class="pub-card">
+  <div class="pub-status pub-status--revision">Under Revision</div>
+  <div class="pub-venue">VLDB 2026 <span class="pub-venue-tag">VLDB</span></div>
+  <h3 class="pub-title">Lower Bound Distance Queries Without a Distance Oracle</h3>
+  <p class="pub-authors">Shetiya, <strong>Sohrab Namazi Nia</strong> et al. &nbsp;·&nbsp; 2026</p>
+  <p class="pub-abstract">Suite of algorithmic techniques with provable guarantees for answering lower bound distance queries over metric space graphs with unknown edge distances.</p>
+  <div class="pub-tags"><span class="proj-tag">Graph Algorithms</span><span class="proj-tag">Distance Queries</span></div>
+</div>
+
+<!-- ========== PREPRINTS ========== -->
+<div class="exp-section-label">Preprints</div>
+
+<div class="pub-card">
+  <div class="pub-status pub-status--preprint">Preprint</div>
+  <div class="pub-venue">arXiv <span class="pub-venue-tag">arXiv</span></div>
+  <h3 class="pub-title">Top-k Set Queries with User-Specified Scoring Functions on Multi-Modal Data</h3>
+  <p class="pub-authors"><strong>Sohrab Namazi Nia</strong> et al. &nbsp;·&nbsp; 2024</p>
+  <p class="pub-abstract">Studies the applicability of LLMs as external oracles for answering top-k queries over predicted scores with a probabilistic computational framework achieving order-of-magnitude improvement over baselines.</p>
+  <div class="pub-tags"><span class="proj-tag">LLMs</span><span class="proj-tag">Top-k Queries</span><span class="proj-tag">Multi-modal</span></div>
+</div>
+
+</div><!-- end .edu-page -->

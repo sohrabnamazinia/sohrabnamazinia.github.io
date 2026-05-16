@@ -29,4 +29,20 @@
 <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
+<!-- Force dark nav — overrides compiled SCSS white background -->
+<style>
+  .masthead,
+  .masthead__inner-wrap,
+  nav.greedy-nav {
+    background: #07090f !important;
+    background-color: #07090f !important;
+  }
+</style>
+
+<!-- Custom dark theme fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ base_path }}/assets/css/custom.css">
+
 <!-- end custom head snippets -->
