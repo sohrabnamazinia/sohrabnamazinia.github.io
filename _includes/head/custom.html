@@ -45,4 +45,121 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ base_path }}/assets/css/custom.css">
 
+<!-- 2026 motion: scroll-reveal · 3D tilt · spotlight · parallax · particles -->
+<script>
+(function() {
+  function init() {
+
+    /* ================================================
+       1. SCROLL REVEAL
+    ================================================ */
+    var revealEls = document.querySelectorAll(
+      '.edu-card, .pub-card, .talk-card, .proj-card, .research-card, .award-card, .cert-item'
+    );
+    revealEls.forEach(function(el) {
+      el.classList.add('reveal');
+      var siblings = el.parentElement
+        ? el.parentElement.querySelectorAll('.edu-card,.pub-card,.talk-card,.proj-card,.research-card,.award-card,.cert-item')
+        : [];
+      var idx = Array.prototype.indexOf.call(siblings, el);
+      el.style.transitionDelay = Math.min(idx * 0.09, 0.36) + 's';
+    });
+
+    var revealObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) { e.target.classList.add('visible'); revealObserver.unobserve(e.target); }
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
+    revealEls.forEach(function(el) { revealObserver.observe(el); });
+
+
+    /* ================================================
+       2. 3D TILT + CARD SPOTLIGHT
+    ================================================ */
+    document.querySelectorAll('.edu-card, .pub-card, .talk-card, .proj-card, .research-card').forEach(function(card) {
+
+      /* inject light overlay */
+      var light = document.createElement('div');
+      light.className = 'card-light';
+      card.insertBefore(light, card.firstChild);
+
+      card.addEventListener('mousemove', function(e) {
+        var r  = card.getBoundingClientRect();
+        var px = e.clientX - r.left;
+        var py = e.clientY - r.top;
+        var nx = px / r.width  - 0.5;
+        var ny = py / r.height - 0.5;
+
+        /* spotlight follows cursor */
+        light.style.background =
+          'radial-gradient(circle 220px at ' + px + 'px ' + py + 'px, ' +
+          'rgba(129,140,248,0.14) 0%, rgba(56,189,248,0.05) 45%, transparent 70%)';
+        light.style.opacity = '1';
+
+        /* 3D tilt — 14 deg max */
+        card.style.transition = 'transform 0.08s ease, box-shadow 0.3s ease';
+        card.style.transform  =
+          'perspective(900px) rotateX(' + (-ny * 14) + 'deg) rotateY(' + (nx * 14) + 'deg) translateZ(10px)';
+      });
+
+      card.addEventListener('mouseleave', function() {
+        light.style.opacity = '0';
+        card.style.transition = 'transform 0.5s cubic-bezier(0.16,1,0.3,1), box-shadow 0.5s ease';
+        card.style.transform  = '';
+      });
+    });
+
+
+    /* ================================================
+       3. PARALLAX SCROLL on hero
+    ================================================ */
+    var heroSection = document.querySelector('.hero-section');
+    if (heroSection) {
+      var heroContent = heroSection.querySelector('.hero-content');
+      var heroImage   = heroSection.querySelector('.hero-image');
+      var heroBg      = heroSection.querySelector('.hero-bg-grid');
+
+      window.addEventListener('scroll', function() {
+        var sy = window.scrollY;
+        if (sy > window.innerHeight) return;
+        if (heroContent) heroContent.style.transform = 'translateY(' + (sy * 0.18) + 'px)';
+        if (heroImage)   heroImage.style.transform   = 'translateY(' + (sy * 0.28) + 'px)';
+        if (heroBg)      heroBg.style.transform      = 'translateY(' + (sy * 0.06) + 'px)';
+      }, { passive: true });
+    }
+
+
+    /* ================================================
+       4. FLOATING PARTICLES in hero
+    ================================================ */
+    if (heroSection) {
+      [
+        { s:4, t:'18%', l:'12%',  c:'rgba(129,140,248,0.55)', d:'10s', dl:'0s'   },
+        { s:3, t:'72%', l:'8%',   c:'rgba(56,189,248,0.45)',  d:'8s',  dl:'-3s'  },
+        { s:5, t:'35%', l:'82%',  c:'rgba(167,139,250,0.5)',  d:'12s', dl:'-6s'  },
+        { s:3, t:'60%', l:'75%',  c:'rgba(129,140,248,0.4)',  d:'9s',  dl:'-2s'  },
+        { s:4, t:'82%', l:'50%',  c:'rgba(56,189,248,0.35)',  d:'11s', dl:'-4s'  },
+        { s:2, t:'25%', l:'55%',  c:'rgba(167,139,250,0.45)', d:'7s',  dl:'-1s'  },
+      ].forEach(function(p) {
+        var dot = document.createElement('div');
+        dot.className = 'hero-particle';
+        dot.style.cssText =
+          'width:' + p.s + 'px;height:' + p.s + 'px;' +
+          'top:' + p.t + ';left:' + p.l + ';' +
+          'background:' + p.c + ';' +
+          '--dur:' + p.d + ';--delay:' + p.dl + ';';
+        heroSection.appendChild(dot);
+      });
+    }
+
+  } /* end init */
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+
 <!-- end custom head snippets -->

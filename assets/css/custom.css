@@ -1522,3 +1522,330 @@ a.stat-link .stat-label {
 @media (max-width: 560px) {
   .proj-grid { grid-template-columns: 1fr !important; }
 }
+
+/* ============================================
+   2026 — 3D & MOTION ENHANCEMENTS
+   ============================================ */
+
+/* ---- Shared keyframes ---- */
+@keyframes gradientFlow {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes auroraMove {
+  0%   { transform: translate(0,    0)    scale(1);    }
+  25%  { transform: translate(35px, -30px) scale(1.08); }
+  50%  { transform: translate(-20px, 40px) scale(0.96); }
+  75%  { transform: translate(28px,  18px) scale(1.04); }
+  100% { transform: translate(0,    0)    scale(1);    }
+}
+
+@keyframes avatarFloat {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-12px); }
+}
+
+@keyframes barShimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+@keyframes revealUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0);     }
+}
+
+/* ---- Animated gradient hero name ---- */
+.hero-name {
+  background: linear-gradient(
+    130deg,
+    #ffffff 0%,
+    #c4b5fd 20%,
+    #818cf8 40%,
+    #38bdf8 60%,
+    #a78bfa 80%,
+    #ffffff 100%
+  ) !important;
+  background-size: 300% 300% !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  animation: gradientFlow 10s ease infinite !important;
+}
+
+/* ---- Floating hero avatar ---- */
+.hero-avatar-wrap {
+  animation: avatarFloat 5.5s ease-in-out infinite;
+}
+
+/* ---- Aurora blobs — animate the existing ::before / ::after ---- */
+.hero-section::before {
+  animation: auroraMove 12s ease-in-out infinite !important;
+}
+.hero-section::after {
+  animation: auroraMove 9s ease-in-out infinite reverse !important;
+  animation-delay: -4s !important;
+}
+
+/* Extra 3rd blob via bg-grid ::after */
+.hero-bg-grid::after {
+  content: '' !important;
+  position: absolute !important;
+  top: 35%; right: 20% !important;
+  width: 320px; height: 320px !important;
+  background: radial-gradient(circle, rgba(167,139,250,0.11) 0%, transparent 65%) !important;
+  border-radius: 50% !important;
+  filter: blur(70px) !important;
+  pointer-events: none !important;
+  animation: auroraMove 15s ease-in-out infinite !important;
+  animation-delay: -7s !important;
+}
+
+/* ---- Shimmer nav accent bar ---- */
+.masthead::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(129,140,248,0.9) 30%,
+    rgba(56,189,248,0.9)  50%,
+    rgba(167,139,250,0.9) 70%,
+    transparent 100%
+  ) !important;
+  background-size: 200% 100% !important;
+  animation: barShimmer 4s linear infinite !important;
+}
+
+/* ---- Neon glow on accent text ---- */
+.accent {
+  text-shadow: 0 0 22px rgba(129,140,248,0.5) !important;
+}
+
+/* ---- Exp section label accent bar ---- */
+.exp-section-label {
+  position: relative;
+  padding-left: 16px !important;
+}
+.exp-section-label::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 50%;
+  transform: translateY(-50%);
+  width: 4px; height: 14px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--accent), var(--accent2));
+  box-shadow: 0 0 8px rgba(129,140,248,0.55);
+}
+
+/* ---- Stats glow on hover ---- */
+a.stat-link:hover .stat-number {
+  filter: drop-shadow(0 0 14px rgba(129,140,248,0.75));
+}
+
+/* ---- 3D-ready card base ---- */
+.edu-card,
+.pub-card,
+.talk-card,
+.proj-card,
+.research-card {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+/* ---- Deeper depth shadow on hover ---- */
+.edu-card:hover {
+  box-shadow:
+    0 24px 64px rgba(0,0,0,0.55),
+    0 0 0 1px rgba(129,140,248,0.28),
+    0 0 48px rgba(129,140,248,0.07) !important;
+}
+.pub-card:hover {
+  box-shadow:
+    0 16px 44px rgba(0,0,0,0.5),
+    0 0 0 1px rgba(129,140,248,0.22),
+    0 0 36px rgba(129,140,248,0.06) !important;
+}
+.talk-card:hover {
+  box-shadow:
+    0 24px 64px rgba(0,0,0,0.55),
+    0 0 0 1px rgba(129,140,248,0.28),
+    0 0 48px rgba(129,140,248,0.07) !important;
+}
+.proj-card:hover {
+  box-shadow:
+    0 20px 52px rgba(0,0,0,0.5),
+    0 0 0 1px rgba(129,140,248,0.25),
+    0 0 40px rgba(129,140,248,0.06) !important;
+}
+.research-card:hover {
+  box-shadow:
+    0 20px 52px rgba(0,0,0,0.5),
+    0 0 0 1px rgba(129,140,248,0.25) !important;
+}
+
+/* ---- Scroll-reveal (JS adds .visible) ---- */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition:
+    opacity  0.75s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ============================================
+   2026 — FULL 3D UPGRADE
+   ============================================ */
+
+/* ---- Perspective floor grid (replaces flat grid) ---- */
+.hero-bg-grid {
+  background-image: none !important;
+  overflow: hidden !important;
+}
+.hero-bg-grid::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: -120%; right: -120%;
+  height: 58%;
+  background-image:
+    linear-gradient(rgba(129,140,248,0.14) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(129,140,248,0.14) 1px, transparent 1px);
+  background-size: 80px 80px;
+  transform: perspective(580px) rotateX(65deg);
+  transform-origin: bottom center;
+  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 68%);
+  mask-image: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 68%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ---- Hero section has perspective for 3D children ---- */
+.hero-section {
+  perspective: 1200px;
+}
+
+/* ---- Depth layers on hero text ---- */
+.hero-content {
+  transform-style: preserve-3d;
+}
+.hero-eyebrow  { transform: translateZ(8px); }
+.hero-name     { transform: translateZ(22px) !important; }
+.hero-subtitle { transform: translateZ(16px); }
+.hero-cta      { transform: translateZ(12px); }
+.hero-social   { transform: translateZ(8px); }
+
+/* ---- Orbit rings (added via about.md HTML) ---- */
+.hero-avatar-wrap {
+  transform-style: preserve-3d !important;
+}
+
+.orbit-ring {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  transform-style: preserve-3d;
+}
+
+.orbit-ring-1 {
+  inset: -28px;
+  border: 1.5px solid rgba(129,140,248,0.4);
+  box-shadow: 0 0 18px rgba(129,140,248,0.2), inset 0 0 18px rgba(129,140,248,0.05);
+  animation: orbitSpin1 9s linear infinite;
+}
+
+.orbit-ring-2 {
+  inset: -56px;
+  border: 1px solid rgba(56,189,248,0.25);
+  box-shadow: 0 0 12px rgba(56,189,248,0.12);
+  animation: orbitSpin2 14s linear infinite;
+  animation-delay: -6s;
+}
+
+@keyframes orbitSpin1 {
+  0%   { transform: rotateX(66deg) rotateZ(0deg); }
+  100% { transform: rotateX(66deg) rotateZ(360deg); }
+}
+
+@keyframes orbitSpin2 {
+  0%   { transform: rotateX(50deg) rotateY(20deg) rotateZ(0deg); }
+  100% { transform: rotateX(50deg) rotateY(20deg) rotateZ(-360deg); }
+}
+
+/* ---- Floating particles (added via JS) ---- */
+.hero-particle {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: particleFloat var(--dur, 9s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+@keyframes particleFloat {
+  0%, 100% { transform: translateY(0) translateX(0);    opacity: 0.5; }
+  25%       { transform: translateY(-22px) translateX(10px); opacity: 0.8; }
+  50%       { transform: translateY(-10px) translateX(-14px); opacity: 0.4; }
+  75%       { transform: translateY(-30px) translateX(6px);  opacity: 0.65; }
+}
+
+/* ---- Card spotlight light overlay ---- */
+.card-light {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: -1;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+/* Cards need isolation so light stays inside */
+.edu-card,
+.pub-card,
+.talk-card,
+.proj-card,
+.research-card {
+  isolation: isolate;
+}
+
+/* ---- Glassmorphism depth on cards ---- */
+.edu-card-header {
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+/* ---- Section divider line (after label) ---- */
+.exp-section-label {
+  display: flex !important;
+  align-items: center;
+  gap: 14px;
+}
+.exp-section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(129,140,248,0.2), transparent);
+}
+
+/* ---- Stats bar glass depth ---- */
+.stat-item,
+a.stat-link {
+  background: rgba(13,17,23,0.7) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+/* ---- Page-level depth divider on inner pages ---- */
+.edu-page::before {
+  content: '';
+  display: block;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, var(--accent) 40%, var(--accent2) 60%, transparent 100%);
+  background-size: 200% 100%;
+  animation: gradientFlow 4s linear infinite;
+  margin-bottom: 0;
+}
