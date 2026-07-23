@@ -11,3 +11,10 @@ Gemfile.lock
 # Ingore files created by npm
 node_modules
 package-lock.json
+# Local preview toolchain (not part of the published site)
+vendor/
+.bundle/
+Gemfile.local
+Gemfile.local.lock
+serve.sh
+.claude/

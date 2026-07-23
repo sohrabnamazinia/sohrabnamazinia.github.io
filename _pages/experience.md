@@ -96,8 +96,8 @@ author_profile: true
     <ul class="edu-bullets">
       <li>Developed novel LLM framework for personalized recommendation — <strong>45% speedup</strong>, 15–20× cost reduction</li>
       <li>Proposed <strong>G-CLAHE</strong>: 17% improvement in diagnostic accuracy for chest X-ray abnormality detection</li>
-      <li>Proposed novel framework for <strong>human–LLM collaboration</strong> in the data science pipeline</li>
-      <li>Probabilistic package selection over multi-modal data using LLMs with optimality guarantees</li>
+      <li>Built agentic <strong>human–LLM collaboration</strong> framework for the data science pipeline — <strong>0.91 accuracy vs. 0.86</strong> for Auto-Sklearn on model refinement</li>
+      <li>Built <strong>ASMR</strong>, an RL-based schema optimizer for ship maintenance reports — <strong>56% less redundancy</strong> and 35% smaller schemas at higher coverage</li>
     </ul>
   </div>
 </div>

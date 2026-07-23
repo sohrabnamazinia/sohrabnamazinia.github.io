@@ -20,6 +20,16 @@ author_profile: true
 
   <div class="proj-card">
     <div class="proj-card-top">
+      <div class="proj-year">2026</div>
+      <span class="proj-private">Private</span>
+    </div>
+    <h3 class="proj-title">ASMR — Agentic Schema Generation for Ship Maintenance Reports</h3>
+    <p class="proj-desc">Modular two-agent framework that discovers compact schemas from historical maintenance reports: a <strong>Field Generation Agent</strong> extracts semantic concepts via adaptive multi-granularity clustering, and a <strong>Structural Optimizer Agent</strong> uses RL to select compact, informative, non-redundant fields.</p>
+    <div class="proj-tags"><span class="proj-tag">Python</span><span class="proj-tag">Agentic AI</span><span class="proj-tag">LLMs</span><span class="proj-tag">Reinforcement Learning</span></div>
+  </div>
+
+  <div class="proj-card">
+    <div class="proj-card-top">
       <div class="proj-year">2025</div>
       <a href="https://github.com/sohrabnamazinia/Personalized-Top-K-Set-Queries" target="_blank" class="proj-gh"><i class="fab fa-github"></i></a>
     </div>

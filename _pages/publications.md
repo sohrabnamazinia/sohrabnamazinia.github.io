@@ -50,36 +50,16 @@ redirect_from:
 
 <div class="pub-card">
   <div class="pub-status pub-status--accepted">Accepted</div>
-  <div class="pub-venue">NE AI Agents Day Workshop 2026 <span class="pub-venue-tag">Workshop</span></div>
-  <h3 class="pub-title">Utility-Aware Human–LLM Agent Orchestration for Data Science Pipelines</h3>
-  <p class="pub-authors"><strong>Sohrab Namazi Nia</strong> et al. &nbsp;·&nbsp; 2026</p>
-  <p class="pub-abstract">Novel framework for agentic collaboration between humans and LLMs across the data science pipeline to maximize utility of downstream ML tasks.</p>
-  <div class="pub-tags"><span class="proj-tag">Agentic AI</span><span class="proj-tag">LLMs</span><span class="proj-tag">Data Science</span></div>
-</div>
-
-<!-- ========== UNDER REVIEW ========== -->
-<div class="exp-section-label">Under Review / Revision</div>
-
-<div class="pub-card">
-  <div class="pub-status pub-status--review">Under Review</div>
-  <div class="pub-venue">KDD 2026 <span class="pub-venue-tag">KDD</span></div>
-  <h3 class="pub-title">LLM-Powered Best Set Recommendation</h3>
-  <p class="pub-authors"><strong>Sohrab Namazi Nia</strong> et al. &nbsp;·&nbsp; 2024</p>
-  <div class="pub-tags"><span class="proj-tag">LLMs</span><span class="proj-tag">Recommendation</span></div>
-</div>
-
-<div class="pub-card">
-  <div class="pub-status pub-status--review">Under Review</div>
   <div class="pub-venue">VLDB 2026 <span class="pub-venue-tag">VLDB</span></div>
-  <h3 class="pub-title">Probabilistic Package Selection on Multi-Modal Data</h3>
-  <p class="pub-authors"><strong>Sohrab Namazi Nia</strong>, Senjuti Basu Roy, Sihem Amer-Yahia &nbsp;·&nbsp; 2026</p>
-  <p class="pub-abstract">Introduces algorithms that minimize expensive LLM oracle calls while guaranteeing optimal or near-optimal solutions for probabilistic package selection over multi-modal data.</p>
-  <div class="pub-tags"><span class="proj-tag">LLMs</span><span class="proj-tag">Multi-modal</span><span class="proj-tag">Algorithms</span></div>
+  <h3 class="pub-title">Lower-Bound Distance Queries under Partial Information</h3>
+  <p class="pub-authors">Biswas, <strong>Sohrab Namazi Nia</strong>, Augustine, Shetiya, Basu Roy, Das &nbsp;·&nbsp; 2026</p>
+  <p class="pub-abstract">Given a metric space graph where only a subset of edge distances is known, studies a query-based model for answering lower bound distance queries on unknown edges <strong>without any black-box distance oracle</strong>. The framework balances preprocessing overhead, query time, and bound tightness with provable guarantees under metric assumptions.</p>
+  <div class="pub-tags"><span class="proj-tag">Graph Algorithms</span><span class="proj-tag">Distance Queries</span></div>
 </div>
 
 <div class="pub-card">
-  <div class="pub-status pub-status--revision">Under Revision</div>
-  <div class="pub-venue">Expert Systems with Applications <span class="pub-venue-tag">Journal</span></div>
+  <div class="pub-status pub-status--accepted">Accepted</div>
+  <div class="pub-venue">Expert Systems with Applications <span class="pub-venue-tag">ESWA</span></div>
   <h3 class="pub-title">Exploring Humans and LLMs in the Data Science Pipeline</h3>
   <p class="pub-authors"><strong>Sohrab Namazi Nia</strong> and Senjuti Basu Roy &nbsp;·&nbsp; 2026</p>
   <div class="pub-footer">
@@ -89,12 +69,43 @@ redirect_from:
 </div>
 
 <div class="pub-card">
-  <div class="pub-status pub-status--revision">Under Revision</div>
-  <div class="pub-venue">VLDB 2026 <span class="pub-venue-tag">VLDB</span></div>
-  <h3 class="pub-title">Lower Bound Distance Queries Without a Distance Oracle</h3>
-  <p class="pub-authors">Shetiya, <strong>Sohrab Namazi Nia</strong> et al. &nbsp;·&nbsp; 2026</p>
-  <p class="pub-abstract">Suite of algorithmic techniques with provable guarantees for answering lower bound distance queries over metric space graphs with unknown edge distances.</p>
-  <div class="pub-tags"><span class="proj-tag">Graph Algorithms</span><span class="proj-tag">Distance Queries</span></div>
+  <div class="pub-status pub-status--accepted">Accepted</div>
+  <div class="pub-venue">DASHSys 2026 @ VLDB <span class="pub-venue-tag">Workshop</span></div>
+  <h3 class="pub-title">ASMR: Agentic Schema Generation for Ship Maintenance Report Writing</h3>
+  <p class="pub-authors"><strong>Sohrab Namazi Nia</strong>, Dalal, Sa, Ly, Zentmaier, Strzalkowski, Miller, Singh, Basu Roy &nbsp;·&nbsp; 2026</p>
+  <p class="pub-abstract">Modular agentic framework for automatic schema generation: a Field Generation Agent extracts semantic concepts from historical narratives via adaptive multi-granularity clustering, while a Structural Optimizer Agent uses reinforcement learning to identify compact, informative, and non-redundant schemas.</p>
+  <div class="pub-tags"><span class="proj-tag">Agentic AI</span><span class="proj-tag">LLMs</span><span class="proj-tag">Schema Generation</span></div>
+</div>
+
+<div class="pub-card">
+  <div class="pub-status pub-status--accepted">Accepted</div>
+  <div class="pub-venue">NE AI Agents Day Workshop 2026 <span class="pub-venue-tag">Workshop</span></div>
+  <h3 class="pub-title">Utility-Aware Human–LLM Agent Orchestration for Data Science Pipelines</h3>
+  <p class="pub-authors"><strong>Sohrab Namazi Nia</strong> et al. &nbsp;·&nbsp; 2026</p>
+  <p class="pub-abstract">Novel framework for agentic collaboration between humans and LLMs across the data science pipeline to maximize utility of downstream ML tasks.</p>
+  <div class="pub-tags"><span class="proj-tag">Agentic AI</span><span class="proj-tag">LLMs</span><span class="proj-tag">Data Science</span></div>
+</div>
+
+<!-- ========== UNDER REVIEW ========== -->
+<div class="exp-section-label">Under Review</div>
+
+<div class="pub-card">
+  <div class="pub-status pub-status--review">Under Review</div>
+  <!-- venue hidden while under review -->
+  <!-- <div class="pub-venue">KDD 2026 <span class="pub-venue-tag">KDD</span></div> -->
+  <h3 class="pub-title">LLM-Powered Best Set Recommendation</h3>
+  <p class="pub-authors"><strong>Sohrab Namazi Nia</strong> et al. &nbsp;·&nbsp; 2024</p>
+  <div class="pub-tags"><span class="proj-tag">LLMs</span><span class="proj-tag">Recommendation</span></div>
+</div>
+
+<div class="pub-card">
+  <div class="pub-status pub-status--review">Under Review</div>
+  <!-- venue hidden while under review -->
+  <!-- <div class="pub-venue">VLDB 2026 <span class="pub-venue-tag">VLDB</span></div> -->
+  <h3 class="pub-title">Probabilistic Package Selection on Multi-Modal Data</h3>
+  <p class="pub-authors"><strong>Sohrab Namazi Nia</strong>, Senjuti Basu Roy, Sihem Amer-Yahia &nbsp;·&nbsp; 2026</p>
+  <p class="pub-abstract">Introduces algorithms that minimize expensive LLM oracle calls while guaranteeing optimal or near-optimal solutions for probabilistic package selection over multi-modal data.</p>
+  <div class="pub-tags"><span class="proj-tag">LLMs</span><span class="proj-tag">Multi-modal</span><span class="proj-tag">Algorithms</span></div>
 </div>
 
 <!-- ========== PREPRINTS ========== -->
