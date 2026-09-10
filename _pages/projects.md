@@ -104,7 +104,7 @@ author_profile: true
       <span class="proj-private">Private</span>
     </div>
     <h3 class="proj-title">Autonomous Python Financial Agent for Credit Analysis</h3>
-    <p class="proj-desc">Reasoning-driven Python agent that generates, executes, and validates financial analysis code — reducing manual analyst time by <strong>75%</strong>.</p>
+    <p class="proj-desc">Reasoning-driven Python agent that generates, executes, and validates financial analysis code — reducing manual analyst time by <strong>60%</strong>.</p>
     <div class="proj-tags"><span class="proj-tag">LangGraph</span><span class="proj-tag">LLMs</span><span class="proj-tag">Finance</span></div>
   </div>
 

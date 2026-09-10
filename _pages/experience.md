@@ -38,7 +38,7 @@ author_profile: true
     </div>
     <ul class="edu-bullets">
       <li>Developed a reasoning-driven <strong>Python financial agent</strong> for automated credit analysis using LangGraph-based orchestration</li>
-      <li>Reduced manual analyst computation and validation time by <strong>75%</strong> through optimized agent execution and tool chaining</li>
+      <li>Reduced manual analyst computation and validation time by <strong>60%</strong> through optimized agent execution and tool chaining</li>
       <li>Built intent detection classifiers to route financial queries into correct LLM workflows</li>
       <li>Implemented multi-agent coordination with LangChain, LangGraph, and LangSmith for production-grade financial AI</li>
       <li>Designed a <strong>Knowledge Graph</strong> for Scalata Personalized Recommendation using AWS NeptuneDB</li>

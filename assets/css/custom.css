@@ -1279,6 +1279,10 @@ a.stat-link .stat-label {
   border-top: 1px solid var(--border);
 }
 
+.talk-gallery--2 {
+  grid-template-columns: repeat(2, 1fr) !important;
+}
+
 .talk-img {
   width: 100%;
   aspect-ratio: 4/3;

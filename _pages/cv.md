@@ -50,7 +50,7 @@ GPA: 4.0 · Ranked 4th nationally among universities in Iran (QS Ranking)
 *Part-time CPT Internship*
 
 - Developed a reasoning-driven **Python financial agent** for automated credit analysis using LangGraph-based orchestration
-- Reduced manual analyst computation and validation time by **75%** through optimized agent execution and tool chaining
+- Reduced manual analyst computation and validation time by **60%** through optimized agent execution and tool chaining
 - Built intent detection classifiers to route financial queries into correct LLM workflows
 - Implemented multi-agent coordination with LangChain, LangGraph, and LangSmith for production-grade financial AI
 - Designed a **Knowledge Graph** for Scalata Personalized Recommendation using AWS NeptuneDB

@@ -113,7 +113,7 @@ redirect_from:
   <div class="research-card domain-card">
     <div class="research-icon"><i class="fas fa-chart-line"></i></div>
     <h3>Finance</h3>
-    <p>At Scalata.ai (ranked <strong>Rank 19 in Top AI Hot 100</strong>), built a reasoning-driven multi-agent system for automated credit analysis using LangGraph — reducing analyst computation time by <strong>75%</strong>. Designed an agentic data lake supporting 24+ document types and VectorDB-backed RAG pipelines for retrieval over heterogeneous financial documents.</p>
+    <p>At Scalata.ai (ranked <strong>Rank 19 in Top AI Hot 100</strong>), built a reasoning-driven multi-agent system for automated credit analysis using LangGraph — reducing analyst computation time by <strong>60%</strong>. Designed an agentic data lake supporting 24+ document types and VectorDB-backed RAG pipelines for retrieval over heterogeneous financial documents.</p>
   </div>
   <div class="research-card domain-card">
     <div class="research-icon"><i class="fas fa-heartbeat"></i></div>
