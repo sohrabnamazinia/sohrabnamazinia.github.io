@@ -17,8 +17,9 @@ redirect_from:
     <h1 class="hero-name">Sohrab<br><span class="accent" style="white-space:nowrap;">Namazi Nia</span></h1>
 
     <p class="hero-subtitle">
-      Senior Data Scientist in <span class="accent">Generative AI</span>
-      &amp; <span class="accent2">Multi-Agent LLM Systems</span>
+      <span class="accent">Agentic data management</span>, <span class="accent2">RL-powered optimization</span>,
+      <span class="accent">personalized recommendation</span>, and <span class="accent2">human–LLM collaboration</span>
+      in data science pipelines
     </p>
 
     <p class="hero-desc">
@@ -132,8 +133,8 @@ redirect_from:
   <h2>About <span class="accent">Me</span></h2>
   <p>
     Hey, I'm <strong>Sohrab</strong> — my preferred name is <strong>Spencer</strong>.
-    I'm a Senior PhD Candidate (ABD) in CS at NJIT and a Senior Data Scientist in Generative AI,
-    with hands-on industry experience building production multi-agent LLM systems at Scalata.ai (ranked <strong>Rank 19 in Top AI Hot 100</strong>).
+    I'm a Computer Science PhD candidate (ABD) at NJIT with experience in building production
+    multi-agent LLM systems at Scalata.ai (ranked <strong>Rank 19 in Top AI Hot 100</strong>).
   </p>
   <p>
     My research, funded by <strong>NSF and ONR</strong>, focuses on LLMs for data science, agentic AI,

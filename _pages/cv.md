@@ -1,6 +1,7 @@
 ---
 layout: archive
 title: "CV"
+published: false # hidden from the public site; set to true to restore /cv/
 permalink: /cv/
 author_profile: true
 redirect_from:
