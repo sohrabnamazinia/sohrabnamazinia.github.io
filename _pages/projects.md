@@ -24,8 +24,8 @@ author_profile: true
       <span class="proj-private">Private</span>
     </div>
     <h3 class="proj-title">ASMR — Agentic Schema Generation for Ship Maintenance Reports</h3>
-    <p class="proj-desc">Modular two-agent framework that discovers compact schemas from historical maintenance reports: a <strong>Field Generation Agent</strong> extracts semantic concepts via adaptive multi-granularity clustering, and a <strong>Structural Optimizer Agent</strong> uses RL to select compact, informative, non-redundant fields.</p>
-    <div class="proj-tags"><span class="proj-tag">Python</span><span class="proj-tag">Agentic AI</span><span class="proj-tag">LLMs</span><span class="proj-tag">Reinforcement Learning</span></div>
+    <p class="proj-desc">Modular two-agent framework that discovers compact schemas from historical maintenance reports: a <strong>Field Generation Agent</strong> extracts semantic concepts via adaptive multi-granularity clustering, and a <strong>Structural Optimizer Agent</strong> uses RL to select compact, informative, non-redundant fields — nearly <strong>doubling schema informativeness</strong>.</p>
+    <div class="proj-tags"><span class="proj-tag">Python</span><span class="proj-tag">Agentic AI</span><span class="proj-tag">LLMs</span><span class="proj-tag">Reinforcement Learning</span><span class="proj-tag">AI Agents</span></div>
   </div>
 
   <div class="proj-card">
@@ -64,8 +64,8 @@ author_profile: true
       <a href="https://github.com/sohrabnamazinia" target="_blank" class="proj-gh"><i class="fab fa-github"></i></a>
     </div>
     <h3 class="proj-title">Agentic Workflow Evaluation (APEX)</h3>
-    <p class="proj-desc">Evaluation framework to benchmark agentic LLM workflows across reasoning tasks, enabling systematic comparison of multi-agent systems.</p>
-    <div class="proj-tags"><span class="proj-tag">Python</span><span class="proj-tag">LLM Agents</span><span class="proj-tag">Evaluation</span></div>
+    <p class="proj-desc">Algorithmic framework for progressively evaluating agentic LLM workflows to identify potential failures.</p>
+    <div class="proj-tags"><span class="proj-tag">Python</span><span class="proj-tag">LLM Agents</span><span class="proj-tag">Multi-Agent Systems</span><span class="proj-tag">Evaluation</span></div>
   </div>
 
   <div class="proj-card">
@@ -86,16 +86,6 @@ author_profile: true
     <h3 class="proj-title">PromptXplorer: LLM-Powered Prompt Refinement</h3>
     <p class="proj-desc">Framework to generate diverse composite personalized prompts using clustering, IPF-based sequence generation, RAG retrieval, and LLM-guided selection.</p>
     <div class="proj-tags"><span class="proj-tag">Python</span><span class="proj-tag">RAG</span><span class="proj-tag">Prompt Engineering</span></div>
-  </div>
-
-  <div class="proj-card">
-    <div class="proj-card-top">
-      <div class="proj-year">2025</div>
-      <span class="proj-private">Private</span>
-    </div>
-    <h3 class="proj-title">RL-Guided Agentic Schema Construction</h3>
-    <p class="proj-desc">Agentic framework to construct structured schema from unstructured forms using agents leveraging RL and LLMs.</p>
-    <div class="proj-tags"><span class="proj-tag">LLMs</span><span class="proj-tag">RL</span><span class="proj-tag">AI Agents</span></div>
   </div>
 
   <div class="proj-card">

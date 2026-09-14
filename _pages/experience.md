@@ -39,7 +39,9 @@ author_profile: true
     <ul class="edu-bullets">
       <li>Developed a reasoning-driven <strong>Python financial agent</strong> for automated credit analysis using LangGraph-based orchestration</li>
       <li>Reduced manual analyst computation and validation time by <strong>60%</strong> through optimized agent execution and tool chaining</li>
-      <li>Built intent detection classifiers to route financial queries into correct LLM workflows</li>
+      <li>Enhanced the <strong>SQL agent</strong>, improving execution accuracy by <strong>~15%</strong> on Scalata's financial benchmark</li>
+      <li>Fine-tuned <strong>Llama 3.1 8B</strong> for financial credit analysis using distributed training on Amazon SageMaker</li>
+      <li>Designed a <strong>human-in-the-loop pipeline</strong> for intent classification and agent orchestration, routing financial queries to the right LLM workflows and improving intent classification accuracy by <strong>~10%</strong></li>
       <li>Implemented multi-agent coordination with LangChain, LangGraph, and LangSmith for production-grade financial AI</li>
       <li>Designed a <strong>Knowledge Graph</strong> for Scalata Personalized Recommendation using AWS NeptuneDB</li>
     </ul>
@@ -94,10 +96,12 @@ author_profile: true
       <span class="edu-chip"><i class="fas fa-dollar-sign"></i> NSF &amp; ONR Funded</span>
     </div>
     <ul class="edu-bullets">
-      <li>Developed novel LLM framework for personalized recommendation — <strong>45% speedup</strong>, 15–20× cost reduction</li>
+      <li>Designed <strong>human–LLM agent orchestration</strong> frameworks for data science pipelines with customizable quality–cost trade-offs — <strong>0.91 accuracy vs. 0.86</strong> for Auto-Sklearn on model refinement</li>
+      <li>Developed <strong>ASMR</strong>, an agentic AI framework for structured schema generation from unstructured ship-maintenance reports — nearly <strong>doubling schema informativeness</strong></li>
+      <li>Designed a multi-agent LLM framework for personalized recommendation — <strong>45% speedup</strong>, 15–20× cost reduction</li>
+      <li>Developed probabilistic package-selection algorithms over multimodal data that minimize expensive LLM calls while guaranteeing optimal or near-optimal solutions</li>
+      <li>Developed <strong>APEX</strong>, an algorithmic framework for progressively evaluating agentic workflows to identify potential failures</li>
       <li>Proposed <strong>G-CLAHE</strong>: 17% improvement in diagnostic accuracy for chest X-ray abnormality detection</li>
-      <li>Built agentic <strong>human–LLM collaboration</strong> framework for the data science pipeline — <strong>0.91 accuracy vs. 0.86</strong> for Auto-Sklearn on model refinement</li>
-      <li>Built <strong>ASMR</strong>, an RL-based schema optimizer for ship maintenance reports — <strong>56% less redundancy</strong> and 35% smaller schemas at higher coverage</li>
     </ul>
   </div>
 </div>
@@ -198,13 +202,13 @@ author_profile: true
   <div class="skill-row">
     <div class="skill-row-label">Programming</div>
     <div class="skill-row-tags">
-      <span class="skill-tag">Python</span><span class="skill-tag">C#</span><span class="skill-tag">Java</span><span class="skill-tag">C/C++</span>
+      <span class="skill-tag">Python</span><span class="skill-tag">SQL</span><span class="skill-tag">C#</span><span class="skill-tag">Java</span><span class="skill-tag">C/C++</span>
     </div>
   </div>
   <div class="skill-row">
     <div class="skill-row-label">LLMs &amp; Agents</div>
     <div class="skill-row-tags">
-      <span class="skill-tag">LangChain</span><span class="skill-tag">LangGraph</span><span class="skill-tag">LangSmith</span><span class="skill-tag">Multi-Agent Systems</span><span class="skill-tag">RAG</span>
+      <span class="skill-tag">LangChain</span><span class="skill-tag">LangGraph</span><span class="skill-tag">LangSmith</span><span class="skill-tag">Multi-Agent Systems</span><span class="skill-tag">RAG</span><span class="skill-tag">Agentic Evaluation</span><span class="skill-tag">Human-in-the-Loop Systems</span>
     </div>
   </div>
   <div class="skill-row">
@@ -216,13 +220,13 @@ author_profile: true
   <div class="skill-row">
     <div class="skill-row-label">Databases</div>
     <div class="skill-row-tags">
-      <span class="skill-tag">PostgreSQL</span><span class="skill-tag">MongoDB</span><span class="skill-tag">Redis</span><span class="skill-tag">NeptuneDB</span><span class="skill-tag">MySQL</span><span class="skill-tag">SQLite</span>
+      <span class="skill-tag">PostgreSQL</span><span class="skill-tag">MongoDB</span><span class="skill-tag">Redis</span><span class="skill-tag">NeptuneDB</span><span class="skill-tag">MySQL</span><span class="skill-tag">SQLite</span><span class="skill-tag">Vector Databases</span><span class="skill-tag">Knowledge Graphs</span>
     </div>
   </div>
   <div class="skill-row">
     <div class="skill-row-label">Cloud &amp; Data</div>
     <div class="skill-row-tags">
-      <span class="skill-tag">AWS</span><span class="skill-tag">Azure</span><span class="skill-tag">GCP</span><span class="skill-tag">Databricks</span><span class="skill-tag">Hadoop</span><span class="skill-tag">MLflow</span>
+      <span class="skill-tag">AWS</span><span class="skill-tag">Azure</span><span class="skill-tag">GCP</span><span class="skill-tag">Databricks</span><span class="skill-tag">Hadoop</span><span class="skill-tag">MLflow</span><span class="skill-tag">Amazon SageMaker</span><span class="skill-tag">LLM Fine-Tuning</span><span class="skill-tag">Azure Document Intelligence</span><span class="skill-tag">Docling</span>
     </div>
   </div>
   <div class="skill-row">

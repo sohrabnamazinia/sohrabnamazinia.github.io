@@ -22,7 +22,7 @@ author_profile: true
       <h2 class="talk-title">ASMR: Agentic Schema Generation for Ship Maintenance Report Writing</h2>
       <div class="talk-event"><i class="fas fa-map-marker-alt"></i> DASHSys 2026 @ VLDB — Workshop on Systems for Data-centric Agents with Human-in-the-loop &nbsp;·&nbsp; Boston, MA &nbsp;·&nbsp; September 2026</div>
       <p class="talk-desc">
-        Presented ASMR, a modular two-agent framework that discovers compact, reusable schemas from historical ship maintenance narratives. The talk walked through the Field Generation Agent, which extracts semantic concepts via adaptive multi-granularity clustering, and the Structural Optimizer Agent, which uses reinforcement learning to trim and merge candidates into a compact, non-redundant schema — nearly doubling informativeness while shrinking schema size by almost 8×.
+        Presented ASMR, a modular two-agent framework that discovers compact, reusable schemas from historical ship maintenance narratives. The talk walked through the Field Generation Agent, which extracts semantic concepts via adaptive multi-granularity clustering, and the Structural Optimizer Agent, which uses reinforcement learning to trim and merge candidates into a compact, non-redundant schema — nearly doubling schema informativeness.
       </p>
       <div class="pub-tags">
         <span class="proj-tag">Agentic AI</span>

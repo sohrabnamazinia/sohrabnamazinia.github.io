@@ -36,7 +36,7 @@ author_profile: true
       <span class="edu-chip"><i class="fas fa-flask"></i> Big Data Analytics Lab (BDAL)</span>
     </div>
     <ul class="edu-bullets">
-      <li>Research focus: LLMs for data science, agentic AI, personalized recommendations, and AI for healthcare</li>
+      <li>Research focus: agentic human–AI collaboration in data management and autonomous data systems</li>
       <li>Research funded by <strong>NSF</strong> and <strong>ONR</strong> grants</li>
     </ul>
   </div>
@@ -102,7 +102,7 @@ author_profile: true
     <div class="award-desc">Merit-based university research funding for excellence in AI and Data Science · NJIT 2022–2026</div>
   </div>
   <div class="award-card">
-    <div class="award-title"><span class="award-dot"></span>Panasonic Chair Research Award</div>
+    <div class="award-title"><span class="award-dot"></span>Panasonic Chair Research Grant</div>
     <div class="award-desc">Contributions to predictive analytics and intelligent systems · 2024–2025</div>
   </div>
   <div class="award-card">
@@ -114,7 +114,11 @@ author_profile: true
     <div class="award-desc">Computer Engineering Department · IUST 2019–2020</div>
   </div>
   <div class="award-card">
-    <div class="award-title"><span class="award-dot"></span>Accepted Presenter</div>
+    <div class="award-title"><span class="award-dot"></span>Speaker &amp; Poster Presenter</div>
+    <div class="award-desc">VLDB 2026 &amp; DASHSys @ VLDB · Boston · September 2026</div>
+  </div>
+  <div class="award-card">
+    <div class="award-title"><span class="award-dot"></span>Speaker</div>
     <div class="award-desc">North East AI Agents Day Workshop · May 2026</div>
   </div>
   <div class="award-card">

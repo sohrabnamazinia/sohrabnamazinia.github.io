@@ -89,18 +89,18 @@ redirect_from:
 <div class="research-grid research-grid--3">
   <div class="research-card">
     <div class="research-icon"><i class="fas fa-network-wired"></i></div>
-    <h3>LLMs &amp; Multi-Agent Systems</h3>
-    <p>Designing and orchestrating multi-agent LLM frameworks for personalized recommendations, probabilistic package selection, and cost-optimized oracle-based query answering.</p>
+    <h3>Agentic AI &amp; Multi-Agent LLM Systems</h3>
+    <p>Designing multi-agent LLM frameworks, progressively evaluating agentic workflows to surface potential failures, and using reinforcement learning to guide agentic systems.</p>
   </div>
   <div class="research-card">
-    <div class="research-icon"><i class="fas fa-robot"></i></div>
-    <h3>Agentic AI &amp; RL</h3>
-    <p>Human–LLM agent orchestration, RL policy reusability, and agentic frameworks for automating complex data science pipelines.</p>
+    <div class="research-icon"><i class="fas fa-handshake"></i></div>
+    <h3>Human–AI Collaboration in Data Management</h3>
+    <p>Orchestrating human and LLM agents across data science pipelines, with customizable trade-offs between result quality and cost.</p>
   </div>
   <div class="research-card">
     <div class="research-icon"><i class="fas fa-database"></i></div>
-    <h3>Big Data Analytics</h3>
-    <p>Large-scale multimodal data management, agentic data lake ingestion, and scalable retrieval systems backed by VectorDB and RAG.</p>
+    <h3>Autonomous &amp; Multimodal Data Systems</h3>
+    <p>LLM-powered data management, personalized recommendation and package selection over multimodal data, and agentic data lake ingestion.</p>
   </div>
 </div>
 
@@ -114,7 +114,7 @@ redirect_from:
   <div class="research-card domain-card">
     <div class="research-icon"><i class="fas fa-chart-line"></i></div>
     <h3>Finance</h3>
-    <p>At Scalata.ai (ranked <strong>Rank 19 in Top AI Hot 100</strong>), built a reasoning-driven multi-agent system for automated credit analysis using LangGraph — reducing analyst computation time by <strong>60%</strong>. Designed an agentic data lake supporting 24+ document types and VectorDB-backed RAG pipelines for retrieval over heterogeneous financial documents.</p>
+    <p>At Scalata.ai (ranked <strong>#19 in the AI Hot 100</strong>), built a reasoning-driven multi-agent system for automated credit analysis using LangGraph — reducing analyst computation time by <strong>60%</strong>. Designed an agentic data lake supporting 24+ document types and VectorDB-backed RAG pipelines for retrieval over heterogeneous financial documents.</p>
   </div>
   <div class="research-card domain-card">
     <div class="research-icon"><i class="fas fa-heartbeat"></i></div>
@@ -134,11 +134,11 @@ redirect_from:
   <p>
     Hey, I'm <strong>Sohrab</strong> — my preferred name is <strong>Spencer</strong>.
     I'm a Computer Science PhD candidate (ABD) at NJIT with experience in building production
-    multi-agent LLM systems at Scalata.ai (ranked <strong>Rank 19 in Top AI Hot 100</strong>).
+    multi-agent LLM systems at Scalata.ai (ranked <strong>#19 in the AI Hot 100</strong>).
   </p>
   <p>
-    My research, funded by <strong>NSF and ONR</strong>, focuses on LLMs for data science, agentic AI,
-    personalized recommendations, and AI for healthcare. I graduated top of my class from IUST (GPA 4.0)
+    My research, funded by <strong>NSF and ONR</strong>, focuses on agentic human–AI collaboration in data management
+    and autonomous data systems. I graduated top of my class from IUST (GPA 4.0)
     and have received competitive research funding at NJIT.
     Outside work, I'm passionate about astronomy, space exploration, and football (soccer).
   </p>

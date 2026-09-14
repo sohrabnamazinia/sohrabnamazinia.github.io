@@ -21,6 +21,17 @@ redirect_from:
 
 <div class="pub-card">
   <div class="pub-status pub-status--published">Published</div>
+  <div class="pub-venue">Expert Systems with Applications <span class="pub-venue-tag">ESWA</span></div>
+  <h3 class="pub-title">Exploring Humans and LLMs collaboration in the Data Science Pipeline</h3>
+  <p class="pub-authors"><strong>Sohrab Namazi Nia</strong> and Senjuti Basu Roy &nbsp;·&nbsp; 2026</p>
+  <div class="pub-footer">
+    <a href="https://doi.org/10.2139/ssrn.5340363" target="_blank" class="pub-link"><i class="fas fa-external-link-alt"></i> SSRN Preprint</a>
+  </div>
+  <div class="pub-tags"><span class="proj-tag">Agentic AI</span><span class="proj-tag">LLMs</span><span class="proj-tag">Human-in-the-Loop</span></div>
+</div>
+
+<div class="pub-card">
+  <div class="pub-status pub-status--published">Published</div>
   <div class="pub-venue">VLDB 2026 <span class="pub-venue-tag">VLDB</span></div>
   <h3 class="pub-title">Lower-Bound Distance Queries under Partial Information</h3>
   <p class="pub-authors">Biswas, <strong>Sohrab Namazi Nia</strong>, Augustine, Shetiya, Basu Roy, Das &nbsp;·&nbsp; 2026</p>
@@ -56,17 +67,6 @@ redirect_from:
 
 <!-- ========== ACCEPTED ========== -->
 <div class="exp-section-label">Accepted / To Appear</div>
-
-<div class="pub-card">
-  <div class="pub-status pub-status--accepted">Accepted</div>
-  <div class="pub-venue">Expert Systems with Applications <span class="pub-venue-tag">ESWA</span></div>
-  <h3 class="pub-title">Exploring Humans and LLMs collaboration in the Data Science Pipeline</h3>
-  <p class="pub-authors"><strong>Sohrab Namazi Nia</strong> and Senjuti Basu Roy &nbsp;·&nbsp; 2026</p>
-  <div class="pub-footer">
-    <a href="https://doi.org/10.2139/ssrn.5340363" target="_blank" class="pub-link"><i class="fas fa-external-link-alt"></i> SSRN Preprint</a>
-  </div>
-  <div class="pub-tags"><span class="proj-tag">Agentic AI</span><span class="proj-tag">LLMs</span><span class="proj-tag">Human-in-the-Loop</span></div>
-</div>
 
 <div class="pub-card">
   <div class="pub-status pub-status--accepted">Accepted</div>
