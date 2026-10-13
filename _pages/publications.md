@@ -60,7 +60,7 @@ redirect_from:
   <div class="pub-status pub-status--published">Published</div>
   <div class="pub-venue">VLDB Journal <span class="pub-venue-tag">VLDB</span></div>
   <h3 class="pub-title">Model Reusability in Reinforcement Learning</h3>
-  <p class="pub-authors">Nikookar, <strong>Sohrab Namazi Nia</strong> et al. &nbsp;·&nbsp; 2024</p>
+  <p class="pub-authors">Nikookar, <strong>Sohrab Namazi Nia</strong> et al. &nbsp;·&nbsp; 2025</p>
   <p class="pub-abstract">Proposed the first principled study of RL model reusability, developing a graph-based framework for Temporal Difference Learning and Deep-RL algorithms. Demonstrated same-quality results as policies trained from scratch with significant efficiency gains.</p>
   <div class="pub-tags"><span class="proj-tag">Reinforcement Learning</span><span class="proj-tag">Model Reusability</span></div>
 </div>
