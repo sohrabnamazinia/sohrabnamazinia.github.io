@@ -33,7 +33,7 @@ author_profile: true
       <div class="proj-year">2025</div>
       <a href="https://github.com/sohrabnamazinia/Personalized-Top-K-Set-Queries" target="_blank" class="proj-gh"><i class="fab fa-github"></i></a>
     </div>
-    <h3 class="proj-title">Top-K Personalized Recommendation Package Queries</h3>
+    <h3 class="proj-title">SemPack — Top-K Personalized Recommendation Package Queries</h3>
     <p class="proj-desc">Probabilistic algorithms for top-k package recommendation over multi-modal data, minimizing expensive LLM oracle calls.</p>
     <div class="proj-tags"><span class="proj-tag">Python</span><span class="proj-tag">LLMs</span><span class="proj-tag">Multi-modal</span><span class="proj-tag">Recommendation</span></div>
   </div>

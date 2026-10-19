@@ -102,7 +102,7 @@ redirect_from:
   <div class="pub-status pub-status--review">Under Review</div>
   <!-- venue hidden while under review -->
   <!-- <div class="pub-venue">VLDB 2026 <span class="pub-venue-tag">VLDB</span></div> -->
-  <h3 class="pub-title">Probabilistic Package Selection on Multi-Modal Data</h3>
+  <h3 class="pub-title">SemPack: LLM-Powered Probabilistic Package Selection on Multi-Modal Data</h3>
   <p class="pub-authors"><strong>Sohrab Namazi Nia</strong>, Senjuti Basu Roy, Sihem Amer-Yahia &nbsp;·&nbsp; 2026</p>
   <p class="pub-abstract">Introduces algorithms that minimize expensive LLM oracle calls while guaranteeing optimal or near-optimal solutions for probabilistic package selection over multi-modal data.</p>
   <div class="pub-tags"><span class="proj-tag">LLMs</span><span class="proj-tag">Multi-modal</span><span class="proj-tag">Algorithms</span></div>

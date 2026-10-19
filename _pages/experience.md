@@ -97,9 +97,9 @@ author_profile: true
     </div>
     <ul class="edu-bullets">
       <li>Designed <strong>human–LLM agent orchestration</strong> frameworks for data science pipelines with customizable quality–cost trade-offs — <strong>0.91 accuracy vs. 0.86</strong> for Auto-Sklearn on model refinement</li>
-      <li>Developed <strong>ASMR</strong>, an agentic AI framework for structured schema generation from unstructured ship-maintenance reports — nearly <strong>doubling schema informativeness</strong></li>
+      <li>Developed <strong>ASMR</strong> (Boston Fusion Corporation, ONR-funded), an agentic AI framework for structured schema generation from unstructured ship-maintenance reports — nearly <strong>doubling schema informativeness</strong></li>
       <li>Designed a multi-agent LLM framework for personalized recommendation — <strong>45% speedup</strong>, 15–20× cost reduction</li>
-      <li>Developed probabilistic package-selection algorithms over multimodal data that minimize expensive LLM calls while guaranteeing optimal or near-optimal solutions</li>
+      <li>Developed <strong>SemPack</strong>, probabilistic package-selection algorithms over multimodal data that minimize expensive LLM calls while guaranteeing optimal or near-optimal solutions</li>
       <li>Developed <strong>APEX</strong>, an algorithmic framework for progressively evaluating agentic workflows to identify potential failures</li>
       <li>Proposed <strong>G-CLAHE</strong>: 17% improvement in diagnostic accuracy for chest X-ray abnormality detection</li>
     </ul>
