@@ -94,7 +94,7 @@ redirect_from:
   <!-- venue hidden while under review -->
   <!-- <div class="pub-venue">KDD 2026 <span class="pub-venue-tag">KDD</span></div> -->
   <h3 class="pub-title">LLM-Powered Best Set Recommendation</h3>
-  <p class="pub-authors"><strong>Sohrab Namazi Nia</strong> et al. &nbsp;·&nbsp; 2024</p>
+  <p class="pub-authors"><strong>Sohrab Namazi Nia</strong> et al. &nbsp;·&nbsp; 2026</p>
   <div class="pub-tags"><span class="proj-tag">LLMs</span><span class="proj-tag">Recommendation</span></div>
 </div>
 
