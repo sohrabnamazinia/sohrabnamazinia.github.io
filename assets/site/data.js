@@ -258,7 +258,6 @@ window.SITE = {
   certs: [
     "GRE Quantitative: 170/170",
     "Advanced Algorithms and Complexity, University of California, San Diego (Sep 2020)",
-    "Algorithmic Toolbox · Algorithms on Graphs · Algorithms on Strings · Data Structures, UC San Diego (Apr 2020)",
-    "RCR Basic Course Certification, Coursera (Nov 2022)"
+    "Algorithmic Toolbox · Algorithms on Graphs · Algorithms on Strings · Data Structures, UC San Diego (Apr 2020)"
   ]
 };
