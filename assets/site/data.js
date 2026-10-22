@@ -256,7 +256,7 @@ window.SITE = {
     ]}
   ],
   certs: [
-    "TOEFL iBT: 107 (R 28 · L 26 · S 25 · W 28) and GRE Quantitative 170/170",
+    "GRE Quantitative: 170/170",
     "Advanced Algorithms and Complexity, University of California, San Diego (Sep 2020)",
     "Algorithmic Toolbox · Algorithms on Graphs · Algorithms on Strings · Data Structures, UC San Diego (Apr 2020)",
     "RCR Basic Course Certification, Coursera (Nov 2022)"
