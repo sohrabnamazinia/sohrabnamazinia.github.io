@@ -436,48 +436,147 @@ $('#soc').innerHTML=Object.entries(S.links).map(([k,v])=>`<a href="${v}" target=
 /* ---------- 3D graph (shared model, two views) ---------- */
 const C={hub:'#ffffff',area:'#6366f1',pub:'#22d3ee',proj:'#f59e0b',venue:'#ec4899'};
 
+/* ---------- procedural planets ----------
+   One equirectangular texture per planet type, then a handful of
+   pre-rendered rotation frames lit as a real sphere. */
 function shade(hex,f){const n=parseInt(hex.slice(1),16);
  let r=(n>>16)&255,g=(n>>8)&255,b=n&255;
  r=Math.round(Math.min(255,Math.max(0,r*f)));g=Math.round(Math.min(255,Math.max(0,g*f)));b=Math.round(Math.min(255,Math.max(0,b*f)));
  return `rgb(${r},${g},${b})`;}
-function drawPlanet(ctx,x,y,r,c,type,t){
- // atmospheric glow
- const gl=ctx.createRadialGradient(x,y,r*.7,x,y,r*2.8);
- gl.addColorStop(0,c+'44');gl.addColorStop(1,c+'00');
- ctx.beginPath();ctx.arc(x,y,r*2.8,0,7);ctx.fillStyle=gl;ctx.fill();
- // ring behind (venues)
- if(type==='venue'){ctx.save();ctx.translate(x,y);ctx.rotate(-.42);
-  ctx.beginPath();ctx.ellipse(0,0,r*2.05,r*.6,0,Math.PI,2*Math.PI);
-  ctx.strokeStyle=shade(c,1.25);ctx.globalAlpha=.75;ctx.lineWidth=Math.max(1,r*.26);ctx.stroke();ctx.restore();ctx.globalAlpha=1;}
- // sphere body, light from upper-left
- const g=ctx.createRadialGradient(x-r*.38,y-r*.42,r*.08,x,y,r*1.08);
- g.addColorStop(0,shade(c,1.55));g.addColorStop(.45,c);g.addColorStop(1,shade(c,.32));
- ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fillStyle=g;ctx.fill();
- // surface character per type
- ctx.save();ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.clip();
- if(type==='area'){ // banded gas giant
-  ctx.globalAlpha=.3;ctx.fillStyle=shade(c,.55);
-  for(let i=-2;i<=2;i++){ctx.beginPath();
-   ctx.ellipse(x,y+i*r*.42,r*1.1,r*(.12+(i%2?.05:.02)),0,0,7);ctx.fill();}
- } else if(type==='proj'){ // cratered rock
-  ctx.globalAlpha=.34;ctx.fillStyle=shade(c,.5);
-  [[-.34,-.1,.22],[.26,.22,.17],[.04,-.4,.13]].forEach(([dx,dy,rr])=>{
-   ctx.beginPath();ctx.arc(x+dx*r,y+dy*r,rr*r,0,7);ctx.fill();});
- } else if(type==='pub'){ // ocean world swirl
-  ctx.globalAlpha=.3;ctx.fillStyle=shade(c,1.5);
-  ctx.beginPath();ctx.ellipse(x-r*.2,y+r*.22,r*.6,r*.26,.5,0,7);ctx.fill();
- }
- ctx.globalAlpha=1;ctx.restore();
- // terminator
- const tg=ctx.createRadialGradient(x-r*.45,y-r*.5,r*.1,x,y,r*1.15);
- tg.addColorStop(0,'rgba(0,0,0,0)');tg.addColorStop(.62,'rgba(0,0,0,0)');tg.addColorStop(1,'rgba(0,0,0,.45)');
- ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fillStyle=tg;ctx.fill();
- // specular highlight
- ctx.globalAlpha=.5;ctx.beginPath();ctx.arc(x-r*.4,y-r*.44,r*.17,0,7);ctx.fillStyle='rgba(255,255,255,.85)';ctx.fill();ctx.globalAlpha=1;
- // ring front half
- if(type==='venue'){ctx.save();ctx.translate(x,y);ctx.rotate(-.42);
-  ctx.beginPath();ctx.ellipse(0,0,r*2.05,r*.6,0,0,Math.PI);
-  ctx.strokeStyle=shade(c,1.45);ctx.globalAlpha=.95;ctx.lineWidth=Math.max(1,r*.26);ctx.stroke();ctx.restore();ctx.globalAlpha=1;}
+const TEXW=168,TEXH=84,SPR=72,FRAMES=20;
+const PLANETS={};
+function h3(x,y,z,s){const n=Math.sin(x*127.1+y*311.7+z*74.7+s*53.3)*43758.5453;return n-Math.floor(n);}
+function vn3(x,y,z,s){
+  const xi=Math.floor(x),yi=Math.floor(y),zi=Math.floor(z),xf=x-xi,yf=y-yi,zf=z-zi;
+  const u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf),w=zf*zf*(3-2*zf);
+  const c=(i,j,k)=>h3(xi+i,yi+j,zi+k,s);
+  const x00=c(0,0,0)+(c(1,0,0)-c(0,0,0))*u, x10=c(0,1,0)+(c(1,1,0)-c(0,1,0))*u;
+  const x01=c(0,0,1)+(c(1,0,1)-c(0,0,1))*u, x11=c(0,1,1)+(c(1,1,1)-c(0,1,1))*u;
+  const y0=x00+(x10-x00)*v, y1=x01+(x11-x01)*v;
+  return y0+(y1-y0)*w;}
+function fbm3(x,y,z,s,oct){let a=.5,f=1,sum=0,nrm=0;
+  for(let i=0;i<oct;i++){sum+=a*vn3(x*f,y*f,z*f,s+i*17);nrm+=a;f*=2.07;a*=.5;}return sum/nrm;}
+const mixc=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t];
+function buildTexture(type){
+  const px=new Uint8ClampedArray(TEXW*TEXH*4);
+  for(let ty=0;ty<TEXH;ty++){
+    const lat=((ty+.5)/TEXH-.5)*Math.PI, cl=Math.cos(lat), sl=Math.sin(lat);
+    for(let tx=0;tx<TEXW;tx++){
+      const lon=((tx+.5)/TEXW)*Math.PI*2;
+      const dx=cl*Math.cos(lon), dy=sl, dz=cl*Math.sin(lon);
+      let col=[120,120,120], spec=0;
+      if(type==='area'||type==='venue'){                       /* gas giants */
+        const warp=fbm3(dx*2.4,dy*2.4,dz*2.4,type==='area'?11:29,4);
+        const band=Math.sin((lat*6.5)+(warp-.5)*3.2);
+        const t=Math.min(1,Math.max(0,band*.5+.5));
+        const pal = type==='area'
+          ? [[33,35,96],[79,82,196],[150,158,250]]
+          : [[104,20,64],[221,65,140],[250,200,224]];
+        col = t<.5 ? mixc(pal[0],pal[1],t*2) : mixc(pal[1],pal[2],(t-.5)*2);
+        const fine=fbm3(dx*9,dy*9,dz*9,type==='area'?5:7,3);
+        col=[col[0]*(.88+fine*.24),col[1]*(.88+fine*.24),col[2]*(.88+fine*.24)];
+        const sd=Math.hypot(lat+0.32, Math.sin((lon-1.9)/2)*1.7);   /* storm oval */
+        if(sd<0.26){const k=1-sd/0.26; col=mixc(col, type==='area'?[226,150,120]:[255,225,140], k*.72);}
+      } else if(type==='pub'){                                  /* ocean world */
+        const e=fbm3(dx*2.7,dy*2.7,dz*2.7,3,5);
+        if(e<.505){const d=(.505-e)/.505; col=mixc([18,86,120],[4,32,58],d*1.25); spec=215;}
+        else{const h=(e-.505)/.495; col=mixc([16,120,112],[132,232,214],Math.min(1,h*1.5)); spec=12;}
+        const ice=(Math.abs(lat)-0.74)/0.34;
+        if(ice>0){const k=Math.min(1,ice*1.5)*(.55+.45*fbm3(dx*6,dy*6,dz*6,8,2));
+          col=mixc(col,[238,248,255],Math.min(1,k)); spec=Math.max(spec,70);}
+        const cloud=fbm3(dx*3.6+11,dy*3.6,dz*3.6,21,4);
+        if(cloud>.60){col=mixc(col,[235,243,250],Math.min(.68,(cloud-.60)*2.3));}
+      } else {                                                  /* rocky world */
+        const e=fbm3(dx*3.3,dy*3.3,dz*3.3,2,5);
+        col=mixc([96,56,16],[243,170,54],e);
+        const cr=fbm3(dx*10,dy*10,dz*10,13,2);
+        if(cr>.60) col=mixc(col,[62,38,14],Math.min(.7,(cr-.60)*2.6));
+        if(cr<.30) col=mixc(col,[255,214,150],Math.min(.4,(.30-cr)*1.4));
+      }
+      const i=(ty*TEXW+tx)*4;
+      px[i]=col[0];px[i+1]=col[1];px[i+2]=col[2];px[i+3]=spec;
+    }
+  }
+  return px;
+}
+function buildSprites(type){
+  const tex=buildTexture(type), frames=[];
+  const Lx=-0.46,Ly=-0.54,Lz=0.70, Ll=Math.hypot(Lx,Ly,Lz);
+  const lx=Lx/Ll, ly=Ly/Ll, lz=Lz/Ll;
+  const hx=lx, hy=ly, hz=lz+1, hl=Math.hypot(hx,hy,hz);   /* half-vector, view = (0,0,1) */
+  const rim = type==='pub'?[150,210,255] : type==='area'?[150,160,255]
+            : type==='venue'?[255,170,215] : [255,200,150];
+  for(let f=0;f<FRAMES;f++){
+    const ang=f/FRAMES*Math.PI*2, ca=Math.cos(ang), sa=Math.sin(ang);
+    const cvs=document.createElement('canvas'); cvs.width=cvs.height=SPR;
+    const c2=cvs.getContext('2d'), img=c2.createImageData(SPR,SPR), d=img.data;
+    for(let py=0;py<SPR;py++)for(let px2=0;px2<SPR;px2++){
+      const nx=(px2+.5)/SPR*2-1, ny=(py+.5)/SPR*2-1, r2=nx*nx+ny*ny, o=(py*SPR+px2)*4;
+      if(r2>1){d[o+3]=0;continue;}
+      const nz=Math.sqrt(1-r2);
+      const wx=nx*ca+nz*sa, wy=ny, wz=-nx*sa+nz*ca;       /* spin about Y */
+      const lat=Math.asin(Math.max(-1,Math.min(1,wy))), lon=Math.atan2(wz,wx);
+      let u=(lon/(Math.PI*2)+.5)*TEXW, v=(lat/Math.PI+.5)*TEXH;
+      let u0=Math.floor(u), v0=Math.floor(v); const uf=u-u0, vf=v-v0;
+      v0=Math.max(0,Math.min(TEXH-1,v0)); const v1=Math.min(TEXH-1,v0+1);
+      const ua=((u0%TEXW)+TEXW)%TEXW, ub=(ua+1)%TEXW;
+      const s00=(v0*TEXW+ua)*4, s10=(v0*TEXW+ub)*4, s01=(v1*TEXW+ua)*4, s11=(v1*TEXW+ub)*4;
+      const smp=k=>{
+        const a=tex[s00+k]+(tex[s10+k]-tex[s00+k])*uf, b=tex[s01+k]+(tex[s11+k]-tex[s01+k])*uf;
+        return a+(b-a)*vf;};
+      let R=smp(0),G=smp(1),B=smp(2); const spec=smp(3)/255;
+      const diff=Math.max(0,nx*lx+ny*ly+nz*lz);
+      const lit=0.085+0.96*Math.pow(diff,0.82);
+      const limb=0.62+0.38*Math.pow(nz,0.4);
+      R*=lit*limb; G*=lit*limb; B*=lit*limb;
+      if(spec>0.04){
+        const sp=Math.pow(Math.max(0,(nx*hx+ny*hy+nz*hz)/hl),42)*spec*255;
+        R+=sp;G+=sp*1.02;B+=sp*1.05;
+      }
+      const edge=Math.pow(1-nz,3.1)*Math.pow(diff,0.55)*0.95;   /* atmosphere */
+      R+=rim[0]*edge; G+=rim[1]*edge; B+=rim[2]*edge;
+      d[o]=R;d[o+1]=G;d[o+2]=B;d[o+3]=255;
+    }
+    c2.putImageData(img,0,0); frames.push(cvs);
+  }
+  return frames;
+}
+let planetsReady=false;
+function initPlanets(){
+  if(planetsReady) return;
+  ['area','pub','proj','venue'].forEach(t=>{ PLANETS[t]=buildSprites(t); });
+  planetsReady=true;
+}
+function drawPlanet(ctx,x,y,r,c,type,spin){
+  const gl=ctx.createRadialGradient(x,y,r*.75,x,y,r*2.9);
+  gl.addColorStop(0,c+'3a');gl.addColorStop(1,c+'00');
+  ctx.beginPath();ctx.arc(x,y,r*2.9,0,7);ctx.fillStyle=gl;ctx.fill();
+  const ringed = type==='venue';
+  if(ringed){                                   /* rings behind the planet */
+    ctx.save();ctx.translate(x,y);ctx.rotate(-.42);
+    for(const [ro,ri,al] of [[2.25,1.9,.55],[1.82,1.52,.8],[1.46,1.3,.4]]){
+      ctx.beginPath();ctx.ellipse(0,0,r*ro,r*ro*.3,0,Math.PI,2*Math.PI);
+      ctx.strokeStyle=shade(c,1.3);ctx.globalAlpha=al*.8;
+      ctx.lineWidth=Math.max(.7,r*(ro-ri)*.9);ctx.stroke();}
+    ctx.restore();ctx.globalAlpha=1;
+  }
+  const spr=PLANETS[type];
+  if(spr){
+    const f=((Math.floor((performance.now()/1000)*spin*FRAMES)%FRAMES)+FRAMES)%FRAMES;
+    ctx.drawImage(spr[f], x-r, y-r, r*2, r*2);
+  } else {
+    const g=ctx.createRadialGradient(x-r*.38,y-r*.42,r*.08,x,y,r*1.08);
+    g.addColorStop(0,shade(c,1.5));g.addColorStop(.5,c);g.addColorStop(1,shade(c,.32));
+    ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fillStyle=g;ctx.fill();
+  }
+  if(ringed){                                   /* rings in front */
+    ctx.save();ctx.translate(x,y);ctx.rotate(-.42);
+    for(const [ro,ri,al] of [[2.25,1.9,.6],[1.82,1.52,.92],[1.46,1.3,.45]]){
+      ctx.beginPath();ctx.ellipse(0,0,r*ro,r*ro*.3,0,0,Math.PI);
+      ctx.strokeStyle=shade(c,1.5);ctx.globalAlpha=al;
+      ctx.lineWidth=Math.max(.7,r*(ro-ri)*.9);ctx.stroke();}
+    ctx.restore();ctx.globalAlpha=1;
+  }
 }
 let GC={link:'140,150,180',ring:'255,255,255',label:'200,210,230'};
 function readGC(){const cs=getComputedStyle(document.documentElement);
@@ -485,7 +584,7 @@ function readGC(){const cs=getComputedStyle(document.documentElement);
 $('#glgd').innerHTML=[['Me','hub'],['Area','area'],['Paper','pub'],['Project','proj'],['Venue','venue']]
  .map(([l,k])=>`<span><i style="background:${C[k]}"></i>${l}</span>`).join('');
 const N=[],L=[],R=()=>(Math.random()-.5);
-const add=(label,type,r,meta,go)=>{const n={label,type,r,meta,go,x:R()*260,y:R()*200,z:R()*260,vx:0,vy:0,vz:0,pin:false};N.push(n);return n};
+const add=(label,type,r,meta,go)=>{const n={label,type,r,meta,go,x:R()*260,y:R()*200,z:R()*260,vx:0,vy:0,vz:0,pin:false,spin:0.035+Math.random()*0.06};N.push(n);return n};
 const hub=add(S.preferred,'hub',26,{t:S.name,sub:S.role},'#research'); hub.x=hub.y=hub.z=0;
 const areas=S.interests.map(i=>add(i.t.split(' in ')[0].replace(' & ',' and '),'area',13,{t:i.t,sub:'Research area'},'#research'));
 areas.forEach(a=>L.push([hub,a,118]));
@@ -574,7 +673,7 @@ function View(canvas,tipEl,opts){
         gl.addColorStop(0,'rgba(99,102,241,.35)');gl.addColorStop(1,'rgba(99,102,241,0)');
         ctx.beginPath();ctx.arc(p.sx,p.sy,r*2.1,0,7);ctx.fillStyle=gl;ctx.fill();
       } else {
-        drawPlanet(ctx,p.sx,p.sy,Math.max(2.4,r*.62)+(n===V.hover?2:0),c,n.type);
+        drawPlanet(ctx,p.sx,p.sy,Math.max(2.6,r*.68)+(n===V.hover?2:0),c,n.type,n.spin);
         if(n.pin){ctx.beginPath();ctx.arc(p.sx,p.sy,r*1.02,0,7);ctx.strokeStyle=c+'88';ctx.lineWidth=1.1;ctx.setLineDash([2,3]);ctx.stroke();ctx.setLineDash([]);}
       }
       const clash=Math.hypot(p.sx-hp.sx,p.sy-hp.sy)<(hub.r*hp.s+42);
@@ -618,7 +717,7 @@ function View(canvas,tipEl,opts){
 const v1=View($('#gcv'),$('#gtip'),{scale:1,dragNodes:false});
 const v2=View($('#gcv2'),$('#gtip2'),{scale:1.5,dragNodes:true,clickNav:n=>{closeModal();
   const el=document.querySelector(n.go); if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth'}),120);}});
-readGC(); v1.resize();
+readGC(); initPlanets(); v1.resize();
 for(let i=0;i<340;i++)physics();
 const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
 let modalOpen=false;
