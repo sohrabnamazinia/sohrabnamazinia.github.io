@@ -839,6 +839,8 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    const keys=new Set(); let usingKeys=false;
    let shotArmed=0, shotCool=0, lastTouch=-1, comm='', commT=0, nearMiss=0;
    let charging=false, charge=0, shotPower=0, stamina=1, sprinting=false;
+   let padIdx=null, usingPad=false, padX=0, padY=0, padMag=0;
+   const padPrev={a:false,x:false,start:false};
    let aimX=1, aimY=0, goalPause=0, netHit=null, dribbleLock=0;
    const PR=13, BR=8;
    const SKIN=['#f1c9a5','#d9a173','#a9713f','#8d5524','#f6d9bd'];
@@ -875,7 +877,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      ball.x=W/2; ball.y=FT+fh/2; ball.vx=0; ball.vy=0; stuck=0; conf=[];
      shotArmed=0; shotCool=0; nearMiss=0; lastTouch=-1;
      charging=false; charge=0; shotPower=0; dribbleLock=0; goalPause=0; netHit=null;
-     if(full){ stamina=1; sprinting=false; }
+     if(full){ stamina=1; sprinting=false; padMag=0; }
      if(full){ comm=''; commT=0; }        /* keep goal commentary through a restart */
      const mir=x=>half===1?x:1-x;
      players=[ mk(W*mir(0.30),FT+fh*0.50,0,true), mk(W*mir(0.17),FT+fh*0.26,0), mk(W*mir(0.17),FT+fh*0.76,0),
@@ -948,6 +950,18 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
          const canSprint = sprinting && stamina>0.04 && !charging;
          sp = canSprint ? 5.35 : 3.8;
          const accel = canSprint ? 0.82 : 0.6;
+         if(usingPad&&padMag>0){
+           aimX=padX; aimY=padY;
+           const target=sp*padMag;
+           p.vx+=padX*accel; p.vy+=padY*accel;
+           const v=Math.hypot(p.vx,p.vy); if(v>target){p.vx*=target/v;p.vy*=target/v;}
+           p.vx*=0.88;p.vy*=0.88;p.x+=p.vx;p.y+=p.vy;
+           p.x=Math.max(PR,Math.min(W-PR,p.x)); p.y=Math.max(FT+PR,Math.min(FB-PR,p.y));
+           p.step+=Math.hypot(p.vx,p.vy)*0.22;
+           if(canSprint) stamina=Math.max(0,stamina-0.0040); else stamina=Math.min(1,stamina+0.0036);
+           return;
+         }
+         if(usingPad){ stamina=Math.min(1,stamina+0.0036); return; }
          if(usingKeys&&keys.size){
            let kx=(keys.has('right')?1:0)-(keys.has('left')?1:0);
            let ky=(keys.has('down')?1:0)-(keys.has('up')?1:0);
@@ -1270,11 +1284,31 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        ctx.globalAlpha=Math.min(1,c.life/28); ctx.fillStyle=c.c;
        ctx.fillRect(-c.w/2,-c.h/2,c.w,c.h); ctx.restore(); ctx.globalAlpha=1; });
    }
-   function loop(){ if(W>=2&&H>=2){ if(started) step(); draw(); } requestAnimationFrame(loop); }
+   function pollPad(){
+     if(padIdx===null || !navigator.getGamepads) return;
+     const gp=navigator.getGamepads()[padIdx];
+     if(!gp){ padIdx=null; usingPad=false; padMag=0; return; }
+     const DZ=0.22;
+     const ax=gp.axes[0]||0, ay=gp.axes[1]||0, mag=Math.hypot(ax,ay);
+     if(mag>DZ){ padX=ax/mag; padY=ay/mag; padMag=Math.min(1,(mag-DZ)/(1-DZ));
+       usingPad=true; usingKeys=false;
+       if(!started){started=true;kick.classList.add('off');} }
+     else padMag=0;
+     const btn=i=>!!(gp.buttons[i]&&gp.buttons[i].pressed);
+     const trig=i=>(gp.buttons[i]?gp.buttons[i].value:0)>0.45;
+     const aBtn=btn(0), xBtn=btn(2), st=btn(9);   /* A = pass, X = shoot */
+     sprinting = trig(7)||btn(5)||btn(10);          /* RT, RB or L3 */
+     if(xBtn&&!padPrev.x){ usingPad=true; beginCharge(); }
+     if(!xBtn&&padPrev.x) releaseShot();
+     if(aBtn&&!padPrev.a){ usingPad=true; doPass(); }
+     if(st&&!padPrev.start){ reset(true); aim(); }
+     padPrev.a=aBtn; padPrev.x=xBtn; padPrev.start=st;
+   }
+   function loop(){ pollPad(); if(W>=2&&H>=2){ if(started) step(); draw(); } requestAnimationFrame(loop); }
    cv.addEventListener('pointermove',e=>{
      const r=cv.getBoundingClientRect();
      const nx=e.clientX-r.left, ny=e.clientY-r.top;
-     if(!mouse||Math.hypot(nx-mouse.x,ny-mouse.y)>1.5) usingKeys=false;
+     if(!mouse||Math.hypot(nx-mouse.x,ny-mouse.y)>1.5){ usingKeys=false; usingPad=false; padMag=0; }
      mouse={x:nx,y:ny};
      if(!started){started=true;kick.classList.add('off');}
    });
@@ -1297,6 +1331,18 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    const pitchActive=()=> mouse!==null || document.activeElement===cv;
    addEventListener('keydown',e=>{ if(e.key==='Shift'&&pitchActive()) sprinting=true; });
    addEventListener('keyup',  e=>{ if(e.key==='Shift') sprinting=false; });
+   function setLegend(){
+     const kb=$('#penKeys'); if(!kb) return;
+     const rows = padIdx!==null
+       ? [['Move','left stick'],['Sprint','RT'],['Shoot','hold X'],['Pass','A'],['Restart','Start']]
+       : [['Move','mouse / arrows / WASD'],['Sprint','Shift'],['Shoot','hold click or Space'],['Pass','E']];
+     kb.innerHTML=rows.map(([k,v])=>`<span><b>${k}</b> ${v}</span>`).join('')
+       + (padIdx!==null?'<span style="color:var(--n5)"><b>Controller</b> connected</span>':'');
+   }
+   addEventListener('gamepadconnected',e=>{ padIdx=e.gamepad.index; usingPad=true;
+     say('Controller connected.',1600); setLegend(); });
+   addEventListener('gamepaddisconnected',e=>{ if(padIdx===e.gamepad.index){ padIdx=null; usingPad=false;
+     padMag=0; sprinting=false; } setLegend(); });
    function beginCharge(){ if(over||htPause>0||shotCool>0||charging) return;
      charging=true; charge=0;
      if(!started){started=true;kick.classList.add('off');} }
@@ -1334,17 +1380,22 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    const tabBtn=document.querySelector('.itab[data-k="ball"]');
    if(tabBtn) tabBtn.addEventListener('click',layout);
    if(!layout()){ const poll=setInterval(()=>{ if(layout()) clearInterval(poll); },300); }
-   const kb=$('#penKeys');
-   if(kb) kb.innerHTML=[['Move','mouse / arrows / WASD'],['Sprint','Shift'],
-     ['Shoot','hold click or Space'],['Pass','E']]
-     .map(([k,v])=>`<span><b>${k}</b> ${v}</span>`).join('');
+   setLegend();
+   /* a pad already paired before load only appears once a button is pressed */
+   if(navigator.getGamepads) setInterval(()=>{
+     if(padIdx!==null) return;
+     const pads=navigator.getGamepads();
+     for(let i=0;i<pads.length;i++) if(pads[i]&&pads[i].connected){
+       padIdx=i; usingPad=true; setLegend(); break; }
+   },1200);
    paint(); loop();
    window.__soccer={goal,reset,step,draw,burst,
      state:()=>({score,over,ball,players,conf,fans,stuck,FT,FB,W,H,clock,half,htPause}),
      setMouse:(x,y)=>{mouse={x,y};usingKeys=false;started=true;},
      setKeys:(...k)=>{keys.clear();k.forEach(x=>keys.add(x));usingKeys=true;started=true;},
      charge:()=>beginCharge(), release:()=>releaseShot(), pass:()=>doPass(),
-     sprint:(v)=>{sprinting=v;},
+     sprint:(v)=>{sprinting=v;}, pollPad:()=>pollPad(),
+     padState:()=>({padIdx,usingPad,padMag,padX,padY}),
      peek:()=>({shotArmed,shotCool,comm,commT,charge,shotPower,stamina,sprinting,goalPause,netHit,dribbleLock})};
  })();
 
