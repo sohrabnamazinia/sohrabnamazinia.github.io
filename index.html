@@ -406,8 +406,8 @@ footer p{color:var(--mute);max-width:52ch;margin:0 auto 30px}
     <div class="pen glass rv">
       <div class="penhead"><span class="clock" id="penClock">00:00</span><span class="sc" id="penSc">0 : 0</span></div>
       <div class="pitchwrap"><canvas id="pitchCv" tabindex="0" aria-label="Soccer pitch"></canvas>
-        <div class="kick" id="kickOff">Move your mouse over the pitch, or click it and use the arrow keys</div></div>
-      <p class="penmsg" id="penMsg">Mouse or arrow keys, your choice. Shoulder the ball into the right-hand goal.</p>
+        <div class="kick" id="kickOff">Move your mouse over the pitch · click or Space to shoot</div></div>
+      <p class="penmsg" id="penMsg">Move with the mouse or arrow keys. Click or press Space to strike it into the right-hand goal.</p>
       <div class="penfoot"><button class="btn" id="penReset">New match</button></div>
     </div>
   </div>
@@ -832,6 +832,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    const MINS_PER_SEC=1.5;
    const dirFor=team=>(team===0?1:-1)*(half===1?1:-1);   /* +1 attacks the right goal */
    const keys=new Set(); let usingKeys=false;
+   let shotArmed=0, shotCool=0, lastTouch=-1, comm='', commT=0, nearMiss=0;
    const PR=13, BR=8;
    const SKIN=['#f1c9a5','#d9a173','#a9713f','#8d5524','#f6d9bd'];
    const mk=(x,y,team,user)=>({x,y,vx:0,vy:0,team,user,hx:x,hy:y,
@@ -865,6 +866,8 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      if(full){ over=false; score=[0,0]; clock=0; half=1; htPause=0; lastT=0; paint(); }
      const fh=FB-FT;
      ball.x=W/2; ball.y=FT+fh/2; ball.vx=0; ball.vy=0; stuck=0; conf=[];
+     shotArmed=0; shotCool=0; nearMiss=0; lastTouch=-1;
+     if(full){ comm=''; commT=0; }        /* keep goal commentary through a restart */
      const mir=x=>half===1?x:1-x;
      players=[ mk(W*mir(0.30),FT+fh*0.50,0,true), mk(W*mir(0.17),FT+fh*0.26,0), mk(W*mir(0.17),FT+fh*0.76,0),
                mk(W*mir(0.70),FT+fh*0.50,1),      mk(W*mir(0.83),FT+fh*0.28,1), mk(W*mir(0.83),FT+fh*0.72,1) ];
@@ -877,7 +880,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
          : String(mm).padStart(2,'0')+':'+String(ss).padStart(2,'0');
        c.classList.toggle('ht',htPause>0); } };
    const aim=()=>{ const d=dirFor(0);
-     msg.textContent='Mouse or arrow keys, your choice. Shoulder the ball into the '+(d>0?'right':'left')+'-hand goal.';
+     msg.textContent='Move with the mouse or arrow keys. Click or press Space to strike it into the '+(d>0?'right':'left')+'-hand goal.';
      msg.className='penmsg'; };
    const goalH=()=>(FB-FT)*0.34;
    function step(dtMs){
@@ -908,6 +911,9 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      if(htPause>0) return;
      if(frozen>0) frozen--;
      if(cheer>0) cheer--;
+     if(shotArmed>0) shotArmed--;
+     if(shotCool>0) shotCool--;
+     if(nearMiss>0) nearMiss--;
      for(const c of conf){ c.vy+=0.14; c.x+=c.vx; c.y+=c.vy; c.vx*=0.995; c.rot+=c.vr; c.life--; }
      conf=conf.filter(c=>c.life>0 && c.y<H+20);
      if(over) return;                       /* full time: nobody moves */
@@ -965,12 +971,31 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        const dx=ball.x-p.x, dy=ball.y-p.y, d=Math.hypot(dx,dy)||1;
        if(d<PR+BR){
          touching=true;
-         const ux=dx/d, uy=dy/d, push=2.4+Math.hypot(p.vx,p.vy)*1.25;
+         const ux=dx/d, uy=dy/d;
+         let push=2.4+Math.hypot(p.vx,p.vy)*1.25;
+         if(p.user&&shotArmed>0){            /* struck, not shouldered */
+           push=11.5; shotArmed=0; shotCool=26; say('He lets fly!',1100);
+         }
          ball.x=p.x+ux*(PR+BR+0.5); ball.y=p.y+uy*(PR+BR+0.5);
          ball.vx=ux*push+p.vx*0.5; ball.vy=uy*push+p.vy*0.5;
+         lastTouch=p.team;
          p.x-=ux*1.6; p.y-=uy*1.6;                 /* small recoil */
          p.x=Math.max(PR,Math.min(W-PR,p.x)); p.y=Math.max(FT+PR,Math.min(FB-PR,p.y));
        }});
+     /* commentary: shots that whistle just wide of a post */
+     {
+       const spdNow=Math.hypot(ball.vx,ball.vy);
+       if(spdNow>6 && nearMiss<=0){
+         const nearLeft = ball.x<W*0.12 && ball.vx<0, nearRight = ball.x>W*0.88 && ball.vx>0;
+         if(nearLeft||nearRight){
+           const off=Math.min(Math.abs(ball.y-gTop),Math.abs(ball.y-gBot));
+           if(ball.y<gTop||ball.y>gBot){
+             if(off<26){ say('Inches wide!',1500); nearMiss=70; }
+             else if(off<60){ say('Off target, but he fancied it.',1500); nearMiss=70; }
+           }
+         }
+       }
+     }
      /* trapped-ball escape: pinned between players, or wedged on a touchline */
      const spd=Math.hypot(ball.vx,ball.vy);
      const nearEdge = ball.y<FT+BR+2.5||ball.y>FB-BR-2.5||ball.x<BR+2.5||ball.x>W-BR-2.5;
@@ -986,16 +1011,17 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        stuck=0;
      }
    }
+   function say(txt,ms){ comm=txt; commT=performance.now()+(ms||1700); }
    function outOfPlay(kind, x, y){
      const fh=FB-FT;
      if(kind==='throw'){
        ball.x=Math.max(W*0.06, Math.min(W*0.94, x));
        ball.y = y<=FT ? FT+BR+6 : FB-BR-6;
-       msg.textContent='Out of play. Throw-in.';
+       msg.textContent='Out of play. Throw-in.'; say('Out for a throw.',1300);
      } else {
        ball.x = x<W/2 ? W*0.14 : W*0.86;
        ball.y = FT+fh/2;
-       msg.textContent='Out of play. Goal kick.';
+       msg.textContent='Out of play. Goal kick.'; say('Goal kick.',1300);
      }
      msg.className='penmsg';
      ball.vx=0; ball.vy=0; stuck=0; frozen=22;
@@ -1019,6 +1045,8 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    function goal(team){
      if(over){ ball.x=W/2; ball.y=(FT+FB)/2; ball.vx=ball.vy=0; return; }
      score[team]++; burst(team);
+     say(team===0 ? ['Get in!','What a finish!','Buries it!'][Math.floor(Math.random()*3)]
+                  : ['Against the run of play.','They punish him.','Back of the net.'][Math.floor(Math.random()*3)], 2200);
      msg.textContent = team===0 ? "Goal. Nicely taken." : 'They score. Back to the middle.';
      msg.className='penmsg '+(team===0?'goal':'save');
      const keepScore=score.slice();
@@ -1032,7 +1060,10 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      ctx.beginPath(); ctx.ellipse(0,bh*0.62,bw*0.78,bw*0.34,0,0,7);
      ctx.fillStyle='rgba(0,0,0,.34)'; ctx.fill();
      if(p.user){ ctx.beginPath(); ctx.ellipse(0,bh*0.62,bw*1.15,bw*0.52,0,0,7);
-       ctx.strokeStyle='rgba(34,211,238,.9)'; ctx.lineWidth=2; ctx.stroke(); }
+       ctx.strokeStyle = shotArmed>0 ? 'rgba(245,158,11,.95)' : 'rgba(34,211,238,.9)';
+       ctx.lineWidth = shotArmed>0 ? 3 : 2; ctx.stroke();
+       if(shotArmed>0){ ctx.beginPath(); ctx.ellipse(0,bh*0.62,bw*1.5,bw*0.68,0,0,7);
+         ctx.strokeStyle='rgba(245,158,11,.4)'; ctx.lineWidth=1.5; ctx.stroke(); } }
      /* legs */
      const sw=Math.sin(p.step)*2.4;
      ctx.strokeStyle='#243244'; ctx.lineWidth=3.1; ctx.lineCap='round';
@@ -1097,6 +1128,18 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      ctx.beginPath(); ctx.arc(ball.x,ball.y,BR,0,7); ctx.fillStyle=bg; ctx.fill();
      ctx.fillStyle='rgba(30,36,48,.85)';
      ctx.beginPath(); ctx.arc(ball.x,ball.y,BR*0.3,0,7); ctx.fill();
+     /* commentary */
+     if(comm && performance.now()<commT){
+       ctx.save(); ctx.font="600 15px Sora,sans-serif"; ctx.textAlign='center';
+       const bw=ctx.measureText(comm).width+30, bh=32, bx=W/2-bw/2, by=FT+10;
+       const fade=Math.min(1,(commT-performance.now())/260);
+       ctx.globalAlpha=0.92*fade; ctx.fillStyle='rgba(8,11,18,.88)';
+       ctx.beginPath();
+       if(ctx.roundRect) ctx.roundRect(bx,by,bw,bh,16); else ctx.rect(bx,by,bw,bh);
+       ctx.fill(); ctx.strokeStyle='rgba(34,211,238,.45)'; ctx.lineWidth=1; ctx.stroke();
+       ctx.globalAlpha=fade; ctx.fillStyle='#eaeef7';
+       ctx.fillText(comm, W/2, by+21); ctx.restore(); ctx.globalAlpha=1;
+     }
      /* celebration paper */
      conf.forEach(c=>{ ctx.save(); ctx.translate(c.x,c.y); ctx.rotate(c.rot);
        ctx.globalAlpha=Math.min(1,c.life/28); ctx.fillStyle=c.c;
@@ -1113,12 +1156,17 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    cv.addEventListener('pointerleave',()=>mouse=null);
    const KEYMAP={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down',
                  a:'left',d:'right',w:'up',s:'down',A:'left',D:'right',W:'up',S:'down'};
-   cv.addEventListener('keydown',e=>{ const k=KEYMAP[e.key]; if(!k) return;
+   cv.addEventListener('keydown',e=>{
+     if(e.key===' '||e.key==='x'||e.key==='X'){ e.preventDefault(); armShot(); return; }
+     const k=KEYMAP[e.key]; if(!k) return;
      e.preventDefault(); keys.add(k); usingKeys=true;
      if(!started){started=true;kick.classList.add('off');} });
    cv.addEventListener('keyup',e=>{ const k=KEYMAP[e.key]; if(k){e.preventDefault();keys.delete(k);} });
    cv.addEventListener('blur',()=>keys.clear());
-   cv.addEventListener('pointerdown',()=>cv.focus({preventScroll:true}));
+   function armShot(){ if(over||htPause>0||shotCool>0) return;
+     shotArmed=14;
+     if(!started){started=true;kick.classList.add('off');} }
+   cv.addEventListener('pointerdown',e=>{ cv.focus({preventScroll:true}); armShot(); });
    $('#penReset').onclick=()=>{reset(true);aim();};
    addEventListener('resize',layout);
    if('ResizeObserver' in window){ new ResizeObserver(()=>layout()).observe(cv); }
@@ -1129,7 +1177,8 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    window.__soccer={goal,reset,step,draw,burst,
      state:()=>({score,over,ball,players,conf,fans,stuck,FT,FB,W,H,clock,half,htPause}),
      setMouse:(x,y)=>{mouse={x,y};usingKeys=false;started=true;},
-     setKeys:(...k)=>{keys.clear();k.forEach(x=>keys.add(x));usingKeys=true;started=true;}};
+     setKeys:(...k)=>{keys.clear();k.forEach(x=>keys.add(x));usingKeys=true;started=true;},
+     shoot:()=>armShot(), peek:()=>({shotArmed,shotCool,comm,commT})};
  })();
 
  /* 3. flip cards + quiz */
