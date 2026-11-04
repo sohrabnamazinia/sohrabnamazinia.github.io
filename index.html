@@ -302,6 +302,10 @@ section{padding:84px 0;border-top:1px solid var(--line)}
  font:500 12.4px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--ink);transition:opacity .35s}
 .kick.off{opacity:0}
 .penmsg{margin:13px 0 0;font:500 13.2px/1.5 Sora;min-height:21px;color:var(--mute)}
+.penkeys{margin:9px 0 0;display:flex;gap:7px;flex-wrap:wrap}
+.penkeys span{font:500 10.4px/1 'IBM Plex Mono',monospace;letter-spacing:.06em;color:var(--dim);
+ border:1px solid var(--line);border-radius:6px;padding:6px 9px;background:color-mix(in srgb,var(--ink) 4%,transparent)}
+.penkeys span b{color:var(--n2);font-weight:600}
 .penmsg.goal{color:var(--n5)}.penmsg.save{color:var(--n3)}
 .penfoot{display:flex;gap:9px;align-items:center;margin-top:12px;flex-wrap:wrap}
 /* flip cards */
@@ -406,8 +410,9 @@ footer p{color:var(--mute);max-width:52ch;margin:0 auto 30px}
     <div class="pen glass rv">
       <div class="penhead"><span class="clock" id="penClock">00:00</span><span class="sc" id="penSc">0 : 0</span></div>
       <div class="pitchwrap"><canvas id="pitchCv" tabindex="0" aria-label="Soccer pitch"></canvas>
-        <div class="kick" id="kickOff">Move your mouse over the pitch · click or Space to shoot</div></div>
-      <p class="penmsg" id="penMsg">Move with the mouse or arrow keys. Click or press Space to strike it into the right-hand goal.</p>
+        <div class="kick" id="kickOff">Move your mouse over the pitch to kick off</div></div>
+      <p class="penmsg" id="penMsg">Move with the mouse or arrow keys. Hold click or Space to power up a shot, Shift to sprint, E to pass.</p>
+      <p class="penkeys" id="penKeys"></p>
       <div class="penfoot"><button class="btn" id="penReset">New match</button></div>
     </div>
   </div>
@@ -833,6 +838,8 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    const dirFor=team=>(team===0?1:-1)*(half===1?1:-1);   /* +1 attacks the right goal */
    const keys=new Set(); let usingKeys=false;
    let shotArmed=0, shotCool=0, lastTouch=-1, comm='', commT=0, nearMiss=0;
+   let charging=false, charge=0, shotPower=0, stamina=1, sprinting=false;
+   let aimX=1, aimY=0, goalPause=0, netHit=null, dribbleLock=0;
    const PR=13, BR=8;
    const SKIN=['#f1c9a5','#d9a173','#a9713f','#8d5524','#f6d9bd'];
    const mk=(x,y,team,user)=>({x,y,vx:0,vy:0,team,user,hx:x,hy:y,
@@ -867,6 +874,8 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      const fh=FB-FT;
      ball.x=W/2; ball.y=FT+fh/2; ball.vx=0; ball.vy=0; stuck=0; conf=[];
      shotArmed=0; shotCool=0; nearMiss=0; lastTouch=-1;
+     charging=false; charge=0; shotPower=0; dribbleLock=0; goalPause=0; netHit=null;
+     if(full){ stamina=1; sprinting=false; }
      if(full){ comm=''; commT=0; }        /* keep goal commentary through a restart */
      const mir=x=>half===1?x:1-x;
      players=[ mk(W*mir(0.30),FT+fh*0.50,0,true), mk(W*mir(0.17),FT+fh*0.26,0), mk(W*mir(0.17),FT+fh*0.76,0),
@@ -880,7 +889,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
          : String(mm).padStart(2,'0')+':'+String(ss).padStart(2,'0');
        c.classList.toggle('ht',htPause>0); } };
    const aim=()=>{ const d=dirFor(0);
-     msg.textContent='Move with the mouse or arrow keys. Click or press Space to strike it into the '+(d>0?'right':'left')+'-hand goal.';
+     msg.textContent='Attacking the '+(d>0?'right':'left')+'-hand goal. Hold to power up a shot, Shift to sprint, E to pass.';
      msg.className='penmsg'; };
    const goalH=()=>(FB-FT)*0.34;
    function step(dtMs){
@@ -914,8 +923,18 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      if(shotArmed>0) shotArmed--;
      if(shotCool>0) shotCool--;
      if(nearMiss>0) nearMiss--;
+     if(dribbleLock>0) dribbleLock--;
+     if(charging){ charge=Math.min(1,charge+0.028); }
      for(const c of conf){ c.vy+=0.14; c.x+=c.vx; c.y+=c.vy; c.vx*=0.995; c.rot+=c.vr; c.life--; }
      conf=conf.filter(c=>c.life>0 && c.y<H+20);
+     if(goalPause>0){                       /* ball settling in the net */
+       goalPause--;
+       ball.x+=ball.vx; ball.y+=ball.vy; ball.vx*=0.86; ball.vy*=0.86;
+       const depth=W*0.035;
+       ball.x=Math.max(-depth+BR, Math.min(W+depth-BR, ball.x));
+       if(goalPause===0){ const keep=score.slice(); reset(false); score=keep; paint(); netHit=null; }
+       return;
+     }
      if(over) return;                       /* full time: nobody moves */
      const gh=goalH(), gTop=FT+((FB-FT)-gh)/2, gBot=gTop+gh;
      const closest={};
@@ -926,25 +945,35 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      players.forEach(p=>{
        let tx,ty,sp;
        if(p.user){
-         sp=3.8;
+         const canSprint = sprinting && stamina>0.04 && !charging;
+         sp = canSprint ? 5.35 : 3.8;
+         const accel = canSprint ? 0.82 : 0.6;
          if(usingKeys&&keys.size){
            let kx=(keys.has('right')?1:0)-(keys.has('left')?1:0);
            let ky=(keys.has('down')?1:0)-(keys.has('up')?1:0);
            const kd=Math.hypot(kx,ky);
-           if(kd){ p.vx+=(kx/kd)*0.75; p.vy+=(ky/kd)*0.75;
+           if(kd){ aimX=kx/kd; aimY=ky/kd;
+             p.vx+=aimX*accel; p.vy+=aimY*accel;
              const v=Math.hypot(p.vx,p.vy); if(v>sp){p.vx*=sp/v;p.vy*=sp/v;}
              p.vx*=0.88;p.vy*=0.88;p.x+=p.vx;p.y+=p.vy;
              p.x=Math.max(PR,Math.min(W-PR,p.x)); p.y=Math.max(FT+PR,Math.min(FB-PR,p.y));
-             p.step+=Math.hypot(p.vx,p.vy)*0.22; }
+             p.step+=Math.hypot(p.vx,p.vy)*0.22;
+             if(canSprint) stamina=Math.max(0,stamina-0.0085); else stamina=Math.min(1,stamina+0.0042);
+           } else stamina=Math.min(1,stamina+0.0042);
            return;
          }
-         if(usingKeys||!mouse) return;
+         if(usingKeys||!mouse){ stamina=Math.min(1,stamina+0.0042); return; }
          tx=mouse.x; ty=mouse.y;
+         const adx=tx-p.x, ady=ty-p.y, ad=Math.hypot(adx,ady);
+         if(ad>6){ aimX=adx/ad; aimY=ady/ad; }
+         if(canSprint && ad>10) stamina=Math.max(0,stamina-0.0085);
+         else stamina=Math.min(1,stamina+0.0042);
        }
        else if(p===closest[p.team]){ tx=ball.x-dirFor(p.team)*PR; ty=ball.y; sp=2.25; }
        else { tx=p.hx+(ball.x-W/2)*0.22; ty=p.hy+(ball.y-(FT+FB)/2)*0.3; sp=1.7; }
        const dx=tx-p.x, dy=ty-p.y, d=Math.hypot(dx,dy)||1;
-       if(d>2){ p.vx+=(dx/d)*0.55; p.vy+=(dy/d)*0.55; }
+       if(d>2){ const ac=p.user?(sprinting&&stamina>0.04&&!charging?0.82:0.6):0.55;
+         p.vx+=(dx/d)*ac; p.vy+=(dy/d)*ac; }
        const v=Math.hypot(p.vx,p.vy); if(v>sp){p.vx*=sp/v;p.vy*=sp/v;}
        p.vx*=0.88; p.vy*=0.88; p.x+=p.vx; p.y+=p.vy;
        p.x=Math.max(PR,Math.min(W-PR,p.x)); p.y=Math.max(FT+PR,Math.min(FB-PR,p.y));
@@ -972,12 +1001,28 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        if(d<PR+BR){
          touching=true;
          const ux=dx/d, uy=dy/d;
-         let push=2.4+Math.hypot(p.vx,p.vy)*1.25;
-         if(p.user&&shotArmed>0){            /* struck, not shouldered */
-           push=11.5; shotArmed=0; shotCool=26; say('He lets fly!',1100);
+         const pv=Math.hypot(p.vx,p.vy);
+         if(p.user&&shotArmed>0){                       /* struck */
+           const pw=7.2+shotPower*8.6;
+           let sx=aimX*0.78+ux*0.22, sy=aimY*0.78+uy*0.22;
+           const sl=Math.hypot(sx,sy)||1; sx/=sl; sy/=sl;
+           ball.x=p.x+sx*(PR+BR+1); ball.y=p.y+sy*(PR+BR+1);
+           ball.vx=sx*pw; ball.vy=sy*pw;
+           shotArmed=0; shotCool=22; dribbleLock=0;
+           say(shotPower>0.7?'He absolutely leathers it!':shotPower>0.35?'He lets fly!':'Scuffed effort.',1100);
+         } else if(p.user && charging){                  /* winding up: hold it */
+           const hx=pv>0.3?p.vx/pv:aimX, hy=pv>0.3?p.vy/pv:aimY;
+           ball.x=p.x+hx*(PR+BR+2); ball.y=p.y+hy*(PR+BR+2);
+           ball.vx=p.vx*0.9; ball.vy=p.vy*0.9;
+         } else if(p.user && pv<4.3 && dribbleLock<=0){  /* close control */
+           const hx=pv>0.35?p.vx/pv:aimX, hy=pv>0.35?p.vy/pv:aimY;
+           ball.x=p.x+hx*(PR+BR+3); ball.y=p.y+hy*(PR+BR+3);
+           ball.vx=hx*(pv*1.18+0.5); ball.vy=hy*(pv*1.18+0.5);
+         } else {
+           const push=2.4+pv*1.25;
+           ball.x=p.x+ux*(PR+BR+0.5); ball.y=p.y+uy*(PR+BR+0.5);
+           ball.vx=ux*push+p.vx*0.5; ball.vy=uy*push+p.vy*0.5;
          }
-         ball.x=p.x+ux*(PR+BR+0.5); ball.y=p.y+uy*(PR+BR+0.5);
-         ball.vx=ux*push+p.vx*0.5; ball.vy=uy*push+p.vy*0.5;
          lastTouch=p.team;
          p.x-=ux*1.6; p.y-=uy*1.6;                 /* small recoil */
          p.x=Math.max(PR,Math.min(W-PR,p.x)); p.y=Math.max(FT+PR,Math.min(FB-PR,p.y));
@@ -1049,8 +1094,11 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
                   : ['Against the run of play.','They punish him.','Back of the net.'][Math.floor(Math.random()*3)], 2200);
      msg.textContent = team===0 ? "Goal. Nicely taken." : 'They score. Back to the middle.';
      msg.className='penmsg '+(team===0?'goal':'save');
-     const keepScore=score.slice();
-     reset(false); score=keepScore; paint();
+     /* let it hit the net: ripple the mesh, slow the ball, pause before kickoff */
+     netHit={x:ball.x, y:ball.y, t0:performance.now(), right:ball.x>W/2,
+             power:Math.min(1,Math.hypot(ball.vx,ball.vy)/13)};
+     ball.vx*=0.22; ball.vy*=0.22;
+     goalPause=72;
    }
    function drawPerson(p){
      const bw=PR*1.15, bh=PR*1.45;
@@ -1059,11 +1107,20 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      ctx.save(); ctx.translate(p.x,p.y+bob);
      ctx.beginPath(); ctx.ellipse(0,bh*0.62,bw*0.78,bw*0.34,0,0,7);
      ctx.fillStyle='rgba(0,0,0,.34)'; ctx.fill();
-     if(p.user){ ctx.beginPath(); ctx.ellipse(0,bh*0.62,bw*1.15,bw*0.52,0,0,7);
-       ctx.strokeStyle = shotArmed>0 ? 'rgba(245,158,11,.95)' : 'rgba(34,211,238,.9)';
-       ctx.lineWidth = shotArmed>0 ? 3 : 2; ctx.stroke();
-       if(shotArmed>0){ ctx.beginPath(); ctx.ellipse(0,bh*0.62,bw*1.5,bw*0.68,0,0,7);
-         ctx.strokeStyle='rgba(245,158,11,.4)'; ctx.lineWidth=1.5; ctx.stroke(); } }
+     if(p.user){
+       ctx.beginPath(); ctx.ellipse(0,bh*0.62,bw*1.15,bw*0.52,0,0,7);
+       ctx.strokeStyle = charging||shotArmed>0 ? 'rgba(245,158,11,.95)'
+                       : (sprinting&&stamina>0.04 ? 'rgba(52,211,153,.95)' : 'rgba(34,211,238,.9)');
+       ctx.lineWidth = charging||shotArmed>0 ? 3 : 2; ctx.stroke();
+       if(charging){                                   /* power arc */
+         ctx.beginPath();
+         ctx.ellipse(0,bh*0.62,bw*1.6,bw*0.74,0,-Math.PI/2,-Math.PI/2+charge*Math.PI*2);
+         ctx.strokeStyle = charge>0.7?'rgba(239,68,68,.95)':'rgba(245,158,11,.85)';
+         ctx.lineWidth=3; ctx.stroke();
+       }
+       ctx.beginPath(); ctx.moveTo(0,-bh*0.1); ctx.lineTo(aimX*bw*1.5, -bh*0.1+aimY*bw*1.5);
+       ctx.strokeStyle='rgba(255,255,255,.18)'; ctx.lineWidth=1.5; ctx.stroke();
+     }
      /* legs */
      const sw=Math.sin(p.step)*2.4;
      ctx.strokeStyle='#243244'; ctx.lineWidth=3.1; ctx.lineCap='round';
@@ -1110,15 +1167,41 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      ctx.strokeRect(6,FT+5,W-12,fh-10);
      ctx.beginPath(); ctx.moveTo(W/2,FT+5); ctx.lineTo(W/2,FB-5); ctx.stroke();
      ctx.beginPath(); ctx.arc(W/2,FT+fh/2,Math.min(W,fh)*0.15,0,7); ctx.stroke();
+     const NETD=W*0.042, COLS=7, ROWS=11;
+     const age = netHit ? (performance.now()-netHit.t0)/1000 : 99;
+     function bulge(px,py,isRight,depthT){
+       if(!netHit || age>1.5 || netHit.right!==isRight) return 0;
+       const dd=Math.hypot(px-netHit.x, py-netHit.y);
+       const falloff=Math.exp(-(dd*dd)/(2*38*38));
+       const wave=Math.cos(age*17 - dd*0.1);
+       const decay=Math.exp(-age*2.9);
+       return (14+18*netHit.power)*falloff*wave*decay*depthT;
+     }
      [[6,1],[W-6,-1]].forEach(([x,s])=>{
+       const isRight = s<0;
        ctx.strokeRect(x, FT+(fh-gh*1.7)/2, s*W*0.08, gh*1.7);
        ctx.save();
-       ctx.beginPath(); ctx.rect(Math.min(x,x+s*W*0.035), gTop, W*0.035, gh); ctx.clip();
-       ctx.strokeStyle='rgba(255,255,255,.17)'; ctx.lineWidth=1;
-       for(let k=-6;k<14;k++){ctx.beginPath();ctx.moveTo(x+s*k*7,gTop);ctx.lineTo(x+s*k*7,gTop+gh);ctx.stroke();}
-       for(let k=0;k<10;k++){ctx.beginPath();ctx.moveTo(x,gTop+k*gh/9);ctx.lineTo(x+s*W*0.035,gTop+k*gh/9);ctx.stroke();}
+       ctx.strokeStyle='rgba(255,255,255,.2)'; ctx.lineWidth=1;
+       const colX=c=>x+s*(c/COLS)*NETD, rowY=r=>gTop+(r/ROWS)*gh;
+       const off=(c,r)=>bulge(x+s*(c/COLS)*NETD, rowY(r), isRight, (c/COLS));
+       for(let c=0;c<=COLS;c++){                       /* strings running back */
+         ctx.beginPath();
+         for(let r=0;r<=ROWS;r++){
+           const px=colX(c)+s*off(c,r), py=rowY(r);
+           r?ctx.lineTo(px,py):ctx.moveTo(px,py);
+         }
+         ctx.stroke();
+       }
+       for(let r=0;r<=ROWS;r++){                       /* strings across */
+         ctx.beginPath();
+         for(let c=0;c<=COLS;c++){
+           const px=colX(c)+s*off(c,r), py=rowY(r);
+           c?ctx.lineTo(px,py):ctx.moveTo(px,py);
+         }
+         ctx.stroke();
+       }
        ctx.restore();
-       ctx.save(); ctx.strokeStyle='rgba(255,255,255,.8)'; ctx.lineWidth=3;
+       ctx.save(); ctx.strokeStyle='rgba(255,255,255,.85)'; ctx.lineWidth=3;
        ctx.beginPath(); ctx.moveTo(x,gTop); ctx.lineTo(x,gTop+gh); ctx.stroke(); ctx.restore();
      });
      [...players].sort((a,b)=>a.y-b.y).forEach(drawPerson);
@@ -1128,6 +1211,17 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      ctx.beginPath(); ctx.arc(ball.x,ball.y,BR,0,7); ctx.fillStyle=bg; ctx.fill();
      ctx.fillStyle='rgba(30,36,48,.85)';
      ctx.beginPath(); ctx.arc(ball.x,ball.y,BR*0.3,0,7); ctx.fill();
+     /* stamina */
+     {
+       const bw2=104, bh2=5, bx=14, by=FB+ (H-FB)/2 - bh2/2;
+       ctx.fillStyle='rgba(255,255,255,.14)';
+       ctx.fillRect(bx,by,bw2,bh2);
+       ctx.fillStyle = stamina>0.3?'rgba(52,211,153,.9)':'rgba(239,68,68,.9)';
+       ctx.fillRect(bx,by,bw2*stamina,bh2);
+       ctx.fillStyle='rgba(255,255,255,.45)';
+       ctx.font="500 9px 'IBM Plex Mono',monospace";
+       ctx.textAlign='left'; ctx.fillText('STAMINA', bx, by-6);
+     }
      /* commentary */
      if(comm && performance.now()<commT){
        ctx.save(); ctx.font="600 15px Sora,sans-serif"; ctx.textAlign='center';
@@ -1157,28 +1251,66 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    const KEYMAP={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down',
                  a:'left',d:'right',w:'up',s:'down',A:'left',D:'right',W:'up',S:'down'};
    cv.addEventListener('keydown',e=>{
-     if(e.key===' '||e.key==='x'||e.key==='X'){ e.preventDefault(); armShot(); return; }
+     if(e.key===' '||e.key==='x'||e.key==='X'){ e.preventDefault(); beginCharge(); return; }
+     if(e.key==='Shift'){ e.preventDefault(); sprinting=true; return; }
+     if(e.key==='e'||e.key==='E'){ e.preventDefault(); doPass(); return; }
      const k=KEYMAP[e.key]; if(!k) return;
      e.preventDefault(); keys.add(k); usingKeys=true;
      if(!started){started=true;kick.classList.add('off');} });
-   cv.addEventListener('keyup',e=>{ const k=KEYMAP[e.key]; if(k){e.preventDefault();keys.delete(k);} });
-   cv.addEventListener('blur',()=>keys.clear());
-   function armShot(){ if(over||htPause>0||shotCool>0) return;
-     shotArmed=14;
+   cv.addEventListener('keyup',e=>{
+     if(e.key===' '||e.key==='x'||e.key==='X'){ e.preventDefault(); releaseShot(); return; }
+     if(e.key==='Shift'){ sprinting=false; return; }
+     const k=KEYMAP[e.key]; if(k){e.preventDefault();keys.delete(k);} });
+   cv.addEventListener('blur',()=>{keys.clear();sprinting=false;charging=false;charge=0;});
+   function beginCharge(){ if(over||htPause>0||shotCool>0||charging) return;
+     charging=true; charge=0;
      if(!started){started=true;kick.classList.add('off');} }
-   cv.addEventListener('pointerdown',e=>{ cv.focus({preventScroll:true}); armShot(); });
+   function releaseShot(){ if(!charging) return;
+     charging=false; shotPower=charge; charge=0; shotArmed=16;
+     const me=players[0]; if(!me) return;
+     const dx=ball.x-me.x, dy=ball.y-me.y, d=Math.hypot(dx,dy)||1;
+     if(d<PR+BR+16){                                  /* strike it now */
+       const pw=7.2+shotPower*8.6;
+       let sx=aimX*0.82+(dx/d)*0.18, sy=aimY*0.82+(dy/d)*0.18;
+       const sl=Math.hypot(sx,sy)||1; sx/=sl; sy/=sl;
+       ball.x=me.x+sx*(PR+BR+1); ball.y=me.y+sy*(PR+BR+1);
+       ball.vx=sx*pw; ball.vy=sy*pw;
+       shotArmed=0; shotCool=22; dribbleLock=14; lastTouch=0;
+       say(shotPower>0.7?'He absolutely leathers it!':shotPower>0.35?'He lets fly!':'Scuffed effort.',1100);
+     } }
+   function doPass(){
+     if(over||htPause>0) return;
+     const me=players[0];
+     if(Math.hypot(ball.x-me.x,ball.y-me.y)>PR+BR+26) return;
+     let best=null,bd=1e9;
+     players.forEach(p=>{ if(p.team!==0||p.user) return;
+       const d=Math.hypot(p.x-me.x,p.y-me.y); if(d<bd){bd=d;best=p;} });
+     if(!best) return;
+     const dx=best.x-ball.x, dy=best.y-ball.y, d=Math.hypot(dx,dy)||1;
+     ball.vx=dx/d*Math.min(9.5,4.2+d*0.022); ball.vy=dy/d*Math.min(9.5,4.2+d*0.022);
+     dribbleLock=16; lastTouch=0; say('Played out wide.',900);
+   }
+   cv.addEventListener('pointerdown',e=>{ cv.focus({preventScroll:true}); beginCharge(); });
+   cv.addEventListener('pointerup',releaseShot);
+   cv.addEventListener('pointercancel',releaseShot);
    $('#penReset').onclick=()=>{reset(true);aim();};
    addEventListener('resize',layout);
    if('ResizeObserver' in window){ new ResizeObserver(()=>layout()).observe(cv); }
    const tabBtn=document.querySelector('.itab[data-k="ball"]');
    if(tabBtn) tabBtn.addEventListener('click',layout);
    if(!layout()){ const poll=setInterval(()=>{ if(layout()) clearInterval(poll); },300); }
+   const kb=$('#penKeys');
+   if(kb) kb.innerHTML=[['Move','mouse / arrows / WASD'],['Sprint','Shift'],
+     ['Shoot','hold click or Space'],['Pass','E']]
+     .map(([k,v])=>`<span><b>${k}</b> ${v}</span>`).join('');
    paint(); loop();
    window.__soccer={goal,reset,step,draw,burst,
      state:()=>({score,over,ball,players,conf,fans,stuck,FT,FB,W,H,clock,half,htPause}),
      setMouse:(x,y)=>{mouse={x,y};usingKeys=false;started=true;},
      setKeys:(...k)=>{keys.clear();k.forEach(x=>keys.add(x));usingKeys=true;started=true;},
-     shoot:()=>armShot(), peek:()=>({shotArmed,shotCool,comm,commT})};
+     charge:()=>beginCharge(), release:()=>releaseShot(), pass:()=>doPass(),
+     sprint:(v)=>{sprinting=v;},
+     peek:()=>({shotArmed,shotCool,comm,commT,charge,shotPower,stamina,sprinting,goalPause,netHit,dribbleLock})};
  })();
 
  /* 3. flip cards + quiz */
