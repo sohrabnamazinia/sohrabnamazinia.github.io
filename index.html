@@ -932,7 +932,9 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
       [g,0,1],[-g,0,1],[g,0,-1],[-g,0,-1]].forEach(p=>{
        const l=Math.hypot(p[0],p[1],p[2]); v.push([p[0]/l,p[1]/l,p[2]/l]); });
      return v; })();
-   let runT=0, manSpr=false;
+   let runT=0, manSpr=false, cdT=0;
+   const CDSTEP=500;                      /* half a second per number */
+   function begin(){ if(started) return; started=true; kick.classList.add('off'); cdT=CDSTEP*3; }
    function buildFans(){
      fans=[];
      const cols=['#22d3ee','#6366f1','#ec4899','#f59e0b','#10b981','#e2e8f0'];
@@ -959,6 +961,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    }
    function reset(full){
      if(full){ over=false; score=[0,0]; clock=0; half=1; htPause=0; lastT=0; pickKits(); paint();
+       if(started) cdT=CDSTEP*3;
        say(kits[0].n+' vs '+kits[1].n+'. Kick off.',2200); }
      const fh=FB-FT;
      ball.x=W/2; ball.y=FT+fh/2; ball.vx=0; ball.vy=0; ball.z=0; ball.vz=0; ball.rot=0; stuck=0; conf=[];
@@ -987,6 +990,11 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      if(!lastT) lastT=now;
      const dt = dtMs!==undefined ? dtMs : Math.min(100, now-lastT);
      lastT=now;
+     if(cdT>0){                           /* nobody moves until the whistle */
+       cdT-=dt; charging=false; charge=0;
+       if(cdT<=0){ cdT=0; frozen=Math.min(frozen,6); }
+       return;
+     }
      if(started&&!over){
        if(htPause>0){
          htPause-=dt;
@@ -1505,6 +1513,22 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        ctx.font="500 9px 'IBM Plex Mono',monospace";
        ctx.textAlign='left'; ctx.fillText(sprinting?'SPRINTING':'STAMINA', bx+bw2+9, by+bh2);
      }
+     /* kick-off count */
+     if(cdT>0){
+       const n=Math.max(1,Math.ceil(cdT/CDSTEP));
+       const left=((cdT-1)%CDSTEP)+1, ph=1-left/CDSTEP;     /* 0 at the start of a number */
+       const cx=PJ(W/2,(FT+FB)/2), cy=FT+fh/2;
+       const sz=Math.max(34,fh*0.3);
+       ctx.save(); ctx.textAlign='center'; ctx.textBaseline='middle';
+       ctx.globalAlpha=Math.max(0,Math.min(1, ph<0.12?ph/0.12 : ph>0.82?(1-ph)/0.18 : 1));
+       ctx.translate(cx,cy); ctx.scale(1.45-0.45*Math.min(1,ph*2.6),1.45-0.45*Math.min(1,ph*2.6));
+       ctx.beginPath(); ctx.arc(0,0,sz*0.86,-Math.PI/2,-Math.PI/2+(1-ph)*Math.PI*2);
+       ctx.strokeStyle='rgba(34,211,238,.8)'; ctx.lineWidth=3.4; ctx.lineCap='round'; ctx.stroke();
+       ctx.font='700 '+sz.toFixed(0)+'px Sora,sans-serif';
+       ctx.lineWidth=Math.max(5,sz*0.12); ctx.strokeStyle='rgba(6,10,18,.8)';
+       ctx.strokeText(n,0,sz*0.04); ctx.fillStyle='#eaf2ff'; ctx.fillText(n,0,sz*0.04);
+       ctx.restore(); ctx.globalAlpha=1;
+     }
      /* commentary */
      if(comm && performance.now()<commT){
        ctx.save(); ctx.font="600 15px Sora,sans-serif"; ctx.textAlign='center';
@@ -1530,7 +1554,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      const ax=gp.axes[0]||0, ay=gp.axes[1]||0, mag=Math.hypot(ax,ay);
      if(mag>DZ){ padX=ax/mag; padY=ay/mag; padMag=Math.min(1,(mag-DZ)/(1-DZ));
        usingPad=true; usingKeys=false;
-       if(!started){started=true;kick.classList.add('off');} }
+       begin(); }
      else padMag=0;
      const btn=i=>!!(gp.buttons[i]&&gp.buttons[i].pressed);
      const trig=i=>(gp.buttons[i]?gp.buttons[i].value:0)>0.45;
@@ -1548,7 +1572,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      const ny=e.clientY-r.top, nx=UNPJ(e.clientX-r.left,ny);
      if(!mouse||Math.hypot(nx-mouse.x,ny-mouse.y)>1.5){ usingKeys=false; usingPad=false; padMag=0; }
      mouse={x:nx,y:ny};
-     if(!started){started=true;kick.classList.add('off');}
+     begin();
    });
    cv.addEventListener('pointerenter',()=>{ try{cv.focus({preventScroll:true});}catch(e){} });
    cv.addEventListener('pointerleave',()=>{ mouse=null; sprinting=false; manSpr=false; runT=0; keys.clear(); });
@@ -1560,7 +1584,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      if(e.key==='e'||e.key==='E'){ e.preventDefault(); doPass(); return; }
      const k=KEYMAP[e.key]; if(!k) return;
      e.preventDefault(); keys.add(k); usingKeys=true;
-     if(!started){started=true;kick.classList.add('off');} });
+     begin(); });
    cv.addEventListener('keyup',e=>{
      if(e.key===' '||e.key==='x'||e.key==='X'){ e.preventDefault(); releaseShot(); return; }
      if(e.key==='Shift'){ manSpr=false; return; }
@@ -1581,9 +1605,9 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      say('Controller connected.',1600); setLegend(); });
    addEventListener('gamepaddisconnected',e=>{ if(padIdx===e.gamepad.index){ padIdx=null; usingPad=false;
      padMag=0; sprinting=false; manSpr=false; } setLegend(); });
-   function beginCharge(){ if(over||htPause>0||shotCool>0||charging) return;
-     charging=true; charge=0;
-     if(!started){started=true;kick.classList.add('off');} }
+   function beginCharge(){ if(!started){ begin(); return; }
+     if(over||htPause>0||cdT>0||shotCool>0||charging) return;
+     charging=true; charge=0; }
    function releaseShot(){ if(!charging) return;
      charging=false; shotPower=charge; charge=0; shotArmed=16;
      const me=players[0]; if(!me) return;
@@ -1598,7 +1622,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        say(shotPower>0.7?'He absolutely leathers it!':shotPower>0.35?'He lets fly!':'Scuffed effort.',1100);
      } }
    function doPass(){
-     if(over||htPause>0) return;
+     if(over||htPause>0||cdT>0) return;
      const me=players[0];
      if(Math.hypot(ball.x-me.x,ball.y-me.y)>PR+BR+26) return;
      let best=null,bd=1e9;
@@ -1629,8 +1653,8 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    paint(); loop();
    window.__soccer={goal,reset,step,draw,burst,
      state:()=>({score,over,ball,players,conf,fans,stuck,FT,FB,W,H,clock,half,htPause}),
-     setMouse:(x,y)=>{mouse={x,y};usingKeys=false;started=true;},
-     setKeys:(...k)=>{keys.clear();k.forEach(x=>keys.add(x));usingKeys=true;started=true;},
+     setMouse:(x,y)=>{mouse={x,y};usingKeys=false;started=true;cdT=0;},
+     setKeys:(...k)=>{keys.clear();k.forEach(x=>keys.add(x));usingKeys=true;started=true;cdT=0;},
      charge:()=>beginCharge(), release:()=>releaseShot(), pass:()=>doPass(),
      sprint:(v)=>{manSpr=v;}, pollPad:()=>pollPad(), kits:()=>kits, clubs:()=>CLUBS, icon:k=>kitIcon(k),
      padState:()=>({padIdx,usingPad,padMag,padX,padY}),
