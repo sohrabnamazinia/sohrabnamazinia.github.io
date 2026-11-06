@@ -292,6 +292,7 @@ section{padding:84px 0;border-top:1px solid var(--line)}
 .penhead .sc{font:600 18px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;font-variant-numeric:tabular-nums}
 .penhead .tm{display:flex;align-items:center;gap:6px;font:600 11.4px/1 Sora;letter-spacing:-.01em;color:var(--mute);white-space:nowrap}
 .penhead .tm svg{display:block;flex:none;filter:drop-shadow(0 1px 1px rgba(0,0,0,.45))}
+.penhead .tm small{font:500 9.2px/1 'IBM Plex Mono',monospace;letter-spacing:.06em;color:var(--dim);font-variant-numeric:tabular-nums}
 .penhead .clock{margin-right:auto;font:500 12.4px/1 'IBM Plex Mono',monospace;letter-spacing:.1em;color:var(--n3);
  font-variant-numeric:tabular-nums;padding:5px 10px;border-radius:999px;
  border:1px solid color-mix(in srgb,var(--n3) 32%,transparent);background:color-mix(in srgb,var(--n3) 10%,transparent)}
@@ -912,30 +913,32 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    const STY=['short','short','short','buzz','buzz','curly','afro','tail','long','bald'];
    const BOOT=['#f8f8f8','#111418','#f59e0b','#ec4899','#22d3ee','#10b981'];
    /* clubs in the 2026/27 Champions League league phase, in their own colours */
+   /* at / df: how good each side is going forward and at the back right now, on a scale centred on 84.
+      It nudges the match (a few per cent either way), it does not decide it. */
    const CLUBS=[
-     {n:'Real Madrid',b:'#f4f5f7',a:'#c8a24a',sh:'#f4f5f7',p:'solid'},
-     {n:'Barcelona',b:'#a50044',a:'#14387f',sh:'#14387f',p:'stripe'},
-     {n:'Man City',b:'#6cabdd',a:'#ffffff',sh:'#ffffff',p:'solid'},
-     {n:'Liverpool',b:'#c8102e',a:'#f6eb61',sh:'#c8102e',p:'solid'},
-     {n:'Arsenal',b:'#ef0107',a:'#ffffff',sh:'#ffffff',p:'sleeve'},
-     {n:'Man United',b:'#d41b2c',a:'#111111',sh:'#f4f4f4',p:'solid'},
-     {n:'Inter',b:'#0b1f6b',a:'#111111',sh:'#111111',p:'stripe'},
-     {n:'Bayern',b:'#dc052d',a:'#ffffff',sh:'#dc052d',p:'solid'},
-     {n:'Dortmund',b:'#fde100',a:'#111111',sh:'#111111',p:'solid'},
-     {n:'PSG',b:'#004170',a:'#da291c',sh:'#004170',p:'sash'},
-     {n:'Atletico',b:'#cb3524',a:'#ffffff',sh:'#1a3a7a',p:'stripe'},
-     {n:'Napoli',b:'#12a0d7',a:'#ffffff',sh:'#f4f4f4',p:'solid'},
-     {n:'Porto',b:'#f4f4f4',a:'#00428c',sh:'#00428c',p:'stripe'},
-     {n:'Sporting',b:'#008057',a:'#f4f4f4',sh:'#008057',p:'hoop'},
-     {n:'Roma',b:'#8e1f2f',a:'#f0b323',sh:'#f4f4f4',p:'solid'},
-     {n:'Aston Villa',b:'#670e36',a:'#95bfe5',sh:'#f4f4f4',p:'sleeve'},
-     {n:'Real Betis',b:'#00954c',a:'#f4f4f4',sh:'#f4f4f4',p:'stripe'},
-     {n:'Feyenoord',b:'#e30613',a:'#f4f4f4',sh:'#111111',p:'half'},
-     {n:'Galatasaray',b:'#a90432',a:'#fdb913',sh:'#f4f4f4',p:'half'},
-     {n:'Fenerbahce',b:'#1c3c73',a:'#ffed00',sh:'#f4f4f4',p:'stripe'},
-     {n:'Villarreal',b:'#ffe500',a:'#005187',sh:'#005187',p:'solid'},
-     {n:'Club Brugge',b:'#0a4ea2',a:'#111111',sh:'#111111',p:'stripe'},
-     {n:'PSV',b:'#e2001a',a:'#f4f4f4',sh:'#f4f4f4',p:'sleeve'}
+     {n:'Real Madrid',at:90,df:85,b:'#f4f5f7',a:'#c8a24a',sh:'#f4f5f7',p:'solid',k2:{b:'#1b2a4a',a:'#c8a24a',sh:'#1b2a4a',p:'solid'}},
+     {n:'Barcelona',at:92,df:82,b:'#a50044',a:'#14387f',sh:'#14387f',p:'stripe',k2:{b:'#e8c35a',a:'#a50044',sh:'#e8c35a',p:'solid'}},
+     {n:'Man City',at:88,df:84,b:'#6cabdd',a:'#ffffff',sh:'#ffffff',p:'solid',k2:{b:'#16181d',a:'#6cabdd',sh:'#16181d',p:'solid'}},
+     {n:'Liverpool',at:89,df:85,b:'#c8102e',a:'#f6eb61',sh:'#c8102e',p:'solid',k2:{b:'#f1ead8',a:'#c8102e',sh:'#f1ead8',p:'solid'}},
+     {n:'Arsenal',at:87,df:91,b:'#ef0107',a:'#ffffff',sh:'#ffffff',p:'sleeve',k2:{b:'#f2d13b',a:'#1c2b5a',sh:'#1c2b5a',p:'solid'}},
+     {n:'Man United',at:80,df:78,b:'#d41b2c',a:'#111111',sh:'#f4f4f4',p:'solid',k2:{b:'#15171c',a:'#d41b2c',sh:'#15171c',p:'solid'}},
+     {n:'Inter',at:86,df:86,b:'#0b1f6b',a:'#111111',sh:'#111111',p:'stripe',k2:{b:'#f4f4f4',a:'#0b1f6b',sh:'#f4f4f4',p:'sash'}},
+     {n:'Bayern',at:92,df:85,b:'#dc052d',a:'#ffffff',sh:'#dc052d',p:'solid',k2:{b:'#f4f4f4',a:'#dc052d',sh:'#f4f4f4',p:'solid'}},
+     {n:'Dortmund',at:82,df:80,b:'#fde100',a:'#111111',sh:'#111111',p:'solid',k2:{b:'#111111',a:'#fde100',sh:'#111111',p:'solid'}},
+     {n:'PSG',at:92,df:88,b:'#004170',a:'#da291c',sh:'#004170',p:'sash',k2:{b:'#f4f4f4',a:'#004170',sh:'#f4f4f4',p:'band'}},
+     {n:'Atletico',at:84,df:86,b:'#cb3524',a:'#ffffff',sh:'#1a3a7a',p:'stripe',k2:{b:'#12213f',a:'#cb3524',sh:'#12213f',p:'solid'}},
+     {n:'Napoli',at:83,df:85,b:'#12a0d7',a:'#ffffff',sh:'#f4f4f4',p:'solid',k2:{b:'#f4f4f4',a:'#12a0d7',sh:'#f4f4f4',p:'solid'}},
+     {n:'Porto',at:80,df:81,b:'#f4f4f4',a:'#00428c',sh:'#00428c',p:'stripe',k2:{b:'#f5a623',a:'#00428c',sh:'#00428c',p:'solid'}},
+     {n:'Sporting',at:82,df:80,b:'#008057',a:'#f4f4f4',sh:'#008057',p:'hoop',k2:{b:'#f2e205',a:'#008057',sh:'#008057',p:'solid'}},
+     {n:'Roma',at:79,df:83,b:'#8e1f2f',a:'#f0b323',sh:'#f4f4f4',p:'solid',k2:{b:'#f4f4f4',a:'#8e1f2f',sh:'#f4f4f4',p:'solid'}},
+     {n:'Aston Villa',at:83,df:82,b:'#670e36',a:'#95bfe5',sh:'#f4f4f4',p:'sleeve',k2:{b:'#95bfe5',a:'#670e36',sh:'#670e36',p:'solid'}},
+     {n:'Real Betis',at:81,df:78,b:'#00954c',a:'#f4f4f4',sh:'#f4f4f4',p:'stripe',k2:{b:'#14181f',a:'#00954c',sh:'#14181f',p:'solid'}},
+     {n:'Feyenoord',at:79,df:76,b:'#e30613',a:'#f4f4f4',sh:'#111111',p:'half',k2:{b:'#0f1f3d',a:'#e30613',sh:'#0f1f3d',p:'solid'}},
+     {n:'Galatasaray',at:82,df:77,b:'#a90432',a:'#fdb913',sh:'#f4f4f4',p:'half',k2:{b:'#17171a',a:'#fdb913',sh:'#17171a',p:'solid'}},
+     {n:'Fenerbahce',at:79,df:77,b:'#1c3c73',a:'#ffed00',sh:'#f4f4f4',p:'stripe',k2:{b:'#ffed00',a:'#1c3c73',sh:'#1c3c73',p:'solid'}},
+     {n:'Villarreal',at:82,df:78,b:'#ffe500',a:'#005187',sh:'#005187',p:'solid',k2:{b:'#0b2a55',a:'#ffe500',sh:'#0b2a55',p:'solid'}},
+     {n:'Club Brugge',at:77,df:76,b:'#0a4ea2',a:'#111111',sh:'#111111',p:'stripe',k2:{b:'#f4f4f4',a:'#0a4ea2',sh:'#f4f4f4',p:'solid'}},
+     {n:'PSV',at:83,df:76,b:'#e2001a',a:'#f4f4f4',sh:'#f4f4f4',p:'sleeve',k2:{b:'#101820',a:'#e2001a',sh:'#101820',p:'solid'}}
    ];
    /* a little shirt in the club's own colours, drawn here rather than a borrowed crest */
    function kitIcon(k){
@@ -959,13 +962,25 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    const cdist=(c1,c2)=>{const a=hx2(c1),b=hx2(c2);
      return Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);};
    let kits=[CLUBS[0],CLUBS[1]];
+   const F=(t,k)=>(((kits[t]&&kits[t][k])||84)-84)/100;       /* about -0.08 to +0.08 */
    const prep=k=>Object.assign({},k,{t:lum(k.b)>0.55?'#1b2232':'rgba(255,255,255,.92)'});
    function pickKits(){
      const pk=()=>CLUBS[Math.floor(Math.random()*CLUBS.length)];
+     /* any two clubs can meet: if the first shirts clash, one side changes into its second kit */
      let a=pk(), b=pk(), guard=0;
-     while(guard++<60 && (b.n===a.n || cdist(a.b,b.b)<130)) b=pk();
-     kits=[prep(a),prep(b)];
-     const chip=(el,k)=>{ if(el) el.innerHTML=kitIcon(k)+'<span>'+k.n+'</span>'; };
+     while(guard++<60 && b.n===a.n) b=pk();
+     const opts=[[0,0],[0,1],[1,0],[1,1]].map(([x,y])=>({x,y,d:cdist((x?a.k2:a).b,(y?b.k2:b).b)}));
+     const o=opts.find(q=>q.d>=130) || opts.slice().sort((p,q)=>q.d-p.d)[0];
+     const wear=(c,alt)=>prep(Object.assign({},c,alt?c.k2:null,{alt:!!alt}));
+     kits=[wear(a,o.x),wear(b,o.y)];
+     {                                   /* keepers wear whatever stands out from both sides and from each other */
+       const pal=['#2bd66a','#f59e0b','#ff5fa2','#22d3ee','#a78bfa','#c7ccd6'];
+       const far=(c,others)=>Math.min(...others.map(q=>cdist(c,q)));
+       const g0=pal.slice().sort((p,q)=>far(q,[kits[0].b,kits[1].b,'#1f7a4a'])-far(p,[kits[0].b,kits[1].b,'#1f7a4a']))[0];
+       const g1=pal.filter(c=>c!==g0).sort((p,q)=>far(q,[kits[0].b,kits[1].b,g0,'#1f7a4a'])-far(p,[kits[0].b,kits[1].b,g0,'#1f7a4a']))[0];
+       GKKIT[0].b=g0; GKKIT[1].b=g1;
+     }
+     const chip=(el,k)=>{ if(el) el.innerHTML=kitIcon(k)+'<span>'+k.n+'</span><small title="Attack and defence">ATT '+k.at+' \u00b7 DEF '+k.df+'</small>'; };
      chip($('#penTA'),kits[0]); chip($('#penTB'),kits[1]);
    }
    /* A squad is picked once per match: the same faces and shirt numbers from kick-off to the report. */
@@ -1036,8 +1051,9 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    let pen=null, breakLbl='Half time';
    const sum=a=>a.reduce((x,y)=>x+y,0);
    const TAP=150;
-   const TUNE={antic:0.5, dive:3.5, wob0:0.22, wob1:0.3, tackle:0.3, gkRead:0.34, gkMe:5, gkDive:3.0, sway0:5, sway1:24, rush:3.5, lunge:5.6, claim:7,
-     aiAim:0.35, aiPow:10.4, myErr:0.32, myLag:0.075, myAntic:0.88, myDive:0.94, mySp:2.5, myParryV:7, myParryP:0.5};   /* balance knobs */                         /* under this and it is a pass, over it a shot */
+   const TUNE={antic:0.5, dive:3.5, wob0:0.25, wob1:0.34, tackle:0.34, gkRead:0.34, gkMe:5, gkDive:3.0, sway0:5, sway1:24, rush:3.5, lunge:5.6, claim:7,
+     aiAim:0.35, aiPow:11, myErr:0.38, myLag:0.075, myAntic:0.7, myDive:0.94, mySp:2.5, myParryV:7, myParryP:0.5,
+     tackleDf:0.5, dfSp:3.45, jockMin:22, jockMax:58, kErr:0.22, kLag:0.105, kAntic:1.15, kDive:1.16, kPos:0.5, kAcc:0.62, myPos:0.7, myAcc:0.5, gkAim:0.2, gkPow:9.8};   /* balance knobs */                         /* under this and it is a pass, over it a shot */
    const ROLES=[{k:'gk',n:'Goalkeeper',sp:0.95,shot:1.0, pass:1.08},
                 {k:'df',n:'Defender',  sp:1.04,shot:0.97,pass:1.12},
                 {k:'fw',n:'Forward',   sp:1.05,shot:1.15,pass:0.98}];
@@ -1186,6 +1202,14 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        const mates=players.filter(p=>p.team===side&&!p.user&&!p.gk)
          .sort((a,b)=>Math.hypot(ball.x-a.x,ball.y-a.y)-Math.hypot(ball.x-b.x,ball.y-b.y));
        closest[side]=mates[0]||null; });
+     /* When your side has the ball their forward does the chasing and their defender does not dive in:
+        he stays goal-side, shows you wide and steps in as you near the box. */
+     let jockey=null;
+     if(lastTouch===0){
+       const owned=players.some(q=>q.team===0&&!q.gk&&Math.hypot(q.x-ball.x,q.y-ball.y)<PR+BR+16);
+       const d1=players.find(q=>q.team===1&&q.role==='df'), f1=players.find(q=>q.team===1&&q.role==='fw');
+       if(owned && d1 && f1){ jockey=d1; closest[1]=f1; }
+     }
      {                                   /* your team-mates do not fight you for it */
        const u=ME();
        if(u && closest[0]){
@@ -1241,17 +1265,22 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
          /* he reads it late, like a keeper does: a struck shot into the corner beats him */
          if(p.ky===undefined){ p.ky=ball.y; p.err=0; p.et=0; }
          const mine = p.team===0;                    /* your man between the sticks is the sharper one */
-         if(--p.et<=0){ p.et=26+Math.floor(Math.random()*26); p.err=(Math.random()-0.5)*gh*(mine?TUNE.myErr:0.27); }
-         p.ky += (ball.y+p.err-p.ky)*(ours?(mine?TUNE.myLag:0.096):0.035);
+         if(--p.et<=0){ p.et=26+Math.floor(Math.random()*26); p.err=(Math.random()-0.5)*gh*(mine?TUNE.myErr:TUNE.kErr)*(1-2.5*F(p.team,'df')); }
+         /* he stands on the line between the ball and the middle of his goal, not level with the ball:
+            a shooter out wide no longer drags him to one post and leaves the other open */
+         const cyK=(FT+FB)/2, offK=Math.abs(p.x-(dir>0?0:W))+18, farK=Math.max(30,Math.abs(ball.x-(dir>0?0:W)));
+         const posK=Math.min(1,Math.max(mine?TUNE.myPos:TUNE.kPos, offK/farK));
+         p.ky += (cyK+(ball.y-cyK)*posK+p.err-p.ky)*(ours?(mine?TUNE.myLag:TUNE.kLag):0.035);
+         p.dive=false;
          ty = ours ? p.ky : (FT+FB)/2;
          sp = p.team===0 ? TUNE.mySp : 2.65;
          /* a struck ball coming his way: he reads some of it and throws himself across */
          const bs=Math.hypot(ball.vx,ball.vy), coming = dir>0 ? ball.vx<-3 : ball.vx>3;
          if(ours && coming && bs>6){
            const cross = ball.y + ball.vy*((lineX-ball.x)/ball.vx);
-           const a = TUNE.antic*(mine?TUNE.myAntic:1.2);
+           const a = TUNE.antic*(mine?TUNE.myAntic:TUNE.kAntic);
            ty = ty*(1-a) + (cross+p.err*0.5)*a;
-           sp = TUNE.dive*(mine?TUNE.myDive:1.08);
+           sp = TUNE.dive*(mine?TUNE.myDive:TUNE.kDive); p.dive=true;
          }
          ty = Math.max(gTop-6, Math.min(gBot+6, ty));
          const gap = Math.abs(ball.x-lineX);
@@ -1273,10 +1302,16 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        else {
          const dir=dirFor(p.team), skill = p.team===1 ? 1 : 0;
          const own = dir>0 ? 0 : W, their = dir>0 ? W : 0;
-         if(p===closest[p.team]){
+         if(p===jockey){
+           const gy=(FT+FB)/2; let ux=own-ball.x, uy=gy-ball.y; const D=Math.hypot(ux,uy)||1; ux/=D; uy/=D;
+           const gap=Math.max(TUNE.jockMin, Math.min(TUNE.jockMax, TUNE.jockMin+(D-W*0.26)*0.3));
+           tx=ball.x+ball.vx*3+ux*gap; ty=ball.y+ball.vy*3+uy*gap;
+           if(Math.abs(tx-own)>W*0.52) tx=own+dir*W*0.52;          /* he does not follow you into your own half */
+           sp=TUNE.dfSp*(1+0.8*F(1,'df'));
+         } else if(p===closest[p.team]){
            const lead = skill ? 9 : 4;
            tx=ball.x+ball.vx*lead*0.1-dir*PR; ty=ball.y+ball.vy*lead*0.1;
-           sp = (skill?3.25:2.6) * (p.role==='fw'?1.05:p.role==='df'?0.97:1);
+           sp = (skill?3.25:2.6) * (p.role==='fw'?1.05:p.role==='df'?0.97:1) * (1+0.8*F(p.team, p.role==='fw'?'at':'df'));
          } else {
            const pull = p.role==='df' ? 0.3 : p.role==='mf' ? 0.58 : 0.45;
            const anchor = p.role==='fw' ? their : own;
@@ -1287,7 +1322,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        }
        const dx=tx-p.x, dy=ty-p.y, d=Math.hypot(dx,dy)||1;
        if(p.user) sp=Math.min(sp, d*0.22+0.5);          /* ease in to the cursor, no jitter */
-       if(d>2){ const ac=p.user?(sprinting?0.92:0.74)*myRole.sp:0.55;
+       if(d>2){ const ac=p.user?(sprinting?0.92:0.74)*myRole.sp:(p.gk&&p.dive?(p.team===1?TUNE.kAcc:TUNE.myAcc):0.55);
          p.vx+=(dx/d)*ac; p.vy+=(dy/d)*ac; }
        const v=Math.hypot(p.vx,p.vy); if(v>sp){p.vx*=sp/v;p.vy*=sp/v;}
        p.vx*=0.88; p.vy*=0.88; p.x+=p.vx; p.y+=p.vy;
@@ -1408,8 +1443,13 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
          } else if(!p.user){
            /* a challenge on you has to be won, it is not automatic */
            if(p.team===1 && hold>0){
-             if(Math.random()>TUNE.tackle){
-               p.tc=30; p.vx*=-0.5; p.vy*=-0.5;
+             /* run straight at him and he will usually take it; go across him and you can ride it */
+             const u2=ME(), uv=u2?Math.hypot(u2.vx,u2.vy):0;
+             let into=0;
+             if(u2 && uv>0.4){ const tx3=p.x-u2.x, ty3=p.y-u2.y, tl=Math.hypot(tx3,ty3)||1; into=Math.max(0,(u2.vx*tx3+u2.vy*ty3)/(uv*tl)); }
+             const pt=(p.role==='df'?TUNE.tackleDf:TUNE.tackle)*(0.6+0.55*into)*(1+2.5*F(1,'df')-1.5*F(0,'at'));
+             if(Math.random()>pt){
+               p.tc=p.role==='df'?24:30; p.vx*=-0.5; p.vy*=-0.5;
                { const u=ME(); if(u) u.sq.st.drib++; }      /* you beat your man */
                if(Math.random()<0.3) say(['Skips past him.','Rides the challenge.','Too quick for him.'][Math.floor(Math.random()*3)],800);
                return;
@@ -1443,14 +1483,14 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
              return;
            }
            const sharp = p.team===1 && myRole.k!=='gk';   /* against your AI keeper they hit it harder and pick a side */
-           const power = (near ? (sharp?TUNE.aiPow:8.8) : 4.6)*str;
-           if(near && sharp){
+           const power = (near ? (sharp?TUNE.aiPow:p.team===1?TUNE.gkPow:8.8)*(1+0.6*F(p.team,'at')) : 4.6)*str;
+           if(near && p.team===1){                     /* with you in goal they still pick a side, just less ruthlessly */
              const kp=players.find(q=>q.gk&&q.team===0), sgn=kp&&kp.y>gy?-1:1;
-             ax=gx-ball.x; ay=gy+sgn*gh*TUNE.aiAim-ball.y; const l2=Math.hypot(ax,ay)||1; ax/=l2; ay/=l2;
+             ax=gx-ball.x; ay=gy+sgn*gh*(sharp?TUNE.aiAim:TUNE.gkAim)-ball.y; const l2=Math.hypot(ax,ay)||1; ax/=l2; ay/=l2;
            }
            let sx=ax*0.7+ux*0.3, sy=ay*0.7+uy*0.3;
            const sl=Math.hypot(sx,sy)||1; sx/=sl; sy/=sl;
-           const aim = p.team===1 ? 0.1 : 0.17;        /* a little inaccuracy */
+           const aim = p.team===1 ? 0.1*(1-3*F(1,'at')) : 0.17;        /* a little inaccuracy */
            ball.x=p.x+sx*(PR+BR+0.5); ball.y=p.y+sy*(PR+BR+0.5);
            ball.vx=sx*power+(Math.random()-0.5)*power*aim;
            ball.vy=sy*power+(Math.random()-0.5)*power*aim;
@@ -2262,7 +2302,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        const top = iy<gcy-gh*0.18 ? true : iy>gcy+gh*0.18 ? false : ky>gcy;
        /* guided, not guaranteed: harder and further out means a wider spread, and it can miss */
        const far = 0.65+gl/(W*0.36);
-       const wob = pure ? 0 : (Math.random()-0.5)*gh*(TUNE.wob0+TUNE.wob1*power)*far;
+       const wob = pure ? 0 : (Math.random()-0.5)*gh*(TUNE.wob0+TUNE.wob1*power)*far*(1-3*F(0,'at'));
        const ty=(top?gTop+gh*0.16:gBot-gh*0.16)+wob;
        const sx=gx-bx, sy=ty-by, l=Math.hypot(sx,sy)||1;
        return [sx/l,sy/l,true];
