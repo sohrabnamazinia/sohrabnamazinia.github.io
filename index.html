@@ -962,7 +962,9 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    const cdist=(c1,c2)=>{const a=hx2(c1),b=hx2(c2);
      return Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);};
    let kits=[CLUBS[0],CLUBS[1]];
-   const F=(t,k)=>(((kits[t]&&kits[t][k])||84)-84)/100;       /* about -0.08 to +0.08 */
+   /* How far a side is from average (84), as a multiplier nudge. It is curved, not linear:
+      a club a long way from the middle is pulled further than its points alone would say. */
+   const F=(t,k)=>{ const d=(((kits[t]&&kits[t][k])||84)-84)/100; return TUNE.gain*d*(1+Math.abs(d)*TUNE.curve); };
    const prep=k=>Object.assign({},k,{t:lum(k.b)>0.55?'#1b2232':'rgba(255,255,255,.92)'});
    function pickKits(){
      const pk=()=>CLUBS[Math.floor(Math.random()*CLUBS.length)];
@@ -1053,7 +1055,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    const TAP=150;
    const TUNE={antic:0.5, dive:3.5, wob0:0.25, wob1:0.34, tackle:0.34, gkRead:0.34, gkMe:5, gkDive:3.0, sway0:5, sway1:24, rush:3.5, lunge:5.6, claim:7,
      aiAim:0.35, aiPow:11, myErr:0.38, myLag:0.075, myAntic:0.7, myDive:0.94, mySp:2.5, myParryV:7, myParryP:0.5,
-     tackleDf:0.5, dfSp:3.45, jockMin:22, jockMax:58, kErr:0.22, kLag:0.105, kAntic:1.15, kDive:1.16, kPos:0.5, kAcc:0.62, myPos:0.7, myAcc:0.5, gkAim:0.2, gkPow:9.8};   /* balance knobs */                         /* under this and it is a pass, over it a shot */
+     tackleDf:0.5, dfSp:3.45, jockMin:22, jockMax:58, kErr:0.22, kLag:0.105, kAntic:1.15, kDive:1.16, kPos:0.5, kAcc:0.62, myPos:0.7, myAcc:0.5, gkAim:0.2, gkPow:9.8, gain:1.5, curve:6};   /* balance knobs */                         /* under this and it is a pass, over it a shot */
    const ROLES=[{k:'gk',n:'Goalkeeper',sp:0.95,shot:1.0, pass:1.08},
                 {k:'df',n:'Defender',  sp:1.04,shot:0.97,pass:1.12},
                 {k:'fw',n:'Forward',   sp:1.05,shot:1.15,pass:0.98}];
@@ -1265,7 +1267,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
          /* he reads it late, like a keeper does: a struck shot into the corner beats him */
          if(p.ky===undefined){ p.ky=ball.y; p.err=0; p.et=0; }
          const mine = p.team===0;                    /* your man between the sticks is the sharper one */
-         if(--p.et<=0){ p.et=26+Math.floor(Math.random()*26); p.err=(Math.random()-0.5)*gh*(mine?TUNE.myErr:TUNE.kErr)*(1-2.5*F(p.team,'df')); }
+         if(--p.et<=0){ p.et=26+Math.floor(Math.random()*26); p.err=(Math.random()-0.5)*gh*(mine?TUNE.myErr:TUNE.kErr)*Math.max(0.4,1-2.5*F(p.team,'df')); }
          /* he stands on the line between the ball and the middle of his goal, not level with the ball:
             a shooter out wide no longer drags him to one post and leaves the other open */
          const cyK=(FT+FB)/2, offK=Math.abs(p.x-(dir>0?0:W))+18, farK=Math.max(30,Math.abs(ball.x-(dir>0?0:W)));
@@ -1278,7 +1280,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
          const bs=Math.hypot(ball.vx,ball.vy), coming = dir>0 ? ball.vx<-3 : ball.vx>3;
          if(ours && coming && bs>6){
            const cross = ball.y + ball.vy*((lineX-ball.x)/ball.vx);
-           const a = TUNE.antic*(mine?TUNE.myAntic:TUNE.kAntic);
+           const a = Math.min(0.95, TUNE.antic*(mine?TUNE.myAntic:TUNE.kAntic)*(1+1.2*F(p.team,'df')));
            ty = ty*(1-a) + (cross+p.err*0.5)*a;
            sp = TUNE.dive*(mine?TUNE.myDive:TUNE.kDive); p.dive=true;
          }
@@ -1447,7 +1449,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
              const u2=ME(), uv=u2?Math.hypot(u2.vx,u2.vy):0;
              let into=0;
              if(u2 && uv>0.4){ const tx3=p.x-u2.x, ty3=p.y-u2.y, tl=Math.hypot(tx3,ty3)||1; into=Math.max(0,(u2.vx*tx3+u2.vy*ty3)/(uv*tl)); }
-             const pt=(p.role==='df'?TUNE.tackleDf:TUNE.tackle)*(0.6+0.55*into)*(1+2.5*F(1,'df')-1.5*F(0,'at'));
+             const pt=Math.min(0.9,(p.role==='df'?TUNE.tackleDf:TUNE.tackle)*(0.6+0.55*into)*(1+2.5*F(1,'df')-1.5*F(0,'at')));
              if(Math.random()>pt){
                p.tc=p.role==='df'?24:30; p.vx*=-0.5; p.vy*=-0.5;
                { const u=ME(); if(u) u.sq.st.drib++; }      /* you beat your man */
@@ -1490,7 +1492,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
            }
            let sx=ax*0.7+ux*0.3, sy=ay*0.7+uy*0.3;
            const sl=Math.hypot(sx,sy)||1; sx/=sl; sy/=sl;
-           const aim = p.team===1 ? 0.1*(1-3*F(1,'at')) : 0.17;        /* a little inaccuracy */
+           const aim = p.team===1 ? 0.1*Math.max(0.35,1-3*F(1,'at')) : 0.17;        /* a little inaccuracy */
            ball.x=p.x+sx*(PR+BR+0.5); ball.y=p.y+sy*(PR+BR+0.5);
            ball.vx=sx*power+(Math.random()-0.5)*power*aim;
            ball.vy=sy*power+(Math.random()-0.5)*power*aim;
@@ -2302,7 +2304,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        const top = iy<gcy-gh*0.18 ? true : iy>gcy+gh*0.18 ? false : ky>gcy;
        /* guided, not guaranteed: harder and further out means a wider spread, and it can miss */
        const far = 0.65+gl/(W*0.36);
-       const wob = pure ? 0 : (Math.random()-0.5)*gh*(TUNE.wob0+TUNE.wob1*power)*far*(1-3*F(0,'at'));
+       const wob = pure ? 0 : (Math.random()-0.5)*gh*(TUNE.wob0+TUNE.wob1*power)*far*Math.max(0.4,1-3*F(0,'at'));
        const ty=(top?gTop+gh*0.16:gBot-gh*0.16)+wob;
        const sx=gx-bx, sy=ty-by, l=Math.hypot(sx,sy)||1;
        return [sx/l,sy/l,true];
@@ -2310,7 +2312,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      return [aimX,aimY,false];
    }
    function strike(me){
-     const pw=(7.6+shotPower*8.4)*myRole.shot;
+     const pw=(7.6+shotPower*8.4)*myRole.shot*(1+0.4*F(0,'at'));
      const v=shotVec(ball.x,ball.y,shotPower,false);
      ball.x=me.x+v[0]*(PR+BR+1); ball.y=me.y+v[1]*(PR+BR+1);
      ball.vx=v[0]*pw; ball.vy=v[1]*pw; ball.vz=0.8+shotPower*2.6;
