@@ -845,7 +845,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    let mouse=null, started=false, score=[0,0], frozen=0, over=false, stuck=0;
    let clock=0, half=1, lastT=0, htPause=0;        /* 90 match minutes in 60 real seconds */
    const MINS_PER_SEC=1.5;
-   const dirFor=team=>(team===0?1:-1)*(half===1?1:-1);   /* +1 attacks the right goal */
+   const dirFor=team=>(team===0?1:-1)*(half%2===1?1:-1);   /* +1 attacks the right goal; ends swap each period */
    const keys=new Set(); let usingKeys=false;
    let shotArmed=0, shotCool=0, lastTouch=-1, comm='', commT=0, nearMiss=0;
    let charging=false, charge=0, shotPower=0, stamina=1, sprinting=false;
@@ -942,8 +942,11 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      return v; })();
    let runT=0, manSpr=false, cdT=0, pressT=0, hold=0;   /* hold: frames of close possession */
    let winded=false;                      /* out of puff: no sprint until it comes back */
+   const PEN_TEST=false;                  /* set true to send every match straight to the shootout, for testing */
+   let pen=null, breakLbl='Half time';
+   const sum=a=>a.reduce((x,y)=>x+y,0);
    const TAP=150;
-   const TUNE={antic:0.5, dive:3.5, wob0:0.22, wob1:0.3, tackle:0.3};   /* balance knobs */                         /* under this and it is a pass, over it a shot */
+   const TUNE={antic:0.5, dive:3.5, wob0:0.22, wob1:0.3, tackle:0.3, gkRead:0.34, gkMe:5, gkDive:3.0, sway0:5, sway1:24};   /* balance knobs */                         /* under this and it is a pass, over it a shot */
    const ROLES=[{k:'gk',n:'Goalkeeper',sp:0.95,shot:1.0, pass:1.08},
                 {k:'df',n:'Defender',  sp:1.04,shot:0.97,pass:1.12},
                 {k:'fw',n:'Forward',   sp:1.05,shot:1.15,pass:0.98}];
@@ -979,7 +982,8 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      return true;
    }
    function reset(full){
-     if(full){ over=false; score=[0,0]; clock=0; half=1; htPause=0; lastT=0; pickKits(); paint();
+     if(full){ pen=null; breakLbl='Half time';
+       over=false; score=[0,0]; clock=0; half=1; htPause=0; lastT=0; pickKits(); paint();
        if(started) cdT=CDSTEP*3;
        say(kits[0].n+' vs '+kits[1].n+'. Kick off.',2200); }
      const fh=FB-FT;
@@ -987,20 +991,23 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      shotArmed=0; shotCool=0; nearMiss=0; lastTouch=-1;
      charging=false; charge=0; shotPower=0; dribbleLock=0; goalPause=0; netHit=null; hold=0;
      if(full){ stamina=1; winded=false; sprinting=false; manSpr=false; runT=0; padMag=0; }
-     const mir=x=>half===1?x:1-x;
+     const mir=x=>half%2===1?x:1-x;
      const LAY=[['gk',0.035,0.50],['df',0.22,0.42],['fw',0.44,0.60]];   /* two out, one in goal */
      players=[];
      LAY.forEach(([r,x,y])=>{ const p=mk(W*mir(x),FT+fh*y,0,r===myRole.k); p.role=r; p.gk=(r==='gk'); players.push(p); });
      LAY.forEach(([r,x,y])=>{ const p=mk(W*mir(1-x),FT+fh*(1-y),1,false); p.role=r; p.gk=(r==='gk'); players.push(p); });
      frozen=28;
+     if(full && PEN_TEST) startPens();
    }
-   const paint=()=>{ const el=$('#penSc'); if(el) el.textContent=`${score[0]} : ${score[1]}`;
+   const paint=()=>{ const el=$('#penSc');
+     if(el) el.textContent = pen ? `${score[0]} (${sum(pen.res[0])}) : (${sum(pen.res[1])}) ${score[1]}`
+                                 : `${score[0]} : ${score[1]}`;
      const c=$('#penClock'); if(c){
        const mm=Math.floor(clock), ss=Math.floor((clock-mm)*60);
-       c.textContent = htPause>0 ? 'Half time'
+       c.textContent = pen ? 'Penalties' : htPause>0 ? breakLbl
          : String(mm).padStart(2,'0')+':'+String(ss).padStart(2,'0');
-       c.classList.toggle('ht',htPause>0); } };
-   const aim=()=>{ const d=dirFor(0);
+       c.classList.toggle('ht',htPause>0||!!pen); } };
+   const aim=()=>{ if(pen) return; const d=dirFor(0);
      msg.textContent='Attacking the '+(d>0?'right':'left')+'-hand goal. '
        +(myRole.k==='gk'?'You are in goal.':'You are playing '+myRole.n.toLowerCase()+'.')
        +' Tap to pass, hold to shoot. In front of goal a tap is a quick shot.';
@@ -1019,24 +1026,37 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        if(cdT<=0){ cdT=0; frozen=Math.min(frozen,6); }
        return;
      }
+     if(pen){ stepPens(); return; }         /* the shootout runs outside the match clock */
      if(started&&!over){
        if(htPause>0){
          htPause-=dt;
-         if(htPause<=0){ htPause=0; half=2; reset(false); aim(); paint(); }
+         if(htPause<=0){ htPause=0; half++; reset(false); aim(); paint(); }
        } else {
-         clock=Math.min(90, clock + (dt/1000)*MINS_PER_SEC);
-         if(half===1 && clock>=45){ clock=45; htPause=1600;
+         clock=Math.min(half<=2?90:120, clock + (dt/1000)*MINS_PER_SEC);
+         const fullTime=(when)=>{ over=true; frozen=1e9;
+           msg.textContent = score[0]>score[1] ? `${when} You win it ${score[0]}:${score[1]}. SIUUU!`
+                                               : `${when} They take it ${score[1]}:${score[0]}. Rematch?`;
+           msg.className='penmsg '+(score[0]>score[1]?'goal':'save'); };
+         if(half===1 && clock>=45){ clock=45; htPause=1600; breakLbl='Half time';
            msg.textContent='Half time. Ends change, keep going.'; msg.className='penmsg'; }
          else if(half===2 && clock>=90){
-           clock=90; over=true; frozen=1e9;
-           msg.textContent = score[0]>score[1] ? `Full time. You win it ${score[0]}:${score[1]}. SIUUU!`
-             : score[0]<score[1] ? `Full time. They take it ${score[1]}:${score[0]}. Rematch?`
-             : `Full time. ${score[0]} apiece. Honours even.`;
-           msg.className='penmsg '+(score[0]>score[1]?'goal':score[0]<score[1]?'save':'');
+           clock=90;
+           if(score[0]===score[1]){ htPause=1900; breakLbl='Extra time';
+             msg.textContent=`Level at ${score[0]} apiece after ninety. Extra time: two halves of fifteen.`;
+             msg.className='penmsg'; say('Extra time!',1900); }
+           else fullTime('Full time.');
+         }
+         else if(half===3 && clock>=105){ clock=105; htPause=1400; breakLbl='ET half time';
+           msg.textContent='Half time in extra time. Ends change again.'; msg.className='penmsg'; }
+         else if(half===4 && clock>=120){
+           clock=120;
+           if(score[0]===score[1]){ startPens(); return; }
+           fullTime('Full time, after extra time.');
          }
          paint();
        }
      }
+
      if(htPause>0) return;
      if(frozen>0) frozen--;
      if(cheer>0) cheer--;
@@ -1348,6 +1368,223 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        if(d<PR*2.4){ p.x=ball.x+dx/d*PR*2.4; p.y=ball.y+dy/d*PR*2.4;
          p.x=Math.max(PR,Math.min(W-PR,p.x)); p.y=Math.max(FT+PR,Math.min(FB-PR,p.y)); } });
    }
+   /* ================= penalties =================
+      Football's rules: five each, taken alternately at one end; it stops as soon as one side
+      cannot be caught; level after five, it is sudden death, one pair at a time.
+      You take your side's kicks and you are in goal for theirs. */
+   function penGeom(){ const gh=goalH(), gTop=FT+((FB-FT)-gh)/2;
+     return {gh, gTop, gBot:gTop+gh, cy:(FT+FB)/2, spotX:W*0.79, lineX:W*0.962}; }
+   function pensDecided(a,b){            /* 0 or 1 for the winner, -1 while it is still alive */
+     const sa=sum(a), sb=sum(b);
+     if(a.length<=5 && b.length<=5 && !(a.length===5&&b.length===5)){
+       if(sa>sb+(5-b.length)) return 0;
+       if(sb>sa+(5-a.length)) return 1;
+       return -1;
+     }
+     if(a.length===b.length && sa!==sb) return sa>sb?0:1;
+     return -1;
+   }
+   function startPens(){
+     pen={first:Math.random()<0.5?0:1, res:[[],[]], phase:'intro', t:80, turn:0, aimY:0, pw:0,
+          taker:null, keeper:null, ai:null, kd:0, passed:false, out:''};
+     pen.turn=pen.first;
+     over=false; frozen=0; charging=false; charge=0; hold=0; conf=[]; netHit=null; goalPause=0; htPause=0;
+     say('Penalties. '+kits[pen.first].n+' to go first.',2400);
+     setupKick(); pen.phase='intro'; pen.t=80; paint();
+   }
+   function setupKick(){
+     const g=penGeom(), t=pen.turn;
+     const order=['fw','df','gk'];                       /* everyone takes one before anyone goes twice */
+     const taker=players.find(p=>p.team===t&&p.role===order[pen.res[t].length%3]);
+     const keeper=players.find(p=>p.team!==t&&p.gk);
+     pen.taker=taker; pen.keeper=keeper; pen.passed=false; pen.out='';
+     const slot=[0,0];
+     players.forEach(p=>{ p.vx=p.vy=0; p.user=false; p.tc=0;
+       if(p===taker){ p.x=g.spotX-46; p.y=g.cy; }
+       else if(p===keeper){ p.x=g.lineX; p.y=g.cy; }
+       else { const k=slot[p.team]++; p.x=W*(p.team===0?0.42:0.53)+k*8; p.y=g.cy+(k?34:-34)+(p.team?12:-12); } });
+     (t===0?taker:keeper).user=true;                     /* the one you are driving */
+     ball.x=g.spotX; ball.y=g.cy; ball.vx=ball.vy=0; ball.z=0; ball.vz=0;
+     pen.aimY=g.cy; pen.base=g.cy; pen.ph=Math.random()*6.28; charging=false; charge=0;
+     if(t===1){                                          /* their taker makes his mind up */
+       const r=Math.random(), side = r<0.42?-1 : r<0.84?1 : 0;
+       const rr=Math.random();                              /* he likes the corners */
+       let ty = g.cy + (side===0 ? (Math.random()-0.5)*22 : side*(g.gh*0.5-7-rr*rr*26));
+       if(Math.random()<0.07) ty = g.cy + (side||1)*(g.gh*0.5+13);        /* now and then he misses */
+       /* the run-up gives him away three times in five: he tends to hit it across his body */
+       const honest=Math.random()<0.6;
+       pen.ai={ty, sp:7.8+Math.random()*2.6, wait:46+Math.floor(Math.random()*46),
+               runY: side===0 ? (Math.random()<0.5?-17:17) : (honest?-side:side)*17};
+       taker.y=g.cy+pen.ai.runY;
+       msg.textContent='You are in goal. Move across your line and get in the way. Watch his run-up.';
+     } else {
+       msg.textContent='Your penalty. The crosshair sways, and sways more the harder you wind up. Hold, then release when it is where you want it.';
+     }
+     msg.className='penmsg';
+     pen.phase='aim'; pen.t=0;
+   }
+   function moveMyKeeper(g){
+     const kp=pen.keeper; let ty=kp.y;
+     if(usingPad&&padMag>0) ty=kp.y+padY*44;
+     else if(usingKeys) ty=kp.y+((keys.has('down')?1:0)-(keys.has('up')?1:0))*44;
+     else if(mouse) ty=mouse.y;
+     ty=Math.max(g.gTop+5,Math.min(g.gBot-5,ty));
+     const mv=Math.max(-TUNE.gkMe,Math.min(TUNE.gkMe,ty-kp.y));
+     kp.y+=mv; if(Math.abs(mv)>0.4) kp.step+=0.55;
+   }
+   function penResult(v,how){
+     const t=pen.turn, pick=a=>a[Math.floor(Math.random()*a.length)];
+     pen.res[t].push(v); pen.out=how; pen.phase='res'; pen.t=78;
+     if(how==='goal'){
+       netHit={x:ball.x,y:ball.y,t0:performance.now(),right:true,power:Math.min(1,Math.hypot(ball.vx,ball.vy)/13)};
+       ball.vx*=0.22; ball.vy*=0.22; cheer=60;
+       say(t===0?pick(['Buries it!','Sends him the wrong way!','No chance for the keeper!'])
+                :pick(['They score.','Tucked away.','Into the side netting.']),1500);
+     } else if(how==='save'){
+       ball.vx=-ball.vx*0.36; ball.vy=(Math.random()-0.5)*5; ball.vz=2.1;
+       if(t===1) cheer=70;
+       say(t===0?pick(['Saved!','The keeper guessed right.','Kept out!'])
+                :pick(['YOU SAVE IT!','What a stop!','Denied!']),1600);
+     } else if(how==='post'){
+       ball.vx=-ball.vx*0.45; ball.vy=-ball.vy*0.5; ball.vz=1.6; say('Off the post!',1500);
+     } else say(t===0?'Dragged wide!':'They put it wide!',1500);
+     paint();
+   }
+   function endPens(w){
+     pen.phase='done'; over=true; frozen=1e9; players.forEach(p=>p.user=false);
+     const a=sum(pen.res[0]), b=sum(pen.res[1]);
+     msg.textContent = w===0 ? `You win ${a}-${b} on penalties. SIUUU!` : `They win it ${b}-${a} on penalties. Rematch?`;
+     msg.className='penmsg '+(w===0?'goal':'save');
+     if(w===0){ burst(0); burst(1); cheer=220; }
+     say(w===0?'You win the shootout!':'Heartbreak from the spot.',3200);
+     paint();
+   }
+   function stepPens(){
+     const g=penGeom();
+     if(cheer>0) cheer--;
+     for(const c of conf){ c.vy+=0.14; c.x+=c.vx; c.y+=c.vy; c.vx*=0.995; c.rot+=c.vr; c.life--; }
+     conf=conf.filter(c=>c.life>0 && c.y<H+20);
+     { const sp=Math.hypot(ball.vx,ball.vy); if(sp>0.06){ ball.ax=ball.vx/sp; ball.ay=ball.vy/sp; } ball.rot+=sp/BR*0.5; }
+     if(ball.z>0||ball.vz>0){ ball.vz-=0.42; ball.z+=ball.vz;
+       if(ball.z<=0){ ball.z=0; if(ball.vz<-1.2) ball.vz*=-0.42; else ball.vz=0; } }
+     if(pen.phase==='done') return;
+     if(pen.phase==='intro'){ if(--pen.t<=0) pen.phase='aim'; return; }
+     const kp=pen.keeper, tk=pen.taker;
+     if(pen.phase==='aim'){
+       pen.t++;
+       if(pen.turn===0){
+         if(usingPad&&padMag>0) pen.base+=padY*padMag*4.4;
+         else if(usingKeys) pen.base+=((keys.has('down')?1:0)-(keys.has('up')?1:0))*3.6;
+         else if(mouse) pen.base+=(mouse.y-pen.base)*0.5;
+         pen.base=Math.max(g.gTop-6,Math.min(g.gBot+6,pen.base));
+         if(charging) charge=Math.min(1,charge+0.024);
+         /* nerves: where you point is only where it is centred. Release when it is where you want it */
+         const amp=TUNE.sway0+TUNE.sway1*charge;
+         pen.ph+=0.07+0.075*charge;       /* slow enough to read, quicker as the power builds */
+         pen.aimY=pen.base+amp*(Math.sin(pen.ph)*0.78+Math.sin(pen.ph*2.31+1.3)*0.22);
+         pen.aimY=Math.max(g.gTop-18,Math.min(g.gBot+18,pen.aimY));
+         kp.y=g.cy+Math.sin(pen.t*0.085)*8; kp.step+=0.12;       /* he shuffles on his line */
+       } else {
+         moveMyKeeper(g);
+         if(pen.t>=pen.ai.wait){ pen.phase='run'; pen.t=0; }
+       }
+       return;
+     }
+     if(pen.phase==='run'){
+       pen.t++;
+       tk.x+=(ball.x-PR-BR+3-tk.x)*0.34; tk.y+=(ball.y-tk.y)*0.34; tk.step+=0.9;
+       if(pen.turn===1) moveMyKeeper(g); else { kp.y=g.cy+Math.sin((pen.t+50)*0.085)*4; }
+       if(pen.t>=(pen.turn===0?9:15)){                        /* contact */
+         let ty,sp;
+         if(pen.turn===0){
+           const pw=pen.pw; sp=9+6.5*pw;
+           ty=pen.aimY+(Math.random()-0.5)*2*(2+5*pw);
+           /* their keeper commits as it is struck: sometimes right, more often not */
+           const off=ty-g.cy, side=Math.abs(off)<12?0:Math.sign(off), r=Math.random(), any=Math.random()<0.5?-1:1;
+           /* straight down the middle is a gamble: he stands his ground more than two times in five */
+           const read=TUNE.gkRead+Math.max(0,0.4-pw)*0.8;       /* a soft one he sees all the way */
+           pen.kd = side===0 ? (r<0.42+Math.max(0,0.4-pw)*0.6?0:any)
+                  : r<read ? side : r<read+0.44 ? -side : 0;
+         } else { ty=pen.ai.ty; sp=pen.ai.sp; }
+         const dx=(W-BR+3)-ball.x, dy=ty-ball.y, d=Math.hypot(dx,dy)||1;
+         ball.vx=dx/d*sp; ball.vy=dy/d*sp; ball.vz=1.3+Math.random()*0.9;
+         pen.phase='fly'; pen.t=0;
+       }
+       return;
+     }
+     if(pen.phase==='fly'){
+       pen.t++;
+       ball.x+=ball.vx; ball.y+=ball.vy;
+       /* he can only get so far across: hit it hard enough and the corner is out of reach */
+       if(pen.turn===0){ const dy=g.cy+pen.kd*36-kp.y; kp.y+=Math.max(-TUNE.gkDive,Math.min(TUNE.gkDive,dy)); kp.step+=0.6; }
+       else moveMyKeeper(g);
+       if(!pen.passed && ball.x>=kp.x-8){
+         pen.passed=true;
+         if(Math.abs(ball.y-kp.y)<(pen.turn===0?23:21)) return penResult(0,'save');
+       }
+       if(ball.x>W-BR){
+         const dT=ball.y-g.gTop, dB=g.gBot-ball.y;
+         if(Math.abs(dT)<4.5||Math.abs(dB)<4.5) return penResult(0,'post');
+         return penResult(dT>0&&dB>0?1:0, dT>0&&dB>0?'goal':'wide');
+       }
+       return;
+     }
+     if(pen.phase==='res'){
+       ball.x+=ball.vx; ball.y+=ball.vy; ball.vx*=0.88; ball.vy*=0.88;
+       ball.x=Math.min(W+W*0.035-BR, ball.x);
+       if(--pen.t<=0){
+         netHit=null;
+         const w=pensDecided(pen.res[0],pen.res[1]);
+         if(w>=0) return endPens(w);
+         const total=pen.res[0].length+pen.res[1].length;
+         pen.turn = total%2===0 ? pen.first : 1-pen.first;
+         setupKick();
+       }
+     }
+   }
+   function drawPens(){
+     const g=penGeom();
+     /* your aim: a marker on the goal line and a faint line to it */
+     if(pen.turn===0 && (pen.phase==='aim'||pen.phase==='run'||pen.phase==='intro')){
+       const ax=PJ(W-5,pen.aimY), ay=pen.aimY, bx=PJ(ball.x,ball.y);
+       ctx.save();
+       ctx.setLineDash([5,7]); ctx.strokeStyle='rgba(255,255,255,.28)'; ctx.lineWidth=1.4;
+       ctx.beginPath(); ctx.moveTo(bx,ball.y); ctx.lineTo(ax,ay); ctx.stroke(); ctx.setLineDash([]);
+       const hot=charging&&charge>0.75, col=charging?(hot?'239,68,68':'245,158,11'):'34,211,238';
+       ctx.strokeStyle=`rgba(${col},.95)`; ctx.lineWidth=2.4;
+       ctx.beginPath(); ctx.arc(ax,ay,9,0,7); ctx.stroke();
+       ctx.beginPath(); ctx.moveTo(ax-14,ay); ctx.lineTo(ax-5,ay); ctx.moveTo(ax+5,ay); ctx.lineTo(ax+14,ay);
+       ctx.moveTo(ax,ay-14); ctx.lineTo(ax,ay-5); ctx.moveTo(ax,ay+5); ctx.lineTo(ax,ay+14); ctx.stroke();
+       if(charging){                                     /* power */
+         const pw=120, px0=bx-pw/2, py=ball.y+34;
+         ctx.fillStyle='rgba(6,9,15,.8)'; ctx.fillRect(px0-3,py-3,pw+6,12);
+         ctx.fillStyle='rgba(255,255,255,.14)'; ctx.fillRect(px0,py,pw,6);
+         ctx.fillStyle=`rgba(${col},.95)`; ctx.fillRect(px0,py,pw*charge,6);
+       }
+       ctx.restore();
+     }
+     /* the tally: one mark per kick, filling in as they are taken */
+     const n=Math.max(5,pen.res[0].length,pen.res[1].length), show=Math.min(n,9), from=n-show;
+     const pw2=170+show*17, ph=50, px=W/2-pw2/2, py=FT+8;
+     ctx.save();
+     ctx.fillStyle='rgba(8,11,18,.9)'; ctx.beginPath();
+     if(ctx.roundRect) ctx.roundRect(px,py,pw2,ph,12); else ctx.rect(px,py,pw2,ph);
+     ctx.fill(); ctx.strokeStyle='rgba(34,211,238,.35)'; ctx.lineWidth=1; ctx.stroke();
+     [0,1].forEach(t=>{
+       const y=py+16+t*20, k=kits[t];
+       ctx.fillStyle=k.b; ctx.fillRect(px+12,y-6,9,12);
+       ctx.fillStyle = pen.turn===t&&pen.phase!=='done' ? '#eaf2ff' : 'rgba(234,242,255,.6)';
+       ctx.font="600 11px Sora,sans-serif"; ctx.textAlign='left'; ctx.textBaseline='middle';
+       ctx.fillText((t===0?'You · ':'')+k.n, px+27, y+0.5);
+       for(let i=0;i<show;i++){
+         const v=pen.res[t][from+i], cx=px+pw2-14-(show-1-i)*17;
+         ctx.beginPath(); ctx.arc(cx,y,5.2,0,7);
+         if(v===undefined){ ctx.strokeStyle='rgba(255,255,255,.3)'; ctx.lineWidth=1.3; ctx.stroke(); }
+         else { ctx.fillStyle=v?'rgba(52,211,153,.95)':'rgba(239,68,68,.95)'; ctx.fill(); }
+       }
+     });
+     ctx.restore();
+   }
    function burst(side){
      const cols=['#22d3ee','#6366f1','#ec4899','#f59e0b','#10b981','#ffffff'];
      const ox = side===0 ? W*0.82 : W*0.18;
@@ -1619,7 +1856,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        ctx.restore();
      }
      /* stamina */
-     {
+     if(!pen){
        const bw2=96, bh2=5, bx=14, by=FB+ (H-FB)/2 - bh2/2;
        ctx.fillStyle='rgba(6,9,15,.78)';
        ctx.beginPath();
@@ -1634,7 +1871,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        ctx.textAlign='left'; ctx.fillText(sprinting?'SPRINTING':winded?'RECOVERING':'STAMINA', bx+bw2+9, by+bh2);
      }
      /* where the shot is going, growing with the power */
-     if(charging && charge>0.12){
+     if(!pen && charging && charge>0.12){
        const me=ME();
        if(me && Math.hypot(ball.x-me.x,ball.y-me.y)<PR+BR+20){
          const v=shotVec(ball.x,ball.y,charge,true), L=40+95*charge;
@@ -1669,10 +1906,11 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        ctx.strokeText(n,0,sz*0.04); ctx.fillStyle='#eaf2ff'; ctx.fillText(n,0,sz*0.04);
        ctx.restore(); ctx.globalAlpha=1;
      }
+     if(pen) drawPens();
      /* commentary */
      if(comm && performance.now()<commT){
        ctx.save(); ctx.font="600 15px Sora,sans-serif"; ctx.textAlign='center';
-       const bw=ctx.measureText(comm).width+30, bh=32, bx=W/2-bw/2, by=FT+10;
+       const bw=ctx.measureText(comm).width+30, bh=32, bx=W/2-bw/2, by=FT+10+(pen?62:0);
        const fade=Math.min(1,(commT-performance.now())/260);
        ctx.globalAlpha=0.92*fade; ctx.fillStyle='rgba(8,11,18,.88)';
        ctx.beginPath();
@@ -1755,6 +1993,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    addEventListener('gamepaddisconnected',e=>{ if(padIdx===e.gamepad.index){ padIdx=null; usingPad=false;
      padMag=0; sprinting=false; manSpr=false; } setLegend(); });
    function beginCharge(){ if(!started){ begin(); return; }
+     if(pen){ if(pen.phase==='aim'&&pen.turn===0&&cdT<=0&&!charging){ charging=true; charge=0; } return; }
      if(over||htPause>0||cdT>0||shotCool>0||charging) return;
      charging=true; charge=0; pressT=performance.now(); }
    /* Where a shot goes. Point it roughly at goal and it is guided inside a post,
@@ -1786,6 +2025,10 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      say(shotPower>0.75?'He absolutely leathers it!':shotPower>0.45?'He lets fly!':'Quick shot!',1100);
    }
    function releaseShot(){ if(!charging) return;
+     if(pen){                              /* the kick is taken: run up and strike */
+       if(pen.phase==='aim'&&pen.turn===0){ pen.pw=Math.max(0.1,charge); pen.phase='run'; pen.t=0; }
+       charging=false; charge=0; return;
+     }
      charging=false;
      const me=ME(); if(!me){ charge=0; return; }
      if(performance.now()-pressT < TAP){
@@ -1800,7 +2043,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      if(Math.hypot(ball.x-me.x,ball.y-me.y)<PR+BR+18) strike(me);
    }
    function doPass(){
-     if(over||htPause>0||cdT>0) return;
+     if(pen||over||htPause>0||cdT>0) return;
      const me=ME(); if(!me) return;
      if(Math.hypot(ball.x-me.x,ball.y-me.y)>PR+BR+28) return;
      /* pick the team-mate the player is facing, not just the closest one */
@@ -1843,7 +2086,8 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      charge:()=>beginCharge(), release:()=>releaseShot(), pass:()=>doPass(),
      sprint:(v)=>{manSpr=v;}, pollPad:()=>pollPad(), kits:()=>kits, clubs:()=>CLUBS, icon:k=>kitIcon(k),
      padState:()=>({padIdx,usingPad,padMag,padX,padY}),
-     tune:TUNE, role:()=>myRole.k, setRole:k=>{myRole=ROLES.find(r=>r.k===k)||myRole;buildRoles();reset(true);},
+     tune:TUNE, pen:()=>pen, startPens, pensDecided, setScore:(a,b)=>{score=[a,b];paint();}, setClock:(c,h)=>{clock=c;half=h;},
+     role:()=>myRole.k, setRole:k=>{myRole=ROLES.find(r=>r.k===k)||myRole;buildRoles();reset(true);},
      peek:()=>({hold,winded,aimX,aimY,shotArmed,shotCool,comm,commT,charge,shotPower,stamina,sprinting,manSpr,runT,goalPause,netHit,dribbleLock})};
  })();
 
