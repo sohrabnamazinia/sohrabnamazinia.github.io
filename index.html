@@ -404,7 +404,7 @@ footer p{color:var(--mute);max-width:52ch;margin:0 auto 30px}
  <h2>Let's have <em>fun</em></h2></div></div>
  <div>
   <div class="icetabs" id="icetabs"></div>
-  <div class="ipan on" id="pan-film">
+  <div class="ipan" id="pan-film">
     <div class="miller glass rv">
       <p class="mq">Do you like Sci-Fi?</p>
       <div class="mclocks">
@@ -415,7 +415,7 @@ footer p{color:var(--mute);max-width:52ch;margin:0 auto 30px}
       <p class="note">In <b>Interstellar</b>, one hour on Miller's planet costs seven years on Earth. That is a factor of <b>61,362</b>. So while you have been reading my site, everyone you know has aged rather a lot. It is my favourite film so far, full stop, and the only one that made relativity feel like a love story.</p>
     </div>
   </div>
-  <div class="ipan" id="pan-ball">
+  <div class="ipan on" id="pan-ball">
     <div class="pen glass rv">
       <div class="penhead"><span class="clock" id="penClock">00:00</span><span class="tm" id="penTA"></span><span class="sc" id="penSc">0 : 0</span><span class="tm" id="penTB"></span></div>
       <div class="pitchwrap"><canvas id="pitchCv" tabindex="0" aria-label="Soccer pitch"></canvas>
@@ -812,7 +812,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
  const F=S.fun; if(!F) return;
 
  /* tabs */
- const TABS=[['film','Interstellar','◉'],['ball',"Let's play soccer",'⚽']];
+ const TABS=[['ball',"Let's play soccer",'⚽'],['film','Interstellar','◉']];
  $('#icetabs').innerHTML=TABS.map(([k,l,ic],i)=>
    `<button class="itab ${i===0?'on':''}" data-k="${k}"><i>${ic}</i>${l}</button>`).join('');
  $('#icetabs').querySelectorAll('.itab').forEach(b=>b.onclick=()=>{
