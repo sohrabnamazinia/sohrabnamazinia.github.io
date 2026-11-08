@@ -943,7 +943,8 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      'Fenerbahce':{gk:{n:'Ederson',num:1,s:2,h:HD,st:'short'},df:{n:'\u0160kriniar',num:37,s:0,h:HD,st:'buzz',b:true},fw:{n:'En-Nesyri',num:19,s:3,h:HD,st:'short',b:true},mgr:{n:'Tedesco',s:1,h:HD,st:'short',b:true}},
      'Villarreal':{gk:{n:'Luiz J\u00fanior',num:1,s:5,h:HD,st:'short'},df:{n:'Foyth',num:8,s:1,h:HD,st:'short',b:true},fw:{n:'P\u00e9p\u00e9',num:19,s:6,h:HD,st:'short'},mgr:{n:'Marcelino',s:1,h:HG,st:'short'}},
      'Club Brugge':{gk:{n:'Mignolet',num:22,s:0,h:HB,st:'short'},df:{n:'Mechele',num:44,s:0,h:HB,st:'short'},fw:{n:'Vanaken',num:20,s:0,h:HB,st:'short'},mgr:{n:'Hayen',s:0,h:HB,st:'short'}},
-     'PSV':{gk:{n:'Kov\u00e1\u0159',num:1,s:0,h:HB,st:'short'},df:{n:'Flamingo',num:4,s:3,h:HD,st:'short'},fw:{n:'De Jong',num:9,s:0,h:HB,st:'buzz',b:true},mgr:{n:'Bosz',s:0,h:HG,st:'bald'}}
+     'PSV':{gk:{n:'Kov\u00e1\u0159',num:1,s:0,h:HB,st:'short'},df:{n:'Flamingo',num:4,s:3,h:HD,st:'short'},fw:{n:'De Jong',num:9,s:0,h:HB,st:'buzz',b:true},mgr:{n:'Bosz',s:0,h:HG,st:'bald'}},
+     'Al Nassr':{gk:{n:'Bento',num:1,s:2,h:HD,st:'short'},df:{n:'I\u00f1igo Mart\u00ednez',num:5,s:1,h:HD,st:'short',b:true},fw:{n:'Ronaldo',num:7,s:2,h:HD,st:'short'},mgr:{n:'Jorge Jesus',s:1,h:HG,st:'short'}}
    };
    const fromRoster=r=>({skin:SKIN[r.s], skinL:SKINL[r.s], hair:r.h, sty:r.st, band:!!r.band, beard:!!r.b,
                          boot:BOOT[Math.floor(Math.random()*BOOT.length)], bld:0.96+Math.random()*0.1});
@@ -977,7 +978,8 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      {n:'Fenerbahce',at:79,df:77,b:'#1c3c73',a:'#ffed00',sh:'#f4f4f4',p:'stripe',k2:{b:'#ffed00',a:'#1c3c73',sh:'#1c3c73',p:'solid'}},
      {n:'Villarreal',at:82,df:78,b:'#ffe500',a:'#005187',sh:'#005187',p:'solid',k2:{b:'#0b2a55',a:'#ffe500',sh:'#0b2a55',p:'solid'}},
      {n:'Club Brugge',at:77,df:76,b:'#0a4ea2',a:'#111111',sh:'#111111',p:'stripe',k2:{b:'#f4f4f4',a:'#0a4ea2',sh:'#f4f4f4',p:'solid'}},
-     {n:'PSV',at:83,df:76,b:'#e2001a',a:'#f4f4f4',sh:'#f4f4f4',p:'sleeve',k2:{b:'#101820',a:'#e2001a',sh:'#101820',p:'solid'}}
+     {n:'PSV',at:83,df:76,b:'#e2001a',a:'#f4f4f4',sh:'#f4f4f4',p:'sleeve',k2:{b:'#101820',a:'#e2001a',sh:'#101820',p:'solid'}},
+     {n:'Al Nassr',at:85,df:76,b:'#f9d616',a:'#1e3a8a',sh:'#1e3a8a',p:'solid',k2:{b:'#1e3a8a',a:'#f9d616',sh:'#1e3a8a',p:'solid'}}
    ];
    /* a little shirt in the club's own colours, drawn here rather than a borrowed crest */
    function kitIcon(k){
