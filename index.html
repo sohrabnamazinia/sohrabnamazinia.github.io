@@ -1709,14 +1709,20 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
              const ln=lane(u,0,PR+BR+6);
              toYou = (oneTwo ? uRoom>40 : (uRoom>34 && (uFwd>30 || uRoom>60))) && ln>0 && !(isOff(u,0) && Math.random()<0.85);
              var chipYou = ln===2;
+             /* you are on the shoulder of the last man with grass in front of you: he puts it into that space */
+             var thruYou = null;
+             if(uFwd>20 && !isOff(u,0)){ const sp=spaceAhead(u,0,56);
+               if(sp && laneClear(sp,0,PR+BR+4) && (u.vx*dirFor(0)>0.5 || uRoom<60)) { thruYou=sp; if(!toYou && Math.random()<0.6) toYou=true; } }
            }
            if(toYou){
-             let sx=u.x-ball.x, sy=u.y-ball.y; const sl=Math.hypot(sx,sy)||1; sx/=sl; sy/=sl;
-             const pw=Math.min(9.4,3.9+dU*0.021)*(chipYou?1.12:1);
+             const tgX = thruYou ? thruYou.x+u.vx*6 : u.x, tgY = thruYou ? thruYou.y+u.vy*6 : u.y;
+             let sx=tgX-ball.x, sy=tgY-ball.y; const sl=Math.hypot(sx,sy)||1; sx/=sl; sy/=sl;
+             const pw=Math.min(9.4,3.9+sl*0.021)*(chipYou&&!thruYou?1.12:1)*(thruYou?0.92:1);
              ball.x=p.x+sx*(PR+BR+1); ball.y=p.y+sy*(PR+BR+1);
              ball.vx=sx*pw+(Math.random()-0.5)*0.5; ball.vy=sy*pw+(Math.random()-0.5)*0.5;
              ball.vz=chipYou?4.2:0.6; note(p,'pass'); dribbleLock=6; p.tc=10;   /* chipped over the man in the way */
-             if(chipYou) say('Lifted over him, to you.',900);
+             if(thruYou){ chipYou=false; ball.vz=0.6; say(['Through ball for you!','In behind, run onto it!','Into your path!'][Math.floor(Math.random()*3)],1000); }
+             else if(chipYou) say('Lifted over him, to you.',900);
              else if(dU>W*0.13) say(['Played in to you.','He finds you.','Squared to you.','Yours!','Over to you.']
                                [Math.floor(Math.random()*5)],900);
              p.x-=sx*1.6; p.y-=sy*1.6;
@@ -1868,10 +1874,22 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      }
      return best||{x:bx,y:cy};
    }
+   /* is there grass in front of a runner with nobody from the other side on it? */
+   function spaceAhead(q,team,dist){
+     const dir=dirFor(team), cy=(FT+FB)/2, ax=q.x+dir*dist, ay=q.y+(cy-q.y)*0.12;
+     if(ax<W*0.05||ax>W*0.95) return null;
+     for(const o of players){ if(o.team===team||o.gk||o.team===2) continue; if(Math.hypot(o.x-ax,o.y-ay)<44) return null; }
+     return {x:ax,y:ay};
+   }
    function aiPass(p,to){
      const chip=!!to.chip; to.chip=false;
-     const lx=to.x+to.vx*8-ball.x, ly=to.y+to.vy*8-ball.y, L=Math.hypot(lx,ly)||1, sx=lx/L, sy=ly/L;
-     const pw=Math.min(9.6,3.8+L*0.022)*(1+0.4*F(p.team,'at'))*(chip?1.12:1), err=0.5*Math.max(0.3,1-2*F(p.team,'at'))*wxErr();
+     const dir=dirFor(p.team), sp=spaceAhead(to,p.team,52);
+     /* a through ball: he is ahead of the ball, there is room in front of him, and he is on the move
+        (or the passer just sees it) — so it is played into the space for him to run onto */
+     const through = sp && to.role!=='df' && (to.x-ball.x)*dir>10 && (to.vx*dir>0.5 || Math.random()<0.4);
+     const lx=(through?sp.x+to.vx*5:to.x+to.vx*8)-ball.x, ly=(through?sp.y+to.vy*5:to.y+to.vy*8)-ball.y, L=Math.hypot(lx,ly)||1, sx=lx/L, sy=ly/L;
+     const pw=Math.min(9.6,3.8+L*0.022)*(1+0.4*F(p.team,'at'))*(chip?1.12:1)*(through?0.9:1), err=0.5*Math.max(0.3,1-2*F(p.team,'at'))*wxErr();
+     if(through && p.team===0) say(['Through ball!','Slipped in behind.','Threaded for him.'][Math.floor(Math.random()*3)],900);
      ball.x=p.x+sx*(PR+BR+1); ball.y=p.y+sy*(PR+BR+1);
      ball.vx=sx*pw+(Math.random()-0.5)*err; ball.vy=sy*pw+(Math.random()-0.5)*err; ball.vz=chip?4.2:0.4;
      note(p,'pass'); aimAt={q:to,t:tick}; dribbleLock=Math.max(dribbleLock,6); p.tc=10; p.x-=sx*1.6; p.y-=sy*1.6;
@@ -2993,6 +3011,20 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        ctx.font="500 9px 'IBM Plex Mono',monospace";
        ctx.textAlign='left'; ctx.fillText(sprinting?'SPRINTING':winded?'RECOVERING':'STAMINA', bx+bw2+9, by+bh2);
      }
+     /* where a pass would go: a faint arrow along your aim, and a ring under the man it is for */
+     if(!pen && !charging && hold>0){
+       const me=ME();
+       if(me && !me.gk){ const pl=passPlan(me);
+         if(pl){ const L2=Math.min(pl.L,150), x0=ball.x+pl.ux*14, y0=ball.y+pl.uy*14, x1=ball.x+pl.ux*L2, y1=ball.y+pl.uy*L2;
+           ctx.save(); ctx.setLineDash([3,6]); ctx.lineCap='round'; ctx.strokeStyle='rgba(125,211,252,.55)'; ctx.lineWidth=2;
+           ctx.beginPath(); ctx.moveTo(PJ(x0,y0),y0); ctx.lineTo(PJ(x1,y1),y1); ctx.stroke(); ctx.setLineDash([]);
+           const an=Math.atan2(y1-y0,PJ(x1,y1)-PJ(x0,y0)), hx=PJ(x1,y1);
+           ctx.fillStyle='rgba(125,211,252,.7)'; ctx.beginPath(); ctx.moveTo(hx+Math.cos(an)*6,y1+Math.sin(an)*6);
+           ctx.lineTo(hx+Math.cos(an+2.5)*6,y1+Math.sin(an+2.5)*6); ctx.lineTo(hx+Math.cos(an-2.5)*6,y1+Math.sin(an-2.5)*6); ctx.closePath(); ctx.fill();
+           if(pl.to && pl.kind!=='space'){ const q=pl.to, sc=SC(q.y); ctx.strokeStyle=pl.kind==='through'?'rgba(52,211,153,.8)':'rgba(125,211,252,.7)'; ctx.lineWidth=1.6;
+             ctx.beginPath(); ctx.ellipse(PJ(q.x,q.y),q.y+PR*0.9*sc,PR*1.1*sc,PR*0.45*sc,0,0,7); ctx.stroke(); }
+           ctx.restore(); } }
+     }
      /* where the shot is going, growing with the power */
      if(!pen && charging && charge>0.12){
        const me=ME();
@@ -3129,12 +3161,12 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      const facing=(tgx/gl)*aimX+(tgy/gl)*aimY;
      if(facing>0.45 && gl<W*0.66){
        const iy = Math.abs(aimX)>0.05 ? by+aimY*((gx-bx)/aimX) : gcy;
-       const kp=players.find(p=>p.gk&&p.team===1), ky=kp?kp.y:gcy;
-       const top = iy<gcy-gh*0.18 ? true : iy>gcy+gh*0.18 ? false : ky>gcy;
+       /* it goes where you point: inside a post, at the keeper, or wide if you pull it */
+       const aimTo = Math.max(gTop-gh*0.6, Math.min(gBot+gh*0.6, iy));
        /* guided, not guaranteed: harder and further out means a wider spread, and it can miss */
        const far = 0.65+gl/(W*0.36);
-       const wob = pure ? 0 : (Math.random()-0.5)*gh*(TUNE.wob0+TUNE.wob1*power)*far*Math.max(0.4,1-3*F(0,'at'));
-       const ty=(top?gTop+gh*0.16:gBot-gh*0.16)+wob;
+       const wob = pure ? 0 : (Math.random()-0.5)*gh*(TUNE.wob0+TUNE.wob1*power)*far*Math.max(0.4,1-3*F(0,'at'))*0.8;
+       const ty=aimTo+wob;
        const sx=gx-bx, sy=ty-by, l=Math.hypot(sx,sy)||1;
        return [sx/l,sy/l,true];
      }
@@ -3164,40 +3196,35 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      charge=0; shotArmed=16;
      if(Math.hypot(ball.x-me.x,ball.y-me.y)<PR+BR+18) strike(me);
    }
+   /* Your pass goes where your arrow points. The team-mate it is for is whoever can get to that line
+      soonest: if the line runs right to him it is played to his feet, if it runs in front of him it is a
+      through ball he runs onto, and if nobody is near it, it goes into space for whoever is closest. */
+   function passPlan(me){
+     const ux=aimX, uy=aimY; let to=null, bc=1e9, along0=0, lat0=0;
+     players.forEach(p=>{ if(p.team!==0||p.user||p.gk) return;
+       const rx=p.x+p.vx*6-ball.x, ry=p.y+p.vy*6-ball.y, along=rx*ux+ry*uy; if(along<26) return;
+       const lat=Math.abs(-rx*uy+ry*ux); if(lat>Math.max(80,along*0.55)) return;
+       const cost=lat*1.7+along*0.12; if(cost<bc){ bc=cost; to=p; along0=along; lat0=lat; } });
+     if(!to){                                          /* into space: whoever is nearest chases it */
+       const L=125, sx=ball.x+ux*L, sy=ball.y+uy*L;
+       to=players.filter(p=>p.team===0&&!p.user&&!p.gk).sort((a,b)=>Math.hypot(a.x-sx,a.y-sy)-Math.hypot(b.x-sx,b.y-sy))[0]||null;
+       return to ? {ux,uy,L,kind:'space',to} : null;
+     }
+     if(lat0<14) return {ux,uy,L:along0,kind:'mate',to};
+     /* in front of him: weighted to where he meets it, a little beyond so he runs onto it */
+     return {ux,uy,L:along0+lat0*0.45+18,kind:(ux*dirFor(0)>0.2?'through':'mate'),to};
+   }
    function doPass(){
      if(pen||over||htPause>0||cdT>0) return;
      const me=ME(); if(!me) return;
      { const near=Math.hypot(ball.x-me.x,ball.y-me.y);
        if(!(hold>0 || (lastTouch===0 && near<PR+BR+4) || (restart && restart.taker===me && near<PR+BR+12))) return; }   /* you can only pass a ball you have */
-     /* pick the team-mate the player is facing, not just the closest one */
-     let best=null,bs=-1e9;
-     players.forEach(p=>{ if(p.team!==0||p.user||p.gk) return;
-       const dx=p.x+p.vx*10-me.x, dy=p.y+p.vy*10-me.y, d=Math.hypot(dx,dy)||1;
-       const facing=(dx/d)*aimX+(dy/d)*aimY;
-       const sc2=facing*90 - d*0.22;
-       if(sc2>bs){bs=sc2;best=p;} });
-     if(!best) best=players.find(p=>p.team===0&&!p.user&&!p.gk);
-     if(!best) return;
-     /* The ball goes where you point. Close to a team-mate's line, your direction wins and it is weighted
-        for his run: point ahead of him and it is a through ball he runs onto. Point at empty grass and
-        it is played into that space for whoever is nearest to chase. */
-     const run=(best.vx*(dirFor(0))>0.3)?14:9;
-     const bx=best.x+best.vx*run, by=best.y+best.vy*run;
-     let ux=bx-ball.x, uy=by-ball.y; const dT=Math.hypot(ux,uy)||1; ux/=dT; uy/=dT;
-     const cosA=ux*aimX+uy*aimY; let L=dT, kind='mate';
-     if(cosA>Math.cos(0.75)){
-       ux=ux*0.3+aimX*0.7; uy=uy*0.3+aimY*0.7; const n=Math.hypot(ux,uy)||1; ux/=n; uy/=n;
-       L=Math.max(40,(bx-ball.x)*ux+(by-ball.y)*uy);
-       if(aimX*dirFor(0)>0.45 && (bx-me.x)*dirFor(0)>20 && cosA<0.99){ kind='through'; L+=34; }
-     } else if(cosA<Math.cos(1.2)){
-       ux=aimX; uy=aimY; L=125; kind='space';
-       const sx=ball.x+ux*L, sy=ball.y+uy*L;
-       best=players.filter(p=>p.team===0&&!p.user&&!p.gk).sort((a,b)=>Math.hypot(a.x-sx,a.y-sy)-Math.hypot(b.x-sx,b.y-sy))[0]||best;
-     }
+     const plan=passPlan(me); if(!plan) return;
+     let {ux,uy,L,kind}=plan, best=plan.to;
      const tx=ball.x+ux*L, ty=ball.y+uy*L;
      const chip = lane({x:tx,y:ty},0,PR+BR+2)===2;       /* a man in the way: it goes over him */
      /* weighted to die a little past the spot, not to run the length of the pitch */
-     const roll = kind==='mate' ? 1.6*L+140 : L+130;
+     const roll = kind==='mate' ? 1.6*L+140 : 1.15*L+120;
      const pw=Math.max(3.8,Math.min(8.6,roll/71))*(chip?0.92:1);
      const err=0.35*Math.max(0.3,1-2*F(0,'at'))*wxErr();
      ball.x=me.x+ux*(PR+BR+2); ball.y=me.y+uy*(PR+BR+2);
