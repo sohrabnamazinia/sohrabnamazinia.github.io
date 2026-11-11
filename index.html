@@ -356,6 +356,19 @@ section{padding:84px 0;border-top:1px solid var(--line)}
 .mrb .bar i{display:block;height:100%;border-radius:99px;background:var(--n2)}
 .mrb .bar i+i{background:var(--n3)}
 .mrteams{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px}
+/* goal highlights */
+.hl{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:14px;margin-top:10px;align-items:start}
+.hl canvas{display:block;width:100%;height:auto;border-radius:10px;background:#0b1220;border:1px solid var(--line)}
+.hlls{display:grid;gap:7px}
+.hlr{display:grid;grid-template-columns:auto 1fr auto auto;gap:8px;align-items:center;padding:7px 9px;border:1px solid var(--line);border-radius:10px;
+ font:500 11.6px/1.3 'IBM Plex Mono',monospace;color:var(--mute);background:color-mix(in srgb,var(--ink) 3%,transparent)}
+.hlr.on{border-color:color-mix(in srgb,var(--n2) 60%,transparent);color:var(--ink)}
+.hlr button,.hlall{padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:transparent;color:inherit;font:500 11px/1 Sora;cursor:pointer}
+.hlr button:hover,.hlall:hover{border-color:color-mix(in srgb,var(--n2) 60%,transparent);color:var(--ink)}
+.hlr button:disabled,.hlall:disabled{opacity:.6;cursor:progress}
+.hlall{margin-top:3px;padding:9px 12px;justify-self:start}
+.hlnone{font:500 11.4px/1.3 'IBM Plex Mono',monospace;color:var(--dim);margin-top:8px}
+@media(max-width:640px){.hl{grid-template-columns:1fr}}
 .mrt h5{display:flex;align-items:center;gap:7px;margin:10px 0 2px;font:600 12.4px/1.2 Sora;color:var(--mute)}
 .mrt h5 small{margin-left:auto;font:500 9.6px/1 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
 .mrt h5 small::before{content:'Manager ';opacity:.7}
@@ -1187,7 +1200,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      return true;
    }
    function reset(full){
-     if(full) hideStats();
+     if(full){ hideStats(); hlClear(); }
      lastP=null; lastKind=''; shotLive=null; lastShot=null; passLive=null; feed=null;
      if(full){ pen=null; breakLbl='Half time';
        over=false; score=[0,0]; clock=0; half=1; htPause=0; lastT=0; pickKits(); pickWeather(); buildSquad(); paint(); buildRoles();
@@ -1996,8 +2009,9 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        +bar('Tackles won',R.tot[0].tkl,R.tot[1].tkl)
        +(OFFSIDE?bar('Offsides',R.tot[0].offs,R.tot[1].offs):'')
        +bar('Saves',R.tot[0].saves,R.tot[1].saves)+`</div>`
-       +`<div class="mrk2">Player ratings</div><div class="mrteams">${team(0)}${team(1)}</div>`;
-     el.hidden=false;
+       +`<div class="mrk2">Player ratings</div><div class="mrteams">${team(0)}${team(1)}</div>`
+       +hlHTML();
+     el.hidden=false; hlWire(el);
    }
    function outOfPlay(kind, x, y){
      const fh=FB-FT, gh=goalH();
@@ -2168,7 +2182,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      players.forEach(q=>q.user=false); const me=players.find(q=>q.team===0&&q.role===myRole.k); if(me) me.user=true;
      if(scored){
        score[t]++; burst(t); taker.sq.st.goals++; taker.sq.st.shots++; taker.sq.st.sot++; squad[1-t][0].st.conc++;
-       goalsLog.push({team:t, num:taker.sq.num, role:taker.sq.role, by:taker.sq.team, min:Math.max(1,Math.ceil(clock)), og:false, me:taker.sq.me, as:null, pen:true});
+       goalsLog.push({team:t, num:taker.sq.num, role:taker.sq.role, by:taker.sq.team, min:Math.max(1,Math.ceil(clock)), og:false, me:taker.sq.me, as:null, pen:true}); hlGoal(goalsLog[goalsLog.length-1]);
        msg.textContent = t===0 ? 'Penalty scored.' : 'They score from the spot.'; msg.className='penmsg '+(t===0?'goal':'save');
        mgrMood(t,'joy',120); mgrMood(1-t,'despair',120); goalPause=72;
      } else {
@@ -2444,7 +2458,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
            if(!mine){ st.shots++; st.sot++; } else if(!mine.on){ mine.on=true; st.sot++; }
            if(feed && feed.to===sc && feed.from!==sc){ as=feed.from; as.sq.st.assists++; }
          }
-         goalsLog.push({team, num:sc.sq.num, role:sc.sq.role, by:sc.sq.team, min:Math.max(1,Math.ceil(clock)), og, me:sc.sq.me, as:as?as.sq.num:null});
+         goalsLog.push({team, num:sc.sq.num, role:sc.sq.role, by:sc.sq.team, min:Math.max(1,Math.ceil(clock)), og, me:sc.sq.me, as:as?as.sq.num:null}); hlGoal(goalsLog[goalsLog.length-1]);
        }
        squad[1-team][0].st.conc++;
        shotLive=null; lastShot=null; passLive=null; feed=null;
@@ -3124,7 +3138,125 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      if(st&&!padPrev.start){ reset(true); aim(); }
      padPrev.fire=fire; padPrev.start=st;
    }
-   function loop(){ pollPad(); if(W>=2&&H>=2){ if(started) step(); draw(); } requestAnimationFrame(loop); }
+
+   /* ================= goal highlights =================
+      The last few seconds of play are kept as small frames in a ring. When a goal goes in, that
+      build-up and a couple of seconds of celebration are kept as a clip (JPEG frames). After the
+      match the report shows them: watch them back, or save one goal or the whole reel as a GIF. */
+   const HL_W=400, HL_EVERY=4, HL_PRE=52, HL_POST=34, HL_MS=67;
+   const hl={pool:[], i:0, n:0, f:0, clips:[], pend:null, w:0, h:0, play:null, cur:-1};
+   function hlClear(){ hl.clips=[]; hl.pend=null; hl.i=0; hl.n=0; hlStop(); }
+   function hlBlob(c){ return new Promise(r=>c.toBlob(b=>r(b),'image/jpeg',0.86)); }
+   function hlCap(){
+     if(!started || (over && !hl.pend) || pen && pen.phase && !pen.single) return;
+     if((++hl.f)%HL_EVERY) return;
+     const w=HL_W, h=Math.round(HL_W*H/W);
+     if(w!==hl.w||h!==hl.h){ hl.w=w; hl.h=h; hl.pool=[]; hl.i=0; hl.n=0; }
+     let c=hl.pool[hl.i]; if(!c){ c=document.createElement('canvas'); c.width=w; c.height=h; hl.pool[hl.i]=c; }
+     const g=c.getContext('2d'); g.drawImage(cv,0,0,w,h);
+     hl.i=(hl.i+1)%HL_PRE; hl.n=Math.min(HL_PRE,hl.n+1);
+     if(hl.pend){ hl.pend.frames.push(hlBlob(c)); if(--hl.pend.left<=0) hl.pend=null; }
+   }
+   function hlGoal(g){
+     if(hl.n<4) return;
+     const e=squad[g.by] && squad[g.by].find(x=>x.role===g.role);
+     const clip={g, name:(e&&e.name)||POS[g.role]||'', num:g.num, kit:Object.assign({},kits[g.team]), sk:kits[g.by]?Object.assign({},kits[g.by]):null,
+       teams:[kits[0].n,kits[1].n], score:score.slice(), frames:[], left:HL_POST, w:hl.w, h:hl.h, bm:null};
+     for(let k=0;k<hl.n;k++){ const c=hl.pool[(hl.i-hl.n+k+HL_PRE*2)%HL_PRE]; clip.frames.push(hlBlob(c)); }
+     hl.pend=clip; hl.clips.push(clip);
+   }
+   async function hlBitmaps(clip){
+     if(clip.bm) return clip.bm;
+     const bl=(await Promise.all(clip.frames)).filter(Boolean);
+     const bm=await Promise.all(bl.map(b=>createImageBitmap(b)));
+     if(hl.pend!==clip) clip.bm=bm;                 /* still filming the celebration: do not cache a part */
+     return bm;
+   }
+   function hlLabel(clip){ return clip.g.min+'′ '+clip.name+(clip.g.og?' (own goal)':clip.g.pen?' (pen)':''); }
+   /* a TV-style replay frame: the picture, a REPLAY tag and a strip with the minute, scorer and score */
+   function hlFrame(g,clip,bm,k){
+     const w=clip.w, h=clip.h; g.drawImage(bm[k],0,0,w,h);
+     const s=w/400;
+     g.save(); g.font=`700 ${10*s}px Sora,sans-serif`; g.textBaseline='middle';
+     const tag='REPLAY', tw=g.measureText(tag).width+14*s;
+     g.fillStyle='rgba(8,12,20,.78)'; g.fillRect(8*s,8*s,tw,18*s);
+     g.fillStyle='#ef4444'; g.beginPath(); g.arc(8*s+8*s,17*s,3*s,0,7); g.fill();
+     g.fillStyle='#f8fafc'; g.fillText(tag,8*s+14*s,17.5*s);
+     const bh=24*s, by=h-bh-8*s, k0=clip.kit;
+     g.fillStyle='rgba(8,12,20,.82)'; g.fillRect(8*s,by,w-16*s,bh);
+     g.fillStyle=k0.b; g.fillRect(8*s,by,5*s,bh);
+     g.fillStyle='#f8fafc'; g.font=`700 ${11.5*s}px Sora,sans-serif`;
+     g.fillText('GOAL  '+hlLabel(clip),20*s,by+bh/2+0.5);
+     const sc=`${clip.score[0]} – ${clip.score[1]}`;
+     g.textAlign='right'; g.font=`600 ${11*s}px "IBM Plex Mono",monospace`; g.fillStyle='#cbd5e1';
+     g.fillText(sc,w-16*s,by+bh/2+0.5);
+     g.restore();
+   }
+   function hlStop(){ if(hl.play){ clearTimeout(hl.play); hl.play=null; } }
+   async function hlWatch(list,root){
+     hlStop(); const c=root.querySelector('#hlCv'); if(!c||!list.length) return;
+     const run={}; hl.run=run;
+     const bms=[]; for(const clip of list) bms.push(await hlBitmaps(clip));
+     if(hl.run!==run) return;
+     c.width=list[0].w; c.height=list[0].h; const g=c.getContext('2d');
+     let ci=0, k=0;
+     const tickF=()=>{
+       if(!c.isConnected) return hlStop();
+       const clip=list[ci], bm=bms[ci];
+       root.querySelectorAll('.hlr').forEach(r=>r.classList.toggle('on', +r.dataset.i===hl.clips.indexOf(clip)));
+       if(bm.length) hlFrame(g,clip,bm,k);
+       let d=HL_MS; k++;
+       if(k>=bm.length){ k=0; ci=(ci+1)%list.length; d=900; }
+       hl.play=setTimeout(tickF,d);
+     };
+     tickF();
+   }
+   let gifLib=null;
+   async function hlGif(list,name,btn){
+     const lab=btn.textContent; btn.disabled=true; btn.textContent='Preparing…';
+     try{
+       gifLib = gifLib || await import('https://cdn.jsdelivr.net/npm/gifenc@1.0.3/dist/gifenc.esm.js');
+       const {GIFEncoder,quantize,applyPalette}=gifLib, enc=GIFEncoder();
+       const w=list[0].w, h=list[0].h, oc=document.createElement('canvas'); oc.width=w; oc.height=h;
+       const g=oc.getContext('2d',{willReadFrequently:true});
+       const all=[]; for(const clip of list){ const bm=await hlBitmaps(clip); bm.forEach((_,k)=>all.push([clip,bm,k])); }
+       /* one palette for the whole reel, from a handful of its frames: faster and smaller */
+       const pick=all.filter((_,n)=>n%Math.max(1,Math.floor(all.length/8))===0).slice(0,10), px=w*h*4;
+       const big=new Uint8ClampedArray(px*pick.length);
+       pick.forEach(([clip,bm,k],j)=>{ hlFrame(g,clip,bm,k); big.set(g.getImageData(0,0,w,h).data,j*px); });
+       const pal=quantize(big,256);
+       for(let n=0;n<all.length;n++){
+         const [clip,bm,k]=all[n]; hlFrame(g,clip,bm,k);
+         const idx=applyPalette(g.getImageData(0,0,w,h).data,pal);
+         enc.writeFrame(idx,w,h,n===0?{palette:pal, delay:HL_MS}:{delay:k===bm.length-1?1000:HL_MS});
+         if(n%3===0){ btn.textContent='Saving '+Math.round(n/all.length*100)+'%'; await new Promise(r=>setTimeout(r,0)); }
+       }
+       enc.finish();
+       const url=URL.createObjectURL(new Blob([enc.bytes()],{type:'image/gif'}));
+       const a=document.createElement('a'); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove();
+       setTimeout(()=>URL.revokeObjectURL(url),4000);
+       btn.textContent='Saved';
+       setTimeout(()=>{ btn.textContent=lab; btn.disabled=false; },1600);
+     }catch(err){ console.warn(err); btn.textContent='Could not save'; setTimeout(()=>{ btn.textContent=lab; btn.disabled=false; },2200); }
+   }
+   const slug=t=>String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+   function hlHTML(){
+     if(!hl.clips.length) return `<div class="mrk2">Highlights</div><div class="hlnone">No goals to replay.</div>`;
+     const rows=hl.clips.map((c,i)=>`<div class="hlr" data-i="${i}"><span class="nb" style="background:${c.kit.b};color:${c.kit.t}">${c.num}</span>`
+       +`<span>${hlLabel(c)}</span><button class="hlw" data-i="${i}">Watch</button><button class="hlg" data-i="${i}">GIF</button></div>`).join('');
+     return `<div class="mrk2">Highlights</div><div class="hl"><canvas id="hlCv" aria-label="Goal replays"></canvas>`
+       +`<div class="hlls">${rows}<button class="hlall" id="hlAll">Save highlights to GIF</button></div></div>`;
+   }
+   function hlWire(root){
+     if(!hl.clips.length) return;
+     root.querySelectorAll('.hlw').forEach(b=>b.onclick=()=>hlWatch([hl.clips[+b.dataset.i]],root));
+     root.querySelectorAll('.hlg').forEach(b=>b.onclick=()=>{ const c=hl.clips[+b.dataset.i];
+       hlGif([c],`goal-${c.g.min}-${slug(c.name)||'goal'}.gif`,b); });
+     const all=root.querySelector('#hlAll');
+     if(all) all.onclick=()=>{ const c=hl.clips[0]; hlGif(hl.clips,`highlights-${slug(c.teams[0])}-${score[0]}-${score[1]}-${slug(c.teams[1])}.gif`,all); };
+     hlWatch(hl.clips,root);
+   }
+   function loop(){ pollPad(); if(W>=2&&H>=2){ if(started) step(); draw(); hlCap(); } requestAnimationFrame(loop); }
    cv.addEventListener('pointermove',e=>{
      const r=cv.getBoundingClientRect();
      const ny=e.clientY-r.top, nx=UNPJ(e.clientX-r.left,ny);
