@@ -1711,17 +1711,17 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
              var chipYou = ln===2;
              /* you are on the shoulder of the last man with grass in front of you: he puts it into that space */
              var thruYou = null;
-             if(uFwd>20 && !isOff(u,0)){ const sp=spaceAhead(u,0,56);
-               if(sp && laneClear(sp,0,PR+BR+4) && (u.vx*dirFor(0)>0.5 || uRoom<60)) { thruYou=sp; if(!toYou && Math.random()<0.6) toYou=true; } }
+             if(uFwd>0 && !isOff(u,0)){ const sp=throughSpot(u,0);
+               if(sp && (u.vx*dirFor(0)>0.3 || Math.random()<0.5)){ thruYou=sp; toYou=true; chipYou=sp.chip; } }
            }
            if(toYou){
              const tgX = thruYou ? thruYou.x+u.vx*6 : u.x, tgY = thruYou ? thruYou.y+u.vy*6 : u.y;
              let sx=tgX-ball.x, sy=tgY-ball.y; const sl=Math.hypot(sx,sy)||1; sx/=sl; sy/=sl;
-             const pw=Math.min(9.4,3.9+sl*0.021)*(chipYou&&!thruYou?1.12:1)*(thruYou?0.92:1);
+             const pw=Math.min(9.4,3.9+sl*0.021)*(chipYou?(thruYou?1.08:1.12):1)*(thruYou?0.92:1);
              ball.x=p.x+sx*(PR+BR+1); ball.y=p.y+sy*(PR+BR+1);
              ball.vx=sx*pw+(Math.random()-0.5)*0.5; ball.vy=sy*pw+(Math.random()-0.5)*0.5;
              ball.vz=chipYou?4.2:0.6; note(p,'pass'); dribbleLock=6; p.tc=10;   /* chipped over the man in the way */
-             if(thruYou){ chipYou=false; ball.vz=0.6; say(['Through ball for you!','In behind, run onto it!','Into your path!'][Math.floor(Math.random()*3)],1000); }
+             if(thruYou){ ball.vz=chipYou?4.2:0.6; say(['Through ball for you!','In behind, run onto it!','Into your path!'][Math.floor(Math.random()*3)],1000); }
              else if(chipYou) say('Lifted over him, to you.',900);
              else if(dU>W*0.13) say(['Played in to you.','He finds you.','Squared to you.','Yours!','Over to you.']
                                [Math.floor(Math.random()*5)],900);
@@ -1874,24 +1874,37 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      }
      return best||{x:bx,y:cy};
    }
-   /* is there grass in front of a runner with nobody from the other side on it? */
-   function spaceAhead(q,team,dist){
-     const dir=dirFor(team), cy=(FT+FB)/2, ax=q.x+dir*dist, ay=q.y+(cy-q.y)*0.12;
-     if(ax<W*0.05||ax>W*0.95) return null;
-     for(const o of players){ if(o.team===team||o.gk||o.team===2) continue; if(Math.hypot(o.x-ax,o.y-ay)<44) return null; }
-     return {x:ax,y:ay};
+   /* The space for a through ball: a spot ahead of the runner, behind the men marking him, that he
+      gets to before any of them does, with a lane from the ball (along the ground or over the top). */
+   function throughSpot(q,team){
+     const dir=dirFor(team), their=dir>0?W:0, cy=(FT+FB)/2; let best=null, bs=-1e9;
+     for(const d of [45,70,95,125,160]) for(const lat of [-40,0,40]){
+       const x=q.x+dir*d, y=Math.max(FT+16,Math.min(FB-16,q.y+lat+(cy-q.y)*0.12));
+       if((their-x)*dir < W*0.045) continue;                 /* not over the goal line */
+       const L=Math.hypot(x-ball.x,y-ball.y); if(L<60||L>W*0.55) continue;
+       /* the runner is already moving; a defender facing the ball has to turn and react first */
+       const qx=q.x+q.vx*TUNE.ppace*6, qy=q.y+q.vy*TUNE.ppace*6;
+       const tRun=Math.hypot(x-qx,y-qy)/2.3, tBall=L/4.6, arrive=Math.max(tRun,tBall);
+       let tOpp=1e9; for(const o of players){ if(o.team===team||o.team===2) continue;
+         tOpp=Math.min(tOpp, Math.hypot(o.x-x,o.y-y)/(o.gk?1.9:2.3)+(o.gk?6:12)); }
+       const margin=tOpp-arrive; if(margin<1) continue;
+       const ln=lane({x,y},team,PR+BR+2); if(ln===0) continue;
+       const sc=margin*0.6+d*0.35-(ln===2?8:0);
+       if(sc>bs){ bs=sc; best={x,y,chip:ln===2}; } }
+     return best;
    }
    function aiPass(p,to){
      const chip=!!to.chip; to.chip=false;
-     const dir=dirFor(p.team), sp=spaceAhead(to,p.team,52);
-     /* a through ball: he is ahead of the ball, there is room in front of him, and he is on the move
-        (or the passer just sees it) — so it is played into the space for him to run onto */
-     const through = sp && to.role!=='df' && (to.x-ball.x)*dir>10 && (to.vx*dir>0.5 || Math.random()<0.4);
+     const dir=dirFor(p.team), sp=(to.role!=='df' && (to.x-ball.x)*dir>0) ? throughSpot(to,p.team) : null;
+     /* a through ball: there is space behind the man marking him that he wins the race to,
+        so it is played there for him to run onto */
+     const through = !!sp && (to.vx*dir>0.3 || Math.random()<0.6);
      const lx=(through?sp.x+to.vx*5:to.x+to.vx*8)-ball.x, ly=(through?sp.y+to.vy*5:to.y+to.vy*8)-ball.y, L=Math.hypot(lx,ly)||1, sx=lx/L, sy=ly/L;
-     const pw=Math.min(9.6,3.8+L*0.022)*(1+0.4*F(p.team,'at'))*(chip?1.12:1)*(through?0.9:1), err=0.5*Math.max(0.3,1-2*F(p.team,'at'))*wxErr();
+     const lob = through ? sp.chip : chip;
+     const pw=Math.min(9.6,3.8+L*0.022)*(1+0.4*F(p.team,'at'))*(lob?1.08:1)*(through?0.9:1), err=0.5*Math.max(0.3,1-2*F(p.team,'at'))*wxErr();
      if(through && p.team===0) say(['Through ball!','Slipped in behind.','Threaded for him.'][Math.floor(Math.random()*3)],900);
      ball.x=p.x+sx*(PR+BR+1); ball.y=p.y+sy*(PR+BR+1);
-     ball.vx=sx*pw+(Math.random()-0.5)*err; ball.vy=sy*pw+(Math.random()-0.5)*err; ball.vz=chip?4.2:0.4;
+     ball.vx=sx*pw+(Math.random()-0.5)*err; ball.vy=sy*pw+(Math.random()-0.5)*err; ball.vz=lob?4.2:0.4;
      note(p,'pass'); aimAt={q:to,t:tick}; dribbleLock=Math.max(dribbleLock,6); p.tc=10; p.x-=sx*1.6; p.y-=sy*1.6;
    }
    /* ================= match report =================
@@ -3161,12 +3174,12 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      const facing=(tgx/gl)*aimX+(tgy/gl)*aimY;
      if(facing>0.45 && gl<W*0.66){
        const iy = Math.abs(aimX)>0.05 ? by+aimY*((gx-bx)/aimX) : gcy;
-       /* it goes where you point: inside a post, at the keeper, or wide if you pull it */
-       const aimTo = Math.max(gTop-gh*0.6, Math.min(gBot+gh*0.6, iy));
+       const kp=players.find(p=>p.gk&&p.team===1), ky=kp?kp.y:gcy;
+       const top = iy<gcy-gh*0.18 ? true : iy>gcy+gh*0.18 ? false : ky>gcy;
        /* guided, not guaranteed: harder and further out means a wider spread, and it can miss */
        const far = 0.65+gl/(W*0.36);
-       const wob = pure ? 0 : (Math.random()-0.5)*gh*(TUNE.wob0+TUNE.wob1*power)*far*Math.max(0.4,1-3*F(0,'at'))*0.8;
-       const ty=aimTo+wob;
+       const wob = pure ? 0 : (Math.random()-0.5)*gh*(TUNE.wob0+TUNE.wob1*power)*far*Math.max(0.4,1-3*F(0,'at'));
+       const ty=(top?gTop+gh*0.16:gBot-gh*0.16)+wob;
        const sx=gx-bx, sy=ty-by, l=Math.hypot(sx,sy)||1;
        return [sx/l,sy/l,true];
      }
