@@ -1715,9 +1715,9 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
                if(sp && (u.vx*dirFor(0)>0.3 || Math.random()<0.5)){ thruYou=sp; toYou=true; chipYou=sp.chip; } }
            }
            if(toYou){
-             const tgX = thruYou ? thruYou.x+u.vx*6 : u.x, tgY = thruYou ? thruYou.y+u.vy*6 : u.y;
+             const tgX = thruYou ? thruYou.x : u.x, tgY = thruYou ? thruYou.y : u.y;
              let sx=tgX-ball.x, sy=tgY-ball.y; const sl=Math.hypot(sx,sy)||1; sx/=sl; sy/=sl;
-             const pw=Math.min(9.4,3.9+sl*0.021)*(chipYou?(thruYou?1.08:1.12):1)*(thruYou?0.92:1);
+             const pw=thruYou ? thruYou.pw*(chipYou?0.86:1) : Math.min(9.4,3.9+sl*0.021)*(chipYou?1.12:1);
              ball.x=p.x+sx*(PR+BR+1); ball.y=p.y+sy*(PR+BR+1);
              ball.vx=sx*pw+(Math.random()-0.5)*0.5; ball.vy=sy*pw+(Math.random()-0.5)*0.5;
              ball.vz=chipYou?4.2:0.6; note(p,'pass'); dribbleLock=6; p.tc=10;   /* chipped over the man in the way */
@@ -1876,21 +1876,32 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    }
    /* The space for a through ball: a spot ahead of the runner, behind the men marking him, that he
       gets to before any of them does, with a lane from the ball (along the ground or over the top). */
+   /* a through ball is weighted, not hit: it arrives at the spot rolling slower than the runner,
+      so he catches it up in his stride instead of chasing it out of play */
+   const THRU_VS=1.6;
    function throughSpot(q,team){
      const dir=dirFor(team), their=dir>0?W:0, cy=(FT+FB)/2; let best=null, bs=-1e9;
+     const k=1-Math.pow(0.986,TUNE.pace*wxFric()), fr=1-k;
+     const qx=q.x+q.vx*TUNE.ppace*4, qy=q.y+q.vy*TUNE.ppace*4;
+     const opp=players.filter(o=>o.team!==team&&o.team!==2);
      for(const d of [45,70,95,125,160]) for(const lat of [-40,0,40]){
        const x=q.x+dir*d, y=Math.max(FT+16,Math.min(FB-16,q.y+lat+(cy-q.y)*0.12));
        if((their-x)*dir < W*0.045) continue;                 /* not over the goal line */
        const L=Math.hypot(x-ball.x,y-ball.y); if(L<60||L>W*0.55) continue;
-       /* the runner is already moving; a defender facing the ball has to turn and react first */
-       const qx=q.x+q.vx*TUNE.ppace*6, qy=q.y+q.vy*TUNE.ppace*6;
-       const tRun=Math.hypot(x-qx,y-qy)/2.3, tBall=L/4.6, arrive=Math.max(tRun,tBall);
-       let tOpp=1e9; for(const o of players){ if(o.team===team||o.team===2) continue;
-         tOpp=Math.min(tOpp, Math.hypot(o.x-x,o.y-y)/(o.gk?1.9:2.3)+(o.gk?6:12)); }
-       const margin=tOpp-arrive; if(margin<1) continue;
        const ln=lane({x,y},team,PR+BR+2); if(ln===0) continue;
-       const sc=margin*0.6+d*0.35-(ln===2?8:0);
-       if(sc>bs){ bs=sc; best={x,y,chip:ln===2}; } }
+       /* weighted to roll on gently past the spot: run it forward tick by tick and see who gets to it first */
+       const v0=THRU_VS+k*L/TUNE.pace, ux=(x-ball.x)/L, uy=(y-ball.y)/L;
+       let bx=ball.x, by=ball.y, v=v0, tR=null, tO=1e9;
+       for(let t=1;t<=130;t++){ bx+=ux*v*TUNE.pace; by+=uy*v*TUNE.pace; v*=fr;
+         if(bx<PR||bx>W-PR||by<FT+4||by>FB-4) break;
+         if(tR===null && Math.hypot(bx-qx,by-qy) <= 2.3*(t+4)+PR) tR=t;
+         if(tO===1e9) for(const o of opp){ const re=o.gk?6:12;
+           if(t>re && Math.hypot(bx-o.x,by-o.y) <= (o.gk?1.9:2.3)*(t-re)+PR){ tO=t; break; } }
+         if(tR!==null) break; }
+       if(tR===null || tR<8) continue;                       /* he has to run onto it, not have it at his feet */
+       const margin=tO-tR; if(margin<3) continue;
+       const sc=Math.min(margin,30)*0.6+d*0.35-(ln===2?8:0);
+       if(sc>bs){ bs=sc; best={x,y,chip:ln===2,pw:v0}; } }
      return best;
    }
    function aiPass(p,to){
@@ -1899,9 +1910,9 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      /* a through ball: there is space behind the man marking him that he wins the race to,
         so it is played there for him to run onto */
      const through = !!sp && (to.vx*dir>0.3 || Math.random()<0.6);
-     const lx=(through?sp.x+to.vx*5:to.x+to.vx*8)-ball.x, ly=(through?sp.y+to.vy*5:to.y+to.vy*8)-ball.y, L=Math.hypot(lx,ly)||1, sx=lx/L, sy=ly/L;
+     const lx=(through?sp.x:to.x+to.vx*8)-ball.x, ly=(through?sp.y:to.y+to.vy*8)-ball.y, L=Math.hypot(lx,ly)||1, sx=lx/L, sy=ly/L;
      const lob = through ? sp.chip : chip;
-     const pw=Math.min(9.6,3.8+L*0.022)*(1+0.4*F(p.team,'at'))*(lob?1.08:1)*(through?0.9:1), err=0.5*Math.max(0.3,1-2*F(p.team,'at'))*wxErr();
+     const pw=through ? sp.pw*(lob?0.86:1) : Math.min(9.6,3.8+L*0.022)*(1+0.4*F(p.team,'at'))*(lob?1.08:1), err=0.5*Math.max(0.3,1-2*F(p.team,'at'))*wxErr();
      if(through && p.team===0) say(['Through ball!','Slipped in behind.','Threaded for him.'][Math.floor(Math.random()*3)],900);
      ball.x=p.x+sx*(PR+BR+1); ball.y=p.y+sy*(PR+BR+1);
      ball.vx=sx*pw+(Math.random()-0.5)*err; ball.vy=sy*pw+(Math.random()-0.5)*err; ball.vz=lob?4.2:0.4;
@@ -2449,10 +2460,15 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      goalPause=72;
    }
    function shirtOf(k,bw,bh){
-     const top=-bh*0.42, hgt=bh*0.76, lft=-bw*0.6, wid=bw*1.2;
+     /* an athletic torso: broad at the shoulders, tapering to a narrow waist */
+     const top=-bh*0.62, hgt=bh*0.6, lft=-bw*0.39, wid=bw*0.78, sh=bw*0.39, ws=bw*0.26, bot=top+hgt;
      ctx.save();
      ctx.beginPath();
-     if(ctx.roundRect) ctx.roundRect(lft,top,wid,hgt,[4,4,3,3]); else ctx.rect(lft,top,wid,hgt);
+     ctx.moveTo(-sh*0.55,top); ctx.lineTo(sh*0.55,top);
+     ctx.quadraticCurveTo(sh,top,sh,top+hgt*0.22);
+     ctx.lineTo(ws+0.3,bot-hgt*0.12); ctx.quadraticCurveTo(ws+0.3,bot,ws-1,bot);
+     ctx.lineTo(-ws+1,bot); ctx.quadraticCurveTo(-ws-0.3,bot,-ws-0.3,bot-hgt*0.12);
+     ctx.lineTo(-sh,top+hgt*0.22); ctx.quadraticCurveTo(-sh,top,-sh*0.55,top); ctx.closePath();
      ctx.clip();
      ctx.fillStyle=k.b; ctx.fillRect(lft,top,wid,hgt);
      ctx.fillStyle=k.a;
@@ -2462,7 +2478,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      else if(k.p==='half'){ ctx.fillRect(lft+wid*0.5,top,wid*0.5,hgt); }
      else if(k.p==='sash'){ ctx.save(); ctx.translate(0,top+hgt/2); ctx.rotate(-0.75);
        ctx.fillRect(-wid,-hgt*0.12,wid*2,hgt*0.24); ctx.restore(); }
-     else if(k.p==='sleeve'){ ctx.fillRect(lft,top,wid*0.17,hgt*0.52); ctx.fillRect(lft+wid*0.83,top,wid*0.17,hgt*0.52); }
+     else if(k.p==='sleeve'){ ctx.fillRect(lft,top,wid*0.13,hgt*0.45); ctx.fillRect(lft+wid*0.87,top,wid*0.13,hgt*0.45); }
      const g=ctx.createLinearGradient(lft,top,lft+wid*0.9,top+hgt);
      g.addColorStop(0,'rgba(255,255,255,.22)'); g.addColorStop(0.45,'rgba(255,255,255,0)');
      g.addColorStop(1,'rgba(0,0,0,.46)');
@@ -2683,47 +2699,44 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      ctx.rotate(lean);
      const liftL=Math.max(0,Math.sin(p.step))*amp*0.42, liftR=Math.max(0,-Math.sin(p.step))*amp*0.42;
      ctx.lineCap='round';
-     /* shorts, a bare knee, then socks down to the boot */
+     /* long athletic legs: shorts to mid-thigh, a bare knee, socks down to the boot */
      const sock = p.ref ? '#111418' : (k.b===k.sh ? k.a : k.b);
-     ctx.strokeStyle=p.skin; ctx.lineWidth=2.9;
-     ctx.beginPath(); ctx.moveTo(-2.3+sw*0.5,bh*0.36-liftL*0.4); ctx.lineTo(-2.3+sw*0.62,bh*0.44-liftL*0.6); ctx.stroke();
-     ctx.beginPath(); ctx.moveTo( 2.3-sw*0.5,bh*0.36-liftR*0.4); ctx.lineTo( 2.3-sw*0.62,bh*0.44-liftR*0.6); ctx.stroke();
-     ctx.strokeStyle=sock; ctx.lineWidth=2.9;
-     ctx.beginPath(); ctx.moveTo(-2.3+sw*0.62,bh*0.43-liftL*0.6); ctx.lineTo(-2.3+sw*1.1,bh*0.57-liftL); ctx.stroke();
-     ctx.beginPath(); ctx.moveTo( 2.3-sw*0.62,bh*0.43-liftR*0.6); ctx.lineTo( 2.3-sw*1.1,bh*0.57-liftR); ctx.stroke();
-     ctx.strokeStyle='rgba(0,0,0,.18)'; ctx.lineWidth=1.1;                       /* the shin in shade */
-     ctx.beginPath(); ctx.moveTo( 2.9-sw*0.62,bh*0.45-liftR*0.6); ctx.lineTo( 2.9-sw*1.1,bh*0.56-liftR); ctx.stroke();
-     ctx.strokeStyle=k.sh; ctx.lineWidth=4.4;
-     ctx.beginPath(); ctx.moveTo(-2.3,bh*0.2); ctx.lineTo(-2.3+sw*0.42,bh*0.37-liftL*0.4); ctx.stroke();
-     ctx.beginPath(); ctx.moveTo( 2.3,bh*0.2); ctx.lineTo( 2.3-sw*0.42,bh*0.37-liftR*0.4); ctx.stroke();
-     ctx.strokeStyle='rgba(0,0,0,.2)'; ctx.lineWidth=1.4;
-     ctx.beginPath(); ctx.moveTo( 3.4,bh*0.21); ctx.lineTo( 3.4-sw*0.42,bh*0.36-liftR*0.4); ctx.stroke();
-     ctx.strokeStyle=p.boot; ctx.lineWidth=2.6;
-     ctx.beginPath(); ctx.moveTo(-2.6+sw*1.1,bh*0.58-liftL); ctx.lineTo(-1.1+sw*1.1,bh*0.63-liftL); ctx.stroke();
-     ctx.beginPath(); ctx.moveTo( 2.6-sw*1.1,bh*0.58-liftR); ctx.lineTo( 1.1-sw*1.1,bh*0.63-liftR); ctx.stroke();
+     const hx=1.7, hipY=-bh*0.06, thY=bh*0.14, knY=bh*0.33, ftY=bh*0.6;
+     const leg=(s0,sw0,lift)=>{                /* s0 = side, lift raises the knee and foot */
+       const kx=s0*hx+sw0*0.5, ky=knY-lift*0.5, fx=s0*hx+sw0*1.1, fy=ftY-lift;
+       const tx=s0*hx+sw0*0.36, ty=thY-lift*0.35;
+       ctx.strokeStyle=p.skin; ctx.lineWidth=2.1; ctx.beginPath(); ctx.moveTo(tx,ty); ctx.lineTo(kx,ky); ctx.stroke();
+       ctx.strokeStyle=sock; ctx.lineWidth=1.9; ctx.beginPath(); ctx.moveTo(kx+(fx-kx)*0.18,ky+(fy-ky)*0.18); ctx.lineTo(fx,fy); ctx.stroke();
+       ctx.strokeStyle='rgba(0,0,0,.16)'; ctx.lineWidth=0.8; ctx.beginPath(); ctx.moveTo(kx+0.6,ky+1); ctx.lineTo(fx+0.6,fy-0.5); ctx.stroke();
+       ctx.strokeStyle=k.sh; ctx.lineWidth=3.3; ctx.beginPath(); ctx.moveTo(s0*hx*0.9,hipY); ctx.lineTo(tx,ty); ctx.stroke();
+       ctx.strokeStyle=p.boot; ctx.lineWidth=2.2; ctx.beginPath(); ctx.moveTo(fx+s0*0.3,fy+0.2); ctx.lineTo(fx-s0*1.3,fy+1.3); ctx.stroke(); };
+     leg(-1,sw,liftL); leg(1,-sw,liftR);
+     ctx.strokeStyle='rgba(0,0,0,.2)'; ctx.lineWidth=1;            /* shade down the shorts */
+     ctx.beginPath(); ctx.moveTo(hx*1.5,hipY); ctx.lineTo(hx*1.5-sw*0.3,thY-liftR*0.35); ctx.stroke();
      /* arms pump against the legs, bent at the elbow when he is running */
-     ctx.strokeStyle=p.skin; ctx.lineWidth=2.7; ctx.lineJoin='round';
-     const el=0.25+Math.min(0.4,spd*0.1), aw=sw*0.45;        /* upper arm close to the body, forearm folded up */
-     ctx.beginPath(); ctx.moveTo(-bw*0.5,-bh*0.06); ctx.lineTo(-bw*0.66,bh*0.14-aw*0.5); ctx.lineTo(-bw*0.62+aw*0.8, bh*0.06-aw*0.9-Math.abs(aw)*el); ctx.stroke();
-     ctx.beginPath(); ctx.moveTo( bw*0.5,-bh*0.06); ctx.lineTo( bw*0.66,bh*0.14+aw*0.5); ctx.lineTo( bw*0.62-aw*0.8, bh*0.06+aw*0.9-Math.abs(aw)*el); ctx.stroke();
+     ctx.strokeStyle=p.skin; ctx.lineWidth=1.9; ctx.lineJoin='round';
+     const el=0.25+Math.min(0.4,spd*0.1), aw=sw*0.42, shX=bw*0.35, shY=-bh*0.54;
+     const HL=[-bw*0.42+aw*0.8, -bh*0.08-aw*0.9-Math.abs(aw)*el], HR=[bw*0.42-aw*0.8, -bh*0.08+aw*0.9-Math.abs(aw)*el];
+     ctx.beginPath(); ctx.moveTo(-shX,shY); ctx.lineTo(-bw*0.47,-bh*0.27-aw*0.5); ctx.lineTo(HL[0],HL[1]); ctx.stroke();
+     ctx.beginPath(); ctx.moveTo( shX,shY); ctx.lineTo( bw*0.47,-bh*0.27+aw*0.5); ctx.lineTo(HR[0],HR[1]); ctx.stroke();
      /* short sleeves over the top of the arm */
-     ctx.strokeStyle=(k.p==='sleeve')?k.a:k.b; ctx.lineWidth=3.7; ctx.lineCap='butt';
-     ctx.beginPath(); ctx.moveTo(-bw*0.5,-bh*0.12); ctx.lineTo(-bw*0.6,bh*0.03-aw*0.25); ctx.stroke();
-     ctx.beginPath(); ctx.moveTo( bw*0.5,-bh*0.12); ctx.lineTo( bw*0.6,bh*0.03+aw*0.25); ctx.stroke();
+     ctx.strokeStyle=(k.p==='sleeve')?k.a:k.b; ctx.lineWidth=2.7; ctx.lineCap='butt';
+     ctx.beginPath(); ctx.moveTo(-shX,shY-0.6); ctx.lineTo(-bw*0.44,-bh*0.38-aw*0.25); ctx.stroke();
+     ctx.beginPath(); ctx.moveTo( shX,shY-0.6); ctx.lineTo( bw*0.44,-bh*0.38+aw*0.25); ctx.stroke();
      ctx.lineCap='round';
      if(p.gk){                                       /* gloves */
        ctx.fillStyle='#f4f6fa';
-       ctx.beginPath(); ctx.arc(-bw*0.62+aw*0.8,bh*0.06-aw*0.9-Math.abs(aw)*el,1.9,0,7); ctx.fill();
-       ctx.beginPath(); ctx.arc( bw*0.62-aw*0.8,bh*0.06+aw*0.9-Math.abs(aw)*el,1.9,0,7); ctx.fill();
+       ctx.beginPath(); ctx.arc(HL[0],HL[1],1.7,0,7); ctx.fill();
+       ctx.beginPath(); ctx.arc(HR[0],HR[1],1.7,0,7); ctx.fill();
      }
      shirtOf(k,bw,bh);
-     ctx.strokeStyle=k.a; ctx.lineWidth=1.1; ctx.beginPath(); ctx.arc(0,-bh*0.43,bw*0.2,0.1*Math.PI,0.9*Math.PI); ctx.stroke();   /* the collar */
-     ctx.fillStyle=k.t; ctx.font='700 7.6px Sora,sans-serif'; ctx.textAlign='center';
-     ctx.fillText(p.num,0,bh*0.14);
+     ctx.strokeStyle=k.a; ctx.lineWidth=1; ctx.beginPath(); ctx.arc(0,-bh*0.64,bw*0.14,0.1*Math.PI,0.9*Math.PI); ctx.stroke();   /* the collar */
+     ctx.fillStyle=k.t; ctx.font='700 6px Sora,sans-serif'; ctx.textAlign='center';
+     ctx.fillText(p.num,0,-bh*0.19);
      /* head, lit like a sphere */
-     const hr=PR*0.46*p.bld, hy=-bh*0.68;
-     ctx.fillStyle=p.skin; ctx.fillRect(-hr*0.36,hy+hr*0.6,hr*0.72,hr*0.55);       /* neck */
-     ctx.fillStyle='rgba(0,0,0,.2)'; ctx.fillRect(-hr*0.36,hy+hr*0.6,hr*0.72,hr*0.2);
+     const hr=PR*0.33*p.bld, hy=-bh*0.62-hr*1.12;
+     ctx.fillStyle=p.skin; ctx.fillRect(-hr*0.32,hy+hr*0.6,hr*0.64,hr*0.75);       /* neck */
+     ctx.fillStyle='rgba(0,0,0,.2)'; ctx.fillRect(-hr*0.32,hy+hr*0.6,hr*0.64,hr*0.25);
      const hg=ctx.createRadialGradient(-hr*0.35,hy-hr*0.4,hr*0.15,0,hy,hr*1.1);
      hg.addColorStop(0,p.skinL); hg.addColorStop(1,p.skin);
      ctx.beginPath(); ctx.arc(0,hy,hr,0,7); ctx.fillStyle=hg; ctx.fill();
@@ -2947,7 +2960,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      if((nameUntil && performance.now()<nameUntil) || cdT>0){        /* who is who */
        const fade = cdT>0 ? 1 : Math.min(1,(nameUntil-performance.now())/600);
        ctx.save(); ctx.globalAlpha=0.92*fade; ctx.font='600 8.5px Sora,sans-serif'; ctx.textAlign='center';
-       players.forEach(p=>{ const nm=(p.sq&&p.sq.name)||POS[p.role]; const x=PJ(p.x,p.y), y=p.y-PR*1.45*p.bld*0.68*SC(p.y)-13;
+       players.forEach(p=>{ const nm=(p.sq&&p.sq.name)||POS[p.role]; const x=PJ(p.x,p.y), y=p.y-PR*1.45*p.bld*0.92*SC(p.y)-12;
          const w=ctx.measureText(nm).width+10;
          ctx.fillStyle='rgba(6,9,15,.78)'; ctx.beginPath(); if(ctx.roundRect) ctx.roundRect(x-w/2,y-8,w,12,4); else ctx.rect(x-w/2,y-8,w,12); ctx.fill();
          ctx.fillStyle=p.user?'#5eead4':'#eaeef7'; ctx.fillText(nm,x,y+1.5); });
