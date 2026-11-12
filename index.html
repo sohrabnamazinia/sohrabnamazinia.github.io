@@ -348,6 +348,10 @@ section{padding:84px 0;border-top:1px solid var(--line)}
  border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:transparent;transition:.2s}
 .rolepick button:hover{color:var(--ink);border-color:color-mix(in srgb,var(--n2) 45%,transparent)}
 .rolepick button small{display:block;margin-top:3px;font:500 9px/1 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.rolepick button .ab{display:grid;grid-template-columns:auto auto;gap:3px 9px;margin-top:6px;font:500 8.6px/1 'IBM Plex Mono',monospace;letter-spacing:.06em;color:var(--dim);text-align:left}
+.rolepick button .ab b{font-weight:600;color:var(--mute);margin-left:2px}
+.rolepick button .ab .hi b{color:var(--n2)}
+.rolepick button.on .ab b{color:var(--ink)}.rolepick button.on .ab .hi b{color:var(--n2)}
 .rolepick button.on{color:var(--ink);border-color:color-mix(in srgb,var(--n2) 70%,transparent);
  background:color-mix(in srgb,var(--n2) 20%,transparent)}
 .penfoot{display:flex;gap:9px;align-items:center;margin-top:12px;flex-wrap:wrap}
@@ -1237,6 +1241,21 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    /* How far a side is from average (84), as a multiplier nudge. It is curved, not linear:
       a club a long way from the middle is pulled further than its points alone would say. */
    const F=(t,k)=>{ const d=(((kits[t]&&kits[t][k])||84)-84)/100; return TUNE.gain*d*(1+Math.abs(d)*TUNE.curve); };
+   /* What each man can do, out of 99: winning the ball, pace, shooting, and keeping it at his feet.
+      His position sets the base (a defender wins it, a forward finishes), his club's attack and defence
+      move it, and he has a quirk of his own. A() is how far he is from the usual man in his position, on
+      the same curve as F(); RB() is how far that position is from an ordinary outfielder. */
+   const ABASE={gk:{def:80,spd:62,sho:45,dri:52}, df:{def:87,spd:80,sho:60,dri:64}, mf:{def:72,spd:78,sho:76,dri:80}, fw:{def:50,spd:84,sho:87,dri:83}};
+   const ABK=['def','spd','sho','dri'], ABN={def:'DEF',spd:'SPD',sho:'SHO',dri:'DRI'};
+   function setAb(){ squad.forEach((sq,t)=>sq.forEach(e=>{ const k=kits[t]||{}, at=(k.at||84)-84, df=(k.df||84)-84, b=ABASE[e.role]; if(!b) return;
+       let h=7; const id=(e.name||'')+e.role+(k.n||''); for(let i=0;i<id.length;i++) h=(h*31+id.charCodeAt(i))>>>0;
+       const q=i=>((h>>>(i*5))%5)-2, cl=v=>Math.max(30,Math.min(99,Math.round(v)));       /* his own quirk: two points either way */
+       e.ab={def:cl(b.def+df+q(0)), spd:cl(b.spd+(at+df)*0.3+q(1)), sho:cl(b.sho+at+q(2)), dri:cl(b.dri+at*0.8+q(3))}; })); }
+   const A=(p,k)=>{ const e=p&&p.sq; if(!e||!e.ab||!ABASE[e.role]) return 0; const d=(e.ab[k]-ABASE[e.role][k])/100; return TUNE.gain*d*(1+Math.abs(d)*TUNE.curve); };
+   const RB=(p,k)=>{ const e=p&&p.sq; return e&&ABASE[e.role] ? (ABASE[e.role][k]-75)/100 : 0; };
+   const abv=(p,k)=>{ const e=p&&p.sq; return e&&e.ab ? e.ab[k] : 78; };
+   const dribT=p=>Math.max(0.85,1+(abv(p,'dri')-78)*0.01);     /* how sharply he turns with it at his feet */
+   const edge=p=>p.team===1;                                    /* the side you play against is sharper than your own AI */
    const prep=k=>Object.assign({},k,{t:lum(k.b)>0.55?'#1b2232':'rgba(255,255,255,.92)'});
    /* The conditions for the match: shown in the header, felt on the pitch. Rain makes the ball skid
       and passes stray; snow slows it; heat or cold wears legs out faster; night means floodlights. */
@@ -1296,6 +1315,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        return {team:t, role:r, look:ro?fromRoster(ro):newLook(), name:ro?ro.n:null,
                num:ro?ro.num:NUMS[r][Math.floor(Math.random()*NUMS[r].length)], st:blank(), me:t===0&&r===myRole.k, rating:6}; }));
      mgr.forEach((m,t)=>{ const ro=(ROSTER[(kits[t]||{}).n]||{}).mgr; m.look=ro||null; });
+     setAb();
      poss=[0,0]; goalsLog=[]; tick=0;
    }
    const mk=(x,y,team,user,e)=>Object.assign({x,y,vx:0,vy:0,team,user,hx:x,hy:y,step:Math.random()*6,num:e.num,sq:e,sta:e.sta===undefined?1:e.sta,fat:e.fat||0},e.look);
@@ -1361,7 +1381,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    const TAP=150;
    const TUNE={antic:0.5, dive:3.5, wob0:0.3, wob1:0.42, tackle:0.7, gkRead:0.3, gkMe:5, gkDive:3.0, sway0:4, sway1:18, rush:3.5, lunge:5.6, claim:7,
      aiAim:0.4, aiPow:12, myErr:0.46, myLag:0.07, myAntic:0.55, myDive:0.94, mySp:2.5, myParryV:7, myParryP:0.5,
-     tackleDf:0.88, dfSp:4.3, jockMin:22, jockMax:58, kErr:0.18, kLag:0.12, kAntic:1.3, kDive:1.25, kPos:0.45, kAcc:0.7, myPos:0.7, myAcc:0.5, gkAim:0.2, gkPow:9.8, mateAim:0.3, matePow:9.8, aiTackle:0.22, carry:0.86, pressSp:4.0, pace:0.9, ppace:0.7, gpace:0.8, meJog:3.5, meSprint:4.2, aiAcc:0.75, settle:40, cover:0.6, readPass:8, reachDf:4, foul:0.14, slideLen:14, slideSp:6.2, outPause:90, outDist:76, cardT:110, stDrain:0.0038, stRegen:0.0035, fatDist:15000, aiDrain:0.0009, aiRegen:0.003, gain:2.8, curve:6};   /* balance knobs */                         /* under this and it is a pass, over it a shot */
+     tackleDf:0.88, dfSp:4.3, jockMin:22, jockMax:58, kErr:0.18, kLag:0.12, kAntic:1.3, kDive:1.25, kPos:0.45, kAcc:0.7, myPos:0.7, myAcc:0.5, gkAim:0.2, gkPow:9.8, mateAim:0.3, matePow:9.8, aiTackle:0.22, carry:0.86, pressSp:4.0, pace:0.9, ppace:0.7, gpace:0.8, meJog:3.5, meSprint:4.2, aiAcc:0.75, settle:40, cover:0.6, readPass:8, reachDf:4, foul:0.14, slideLen:14, slideSp:6.2, outPause:90, outDist:76, cardT:110, stDrain:0.0038, stRegen:0.0035, fatDist:15000, aiDrain:0.0009, aiRegen:0.003, gain:2.8, curve:6, oTk:1.05, oPress:1.05, oSup:1.12, oRange:1.06, oBlk:1.3, oMix:0.14, oAim:0.75, oSide:0.34, drW:0.5};   /* balance knobs */                         /* under this and it is a pass, over it a shot */
    const ROLES=[{k:'gk',n:'Goalkeeper',sp:0.95,shot:1.0, pass:1.08},
                 {k:'df',n:'Defender',  sp:1.04,shot:0.97,pass:1.12},
                 {k:'mf',n:'Midfielder',sp:1.02,shot:1.02,pass:1.16},
@@ -1600,11 +1620,12 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
          const canSprint = sprinting;
          /* tired legs show before the tank is empty: the sprint fades below 40%, the jog below 25% */
          const legs = (canSprint ? 0.62+0.38*Math.min(1,stamina/0.4) : 0.7+0.3*Math.min(1,stamina/0.25));
-         sp = (canSprint ? TUNE.meSprint : TUNE.meJog)*myRole.sp*(hold>0?TUNE.carry:1)*(1-0.14*fatigue)*legs;   /* slower with the ball, and as the match wears on */
+         const abSp=1+(abv(p,'spd')-(ABASE[p.role]||ABASE.mf).spd)*0.005, abDr=1+(abv(p,'dri')-78)*0.004;   /* your man's own pace, and how well the ball sticks to him */
+         sp = (canSprint ? TUNE.meSprint : TUNE.meJog)*myRole.sp*abSp*(hold>0?TUNE.carry*abDr:1)*(1-0.14*fatigue)*legs;   /* slower with the ball, and as the match wears on */
          /* it only comes back when the legs are resting: a jog holds it, a sprint burns it */
          const moving=Math.hypot(p.vx,p.vy)*TUNE.ppace, idle=moving<1.1;
          const drain=TUNE.stDrain*(1+0.5*fatigue)*wxTire(), regen=idle ? TUNE.stRegen*(1-0.45*fatigue) : (moving<1.6 ? TUNE.stRegen*0.25 : 0);
-         const accel = (canSprint ? 0.92 : 0.74)*myRole.sp;
+         const accel = (canSprint ? 0.92 : 0.74)*myRole.sp*(hold>0?dribT(p):1);
          if(usingPad&&padMag>0){
            aimX=padX; aimY=padY;
            const target=sp*padMag;
@@ -1703,12 +1724,12 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
            /* a pass is on its way: he steps into its path if it is coming his way */
            if(passLive && passLive.p.team!==p.team){ const ax2=ball.x+ball.vx*TUNE.pace*8, ay2=ball.y+ball.vy*TUNE.pace*8;
              if(Math.hypot(ax2-p.x,ay2-p.y)<70){ tx=ax2; ty=ay2; } }
-           sp=TUNE.dfSp*(1+0.8*F(p.team,'df'));
+           sp=TUNE.dfSp*(1+0.8*F(p.team,'df'))*(edge(p)?TUNE.oPress:1);
          } else if(p===closest[p.team] && (!held[p.team] || holder[p.team]===p)){   /* the man on the ball stays on it */
            /* a pass in the air is read early: he goes where it is going, not where it is */
            const lead = (passLive && passLive.p.team!==p.team) ? TUNE.readPass : 0.9;
            tx=ball.x+ball.vx*TUNE.pace*lead-dir*PR; ty=ball.y+ball.vy*TUNE.pace*lead;
-           sp = TUNE.pressSp * (p.role==='fw'?1.05:p.role==='df'?0.97:1) * (1+0.8*F(p.team, p.role==='fw'?'at':'df'));
+           sp = TUNE.pressSp * (p.role==='fw'?1.05:p.role==='df'?0.97:1) * (1+0.8*F(p.team, p.role==='fw'?'at':'df')) * (edge(p)?TUNE.oPress:1);
          } else if(restart && restart.short===p){
            /* a throw or a free kick: one man comes short so there is always a ball on */
            /* inside the ring the other side has to keep, so the ball reaches him first */
@@ -1717,7 +1738,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
            tx=Math.max(PR,Math.min(W-PR,ox)); ty=Math.max(FT+PR,Math.min(FB-PR,oy)); sp=3.8;
          } else if(held[p.team]){
            /* his side has it: he goes looking for a free spot to take a pass */
-           const spot=supportSpot(p); tx=spot.x; ty=spot.y; sp=p.role==='df'?2.5:2.9;
+           const spot=supportSpot(p); tx=spot.x; ty=spot.y; sp=(p.role==='df'?2.5:2.9)*(edge(p)?TUNE.oSup:1);
          } else if(p.role==='mf' && lastTouch===1-p.team){
            /* they have it and someone else is on the ball: the midfielder screens, goal-side of their
               most advanced free man and in the lane to him */
@@ -1734,6 +1755,10 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
            sp = 3.2 * (p.role==='df'?0.95:1);
          }
        }
+       /* he watches the line: off the ball he does not drift past the last defender, and caught beyond it he comes back */
+       if(OFFSIDE && !p.user && !p.gk && p.team<2 && tx!==undefined && !(aimAt&&aimAt.q===p&&tick-aimAt.t<80) && p!==closest[p.team]
+          && p!==holder[p.team] && !(p.mt&&p.role==='fw')){
+         const lu=offLine(p.team)-6/W; if(prog(tx,p.team)>lu) tx = dirFor(p.team)>0 ? lu*W : W-lu*W; }
        /* at a restart the other side stays back until it is taken */
        if(restart && !p.user && p.team!==restart.team){ const rx=p.x-ball.x, ry=p.y-ball.y, rd=Math.hypot(rx,ry)||1;
          if(rd<TUNE.outDist+8){ tx=ball.x+rx/rd*(TUNE.outDist+14); ty=ball.y+ry/rd*(TUNE.outDist+14); } }
@@ -1744,9 +1769,9 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
          const v0=Math.hypot(p.vx,p.vy);
          if(v0>sp*0.6) p.sta=Math.max(0,p.sta-TUNE.aiDrain*(1+0.5*p.fat)); else p.sta=Math.min(1,p.sta+TUNE.aiRegen*(1-0.4*p.fat));
          p.fat=Math.min(1,p.fat+v0*TUNE.ppace/TUNE.fatDist); p.sq.sta=p.sta; p.sq.fat=p.fat;
-         sp*=(0.78+0.22*p.sta)*(1-0.1*p.fat);
+         sp*=(0.78+0.22*p.sta)*(1-0.1*p.fat)*(1+(abv(p,'spd')-80)*0.005);   /* and some men are simply quicker */
        }
-       if(d>2){ const ac=p.user?(sprinting?0.92:0.74)*myRole.sp:(p.gk&&p.dive?(p.team===1?TUNE.kAcc:TUNE.myAcc):TUNE.aiAcc);
+       if(d>2){ const ac=p.user?(sprinting?0.92:0.74)*myRole.sp*(hold>0?dribT(p):1):(p.gk&&p.dive?(p.team===1?TUNE.kAcc:TUNE.myAcc):TUNE.aiAcc);
          p.vx+=(dx/d)*ac; p.vy+=(dy/d)*ac; }
        const v=Math.hypot(p.vx,p.vy); if(v>sp){p.vx*=sp/v;p.vy*=sp/v;}
        p.vx*=0.88; p.vy*=0.88; { const pm=p.gk?TUNE.gpace:TUNE.ppace; p.x+=p.vx*pm; p.y+=p.vy*pm; }   /* outfield players run at ppace, keepers (and the ball) at pace: a pass outruns a man, a keeper still reaches a shot */
@@ -1893,9 +1918,9 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
              const u2=ME(), uv=u2?Math.hypot(u2.vx,u2.vy):0;
              let into=0;
              if(u2 && uv>0.4){ const tx3=p.x-u2.x, ty3=p.y-u2.y, tl=Math.hypot(tx3,ty3)||1; into=Math.max(0,(u2.vx*tx3+u2.vy*ty3)/(uv*tl)); }
-             const pt=Math.min(0.9,(p.role==='df'?TUNE.tackleDf:TUNE.tackle)*(0.72+0.45*into)*(1+3*F(1,'df')-1.5*F(0,'at')));
+             const pt=Math.min(0.93,(p.role==='df'?TUNE.tackleDf:TUNE.tackle)*(0.72+0.45*into)*(1+3*A(p,'def')-1.5*A(u2,'dri')-TUNE.drW*RB(u2,'dri'))*TUNE.oTk);   /* his defending against your dribbling */
              if(Math.random()>pt){
-               if(Math.random()<TUNE.foul*(1-F(1,'df'))){ p.tc=30; p.vx*=0.2; p.vy*=0.2; foulBy(p, u2.x, u2.y, 'tackle'); return; }
+               if(Math.random()<TUNE.foul*(1-A(p,'def'))){ p.tc=30; p.vx*=0.2; p.vy*=0.2; foulBy(p, u2.x, u2.y, 'tackle'); return; }
                p.tc=p.role==='df'?14:16; p.vx*=-0.5; p.vy*=-0.5;
                { const u=ME(); if(u) u.sq.st.drib++; }      /* you beat your man */
                if(Math.random()<0.3) say(['Skips past him.','Rides the challenge.','Too quick for him.'][Math.floor(Math.random()*3)],800);
@@ -1905,7 +1930,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
            }
            /* one AI man on another: a tackle has to be won here too, by the better side more often */
            if(lastP && lastP!==p && lastP.team!==p.team && !lastP.user && !lastP.gk && lastKind==='carry' && tick-lastPT<6){
-             const pt=TUNE.aiTackle*(1+3*F(p.team,'df')-1.5*F(lastP.team,'at'));
+             const pt=TUNE.aiTackle*(1+1.5*RB(p,'def'))*(1+3*A(p,'def')-1.5*A(lastP,'dri')-TUNE.drW*RB(lastP,'dri'))*(edge(p)?TUNE.oTk:1);   /* a defender wins far more of these than a forward */
              if(Math.random()>pt){ p.tc=20; p.vx*=-0.5; p.vy*=-0.5; return; }
            }
            /* the AI strikes toward goal instead of bundling it anywhere */
@@ -1947,18 +1972,19 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
              return;
            }
            /* a forward shoots when he sees goal, a midfielder shoots or picks a pass, a defender passes */
-           const range = p.role==='fw' ? 0.48 : p.role==='mf' ? 0.4 : 0.2;
+           const og = edge(p);                                   /* they go for goal when they see it */
+           const range = (p.role==='fw' ? 0.48 : p.role==='mf' ? 0.4 : 0.2)*(og?TUNE.oRange:1);
            const near = al < W*range, str = p.team===1 ? 1 : 0.9;
            let pressD=1e9; players.forEach(q=>{ if(q.team!==p.team&&!q.gk) pressD=Math.min(pressD,Math.hypot(q.x-p.x,q.y-p.y)); });
            const press = pressD<50, tight = pressD<32;
            const blocked = near && !laneClear({x:gx,y:gy},p.team);
            let shoot=false;
            if(near){
-             if(p.role==='fw') shoot = !blocked || Math.random()<0.45;
+             if(p.role==='fw') shoot = !blocked || Math.random()<0.45*(og?TUNE.oBlk:1);
              else if(p.role==='mf'){
                const m=openMate(p,false), better = m && (m.x-ball.x)*dirFor(p.team)>40;
-               if(better && Math.random()<(blocked?0.6:0.4)){ aiPass(p,m); return; }
-               shoot = !blocked || Math.random()<0.3;
+               if(better && Math.random()<(blocked?0.6:0.4)*(og?0.65:1)){ aiPass(p,m); return; }
+               shoot = !blocked || Math.random()<0.3*(og?TUNE.oBlk:1);
              }
              else shoot = !blocked;
            }
@@ -1967,22 +1993,23 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
              if(wants){ const m=openMate(p, tight); if(m){ aiPass(p,m); return; } }
              if(!tight){                              /* knocks it on and runs after it */
                ball.x=Math.max(BR+2,Math.min(W-BR-2,p.x+ax*(PR+BR+2))); ball.y=Math.max(FT+BR+3,Math.min(FB-BR-3,p.y+ay*(PR+BR+2)));
-               ball.vx=ax*(2.2+pv*0.8); ball.vy=ay*(2.2+pv*0.8);
+               { const kv=(2.2+pv*0.8)*(1+(abv(p,'dri')-78)*0.004); ball.vx=ax*kv; ball.vy=ay*kv; }
                note(p,'carry'); p.tc=3;
                return;
              }
              if(!near){ const m=openMate(p,true); if(m){ aiPass(p,m); return; } }   /* hemmed in: anything, even a ball back */
            }
            const sharp = p.team===1 && myRole.k!=='gk';   /* against your AI keeper they hit it harder and pick a side */
-           const power = (near ? (p.team===0?TUNE.matePow:sharp?TUNE.aiPow:TUNE.gkPow)*(1+0.6*F(p.team,'at')) : 4.6)*str;
+           const power = (near ? (p.team===0?TUNE.matePow:sharp?TUNE.aiPow:TUNE.gkPow)*(1+0.6*A(p,'sho'))*(1+0.25*RB(p,'sho')) : 4.6)*str;
            if(near){                                   /* a finisher picks a side, away from the keeper */
              const kp=players.find(q=>q.gk&&q.team!==p.team), sgn=kp&&kp.y>gy?-1:1;
-             const side = p.team===0 ? TUNE.mateAim : sharp ? TUNE.aiAim : TUNE.gkAim;   /* with you in goal they are less ruthless */
+             const side = p.team===0 ? TUNE.mateAim : sharp ? TUNE.oSide : TUNE.gkAim;   /* with you in goal they are less ruthless */
              ax=gx-ball.x; ay=gy+sgn*gh*side-ball.y; const l2=Math.hypot(ax,ay)||1; ax/=l2; ay/=l2;
            }
-           let sx=ax*0.7+ux*0.3, sy=ay*0.7+uy*0.3;
+           const mix = near&&og ? TUNE.oMix : 0.3;              /* how much of it goes where he happens to be facing */
+           let sx=ax*(1-mix)+ux*mix, sy=ay*(1-mix)+uy*mix;
            const sl=Math.hypot(sx,sy)||1; sx/=sl; sy/=sl;
-           const aim = 0.1*Math.max(0.35,1-3*F(p.team,'at'));        /* a little inaccuracy */
+           const aim = 0.1*Math.max(0.35,1-3*A(p,'sho'))*(1-1.2*RB(p,'sho'))*(og?TUNE.oAim:1);        /* a little inaccuracy */
            ball.x=p.x+sx*(PR+BR+0.5); ball.y=p.y+sy*(PR+BR+0.5);
            ball.vx=sx*power+(Math.random()-0.5)*power*aim;
            ball.vy=sy*power+(Math.random()-0.5)*power*aim;
@@ -2048,7 +2075,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      const dir=dirFor(p.team), their=dir>0?W:0; let best=null, bs=-1e9;
      players.forEach(q=>{ if(q.team!==p.team||q===p||q.gk||(q.user&&p.team===0)) return;
        const d=Math.hypot(q.x-ball.x,q.y-ball.y); if(d<55||d>Math.min(W*0.5,370)) return;   /* no hopeful long balls on a big pitch */
-       if(isOff(q,p.team) && Math.random()<0.88) return;   /* he sees the flag coming, nearly always */
+       if(isOff(q,p.team) && Math.random()<0.96) return;   /* he sees the flag coming, nearly always */
        if(!any && (q.x-ball.x)*dir<-30) return;          /* a ball back only when there is nothing else */
        let room=1e9;
        players.forEach(o=>{ if(o.team===p.team||o.gk) return; room=Math.min(room,Math.hypot(o.x-q.x,o.y-q.y)); });
@@ -2074,7 +2101,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      if(p.role==='df' && Math.abs(bx-(W-their))<W*0.14) bx=(W-their)+dir*W*0.14;
      /* everyone keeps to his own band: the defender behind, the midfielder in the middle, the forward high */
      const band={df:[0.06,0.5],mf:[0.24,0.8],fw:[0.44,0.93]}[p.role]||[0,1];
-     if(!(tick<(p.mtT||0))){ p.mt=Math.random()<0.14; p.mtT=tick+110; }   /* now and then a runner goes too early */
+     if(!(tick<(p.mtT||0))){ p.mt=Math.random()<0.05; p.mtT=tick+110; }   /* now and then a runner goes too early */
      const toX=u=>dir>0?u*W:W-u*W, lineU = OFFSIDE ? offLine(p.team)+(p.mt&&p.role==='fw'?0.04:-10/W) : 1;
      bx=toX(Math.max(band[0],Math.min(band[1],prog(bx,p.team))));
      let best=null, bs=-1e9;
@@ -3491,7 +3518,9 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      const el=$('#rolePick'); if(!el) return;
      el.innerHTML='<span class="rl">You play</span>'+ROLES.filter(r=>LINEUP.includes(r.k)).map(r=>{
        const e=squad[0]&&squad[0].find(q=>q.role===r.k);
-       return `<button type="button" data-r="${r.k}" class="${r.k===myRole.k?'on':''}">${r.n}${e&&e.name?`<small>${e.name}</small>`:''}</button>`; }).join('');
+       const top=e&&e.ab ? Math.max(...ABK.map(k=>e.ab[k])) : 0;
+       const ab=e&&e.ab ? '<span class="ab">'+ABK.map(k=>`<span class="${e.ab[k]===top?'hi':''}">${ABN[k]}<b>${e.ab[k]}</b></span>`).join('')+'</span>' : '';
+       return `<button type="button" data-r="${r.k}" class="${r.k===myRole.k?'on':''}" title="Defense, speed, shoot and dribble, out of 99">${r.n}${e&&e.name?`<small>${e.name}</small>`:''}${ab}</button>`; }).join('');
      el.querySelectorAll('button').forEach(b=>b.onclick=()=>{
        myRole=ROLES.find(r=>r.k===b.dataset.r)||myRole;
        try{ localStorage.setItem('pitchRole',myRole.k); }catch(e){}
@@ -3528,7 +3557,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        const top = iy<gcy-gh*0.18 ? true : iy>gcy+gh*0.18 ? false : ky>gcy;
        /* guided, not guaranteed: harder and further out means a wider spread, and it can miss */
        const far = 0.65+gl/(W*0.36);
-       const wob = pure ? 0 : (Math.random()-0.5)*gh*(TUNE.wob0+TUNE.wob1*power)*far*Math.max(0.4,1-3*F(0,'at'));
+       const wob = pure ? 0 : (Math.random()-0.5)*gh*(TUNE.wob0+TUNE.wob1*power)*far*Math.max(0.4,1-3*A(ME(),'sho'));
        const ty=(top?gTop+gh*0.16:gBot-gh*0.16)+wob;
        const sx=gx-bx, sy=ty-by, l=Math.hypot(sx,sy)||1;
        return [sx/l,sy/l,true];
@@ -3536,7 +3565,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      return [aimX,aimY,false];
    }
    function strike(me){
-     const pw=(7.6+shotPower*8.4)*myRole.shot*(1+0.4*F(0,'at'));
+     const pw=(7.6+shotPower*8.4)*myRole.shot*(1+0.4*A(me,'sho'));
      const v=shotVec(ball.x,ball.y,shotPower,false);
      ball.x=me.x+v[0]*(PR+BR+1); ball.y=me.y+v[1]*(PR+BR+1);
      ball.vx=v[0]*pw; ball.vy=v[1]*pw; ball.vz=0.8+shotPower*2.6;
@@ -3621,7 +3650,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      sprint:(v)=>{manSpr=v;}, pollPad:()=>pollPad(), kits:()=>kits, clubs:()=>CLUBS, icon:k=>kitIcon(k),
      padState:()=>({padIdx,usingPad,padMag,padX,padY}),
      tune:TUNE, report:()=>report(), squad:()=>squad, showStats, pen:()=>pen, slide:()=>slideTackle(), foulAt:(t,x,y)=>foulBy(players.find(q=>q.team===t&&!q.gk),x,y), wx:()=>wx, ref:()=>ref, restart:()=>restart, setLast:(t)=>{lastTouch=t;}, card:()=>card, frozen:()=>frozen, startPens, pensDecided, setScore:(a,b)=>{score=[a,b];paint();}, setClock:(c,h)=>{clock=c;half=h;},
-     off:()=>({OFFSIDE,offMark,offCall,offFlag}),
+     off:()=>({OFFSIDE,offMark,offCall,offFlag}), reAb:()=>{setAb();buildRoles();}, ab:()=>squad.map(q=>q.map(e=>Object.assign({n:e.name,r:e.role},e.ab))),
      role:()=>myRole.k, setRole:k=>{myRole=ROLES.find(r=>r.k===k)||myRole;buildRoles();reset(true);},
      peek:()=>({hold,winded,fatigue,aimX,aimY,shotArmed,shotCool,comm,commT,charge,shotPower,stamina,sprinting,manSpr,runT,goalPause,netHit,dribbleLock})};
  })();
