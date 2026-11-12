@@ -4162,7 +4162,15 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    cv.addEventListener('pointerdown',e=>{ cv.focus({preventScroll:true}); sndInit(); beginCharge(); });
    cv.addEventListener('pointerup',releaseShot);
    cv.addEventListener('pointercancel',releaseShot);
-   $('#penReset').onclick=()=>{reset(true);aim();};
+   function showPitch(){
+     const nav=document.querySelector('nav'), top=(nav?nav.getBoundingClientRect().bottom:0)+10, vh=innerHeight;
+     const c=cv.getBoundingClientRect(), hd=cv.closest('.pen').querySelector('.penhead'), h=hd?hd.getBoundingClientRect():c;
+     if(h.top>=top-2 && c.bottom<=vh-6) return;                         /* already all in view */
+     /* scoreboard under the menu if the pitch still fits below it, otherwise just the pitch */
+     const d = c.bottom-(h.top-top)<=vh-6 ? h.top-top : c.top-top;
+     scrollBy({top:d, behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+   }
+   $('#penReset').onclick=()=>{reset(true);aim();showPitch();};
    { const b=$('#penSnd'); if(b){ const lab=()=>{ b.textContent='Crowd sound: '+(sndOn?'on':'off'); b.setAttribute('aria-pressed',sndOn?'true':'false'); }; lab();
      b.onclick=()=>{ sndOn=!sndOn; try{ localStorage.setItem('pitchSnd',sndOn?'1':'0'); }catch(e){} if(sndOn) sndInit(); else if(AC){ try{ AC.suspend(); }catch(e){} } lab(); }; } }
    addEventListener('resize',layout);
