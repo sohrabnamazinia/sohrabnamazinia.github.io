@@ -1362,7 +1362,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      const s=p.sq.st;
      if(shotLive && shotLive.p.team!==p.team){
        if(!shotLive.on){ shotLive.on=true; shotLive.p.sq.st.sot++; }
-       s.saves++; shotLive=null;
+       s.saves++; shotLive=null; sndSave(p.team);
      } else if(lastP && lastP.team!==p.team && lastKind==='carry' && tick-lastPT<25) s.claims++;
      note(p,'keep');
    }
@@ -1417,7 +1417,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      const nm=(kits[side]||{}).n, c=CHANTS[nm]; let key, txt, all=false;
      if(!kind && Math.random()<0.24){ const gi=Math.floor(Math.random()*GEN.length); key='g|'+gi; txt=GEN[gi][0]; all=true; }
      else { const i=c?(kind?0:Math.floor(Math.random()*c.length)):0; key='c|'+(nm||'')+'|'+i; txt=c?c[i][0]:(nm||'Come on')+'!'; }
-     const lead=kind===1?1.3:kind===2?0.7:0.05, d=kind===2?170:Math.round((chantDef(key).dur+lead)*60)+12;
+     const lead=kind===1?2.4:kind===2?1.2:0.05, d=kind===2?170:Math.round((chantDef(key).dur+lead)*60)+12;
      chant={side, all, txt, key, lead, t:d, d}; chantLast=side; sndChant(chant,kind); }
    function tickChant(){ if(chant && --chant.t<=0) chant=null; }
    /* the crowd you hear is made here, not recorded: dozens of voices, each a little out of tune and out of time with the
@@ -1425,6 +1425,22 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
       worked out once, off to the side, and then simply played */
    let AC=null, sndG=null, roarLast=0, ambH=null, chH=null, chObj=null, ovaH=null, warmFor='', warmQ=Promise.resolve();
    const SBUF={}, SPEND={}, SSTAT={};
+   /* the real thing, where it can be had: recordings from two grounds (freesound.org, CC0: Philipp Feit at the Millerntor,
+      Felix Blume among sixty thousand at the Mineirao). The made-up crowd plays until they arrive, and for good if they never do */
+   const REC={amb:['amb1'], roar:['roar1','roar2','roar3'], amb2:['amb2'], ooh:['ooh1','ooh2'], cheer:['cheer1'], boo:['boo1','boo2']};
+   const RLVL={roar:0.2, ooh:0.14, boo:0.15, cheer:0.16, amb:0.075, amb2:0.1}, RBUF={};
+   let recOn=false, amb2H=null;
+   function recLoad(){
+     if(recOn||!AC) return; recOn=true;
+     const one=(kind,n)=>fetch('/assets/site/snd/'+n+'.m4a?v=2').then(r=>r.ok?r.arrayBuffer():Promise.reject(r.status))
+       .then(a=>new Promise((res,rej)=>{ const p=AC.decodeAudioData(a,res,rej); if(p&&p.catch) p.catch(rej); }))
+       .then(b=>{ if(kind==='amb'||kind==='amb2') b=sndLoop(b,0.5,b.duration-3.2,2.4);
+         RBUF[n]=sndNorm(b,RLVL[kind],'rec|'+n);
+         if(kind==='amb' && ambH){ sndStop(ambH,0.6); ambH=null; } })                 /* the bed changes over to the real one */
+       .catch(e=>{ SSTAT['rec|'+n]={err:String(e)}; });
+     Object.keys(REC).reduce((p,k)=>REC[k].reduce((q,n)=>q.then(()=>one(k,n)),p),Promise.resolve());
+   }
+   const recPick=key=>{ const l=(REC[key]||[]).map(n=>RBUF[n]).filter(Boolean); return l.length?l[Math.floor(Math.random()*l.length)]:null; };
    let sndOn=(()=>{ try{ return localStorage.getItem('pitchSnd')!=='0'; }catch(e){ return true; } })();
    const VOW={a:[820,1250,2650],e:[540,1850,2600],i:[330,2300,3050],o:[540,900,2500],u:[360,820,2350]};   /* where a mouth rings for each vowel */
    const hashS=s=>[...s].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
@@ -1437,10 +1453,10 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      sndG=AC.createGain(); sndG.gain.value=0;
      let cp=null; try{ cp=AC.createDynamicsCompressor(); cp.threshold.value=-10; cp.knee.value=8; cp.ratio.value=8; cp.attack.value=0.005; cp.release.value=0.2; }catch(e){ cp=null; }
      if(cp){ sndG.connect(cp); cp.connect(AC.destination); } else sndG.connect(AC.destination);
-     sndWarm();
+     recLoad(); sndWarm();
    }
    /* what every sound is built from: noise, the buzz of a voice, the hall's echo, and somewhere to stand in the stereo picture */
-   function sndKit(oc,R){
+   function sndKit(oc,R,big){
      const sr=oc.sampleRate, G=()=>(R()+R()+R()-1.5)*2;
      const nb=oc.createBuffer(1,sr*2,sr), nd=nb.getChannelData(0); for(let i=0;i<nd.length;i++) nd[i]=R()*2-1;
      const re=new Float32Array(28), im=new Float32Array(28); for(let n=1;n<28;n++) im[n]=1/Math.pow(n,1.15);
@@ -1448,10 +1464,12 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      const mix=oc.createGain(), lp=oc.createBiquadFilter(), hp=oc.createBiquadFilter();
      lp.type='lowpass'; lp.frequency.value=5200; hp.type='highpass'; hp.frequency.value=130;
      mix.connect(lp); lp.connect(hp); hp.connect(oc.destination);
-     const ir=oc.createBuffer(2,Math.floor(sr*1.6),sr);
+     const ir=oc.createBuffer(2,Math.floor(sr*(big?3.2:1.6)),sr);
      for(let c=0;c<2;c++){ const d=ir.getChannelData(c); let l=0;
-       for(let i=0;i<d.length;i++){ l+=((R()*2-1)-l)*0.4; d[i]=l*Math.pow(1-i/d.length,2.4)*Math.min(1,i/(sr*0.015)); } }
-     const rv=oc.createConvolver(); rv.buffer=ir; const wet=oc.createGain(); wet.gain.value=0.55; mix.connect(rv); rv.connect(wet); wet.connect(hp);
+       for(let i=0;i<d.length;i++){ l+=((R()*2-1)-l)*0.4; d[i]=l*Math.pow(1-i/d.length,big?2:2.4)*Math.min(1,i/(sr*0.015)); } }
+     const rv=oc.createConvolver(); rv.buffer=ir; const wet=oc.createGain(); wet.gain.value=big?BIGK.wet:0.55; mix.connect(rv); rv.connect(wet); wet.connect(hp);
+     if(big){ const dl=oc.createDelay(0.5), dp=oc.createBiquadFilter(), dg=oc.createGain();     /* the far stand answering, a moment late */
+       dl.delayTime.value=0.23; dp.type='lowpass'; dp.frequency.value=1700; dg.gain.value=BIGK.echo; mix.connect(dl); dl.connect(dp); dp.connect(dg); dg.connect(hp); }
      const pan=v=>{ const g=oc.createGain(); if(oc.createStereoPanner){ const sp=oc.createStereoPanner(); sp.pan.value=Math.max(-1,Math.min(1,v)); g.connect(sp); sp.connect(mix); } else g.connect(mix); return g; };
      const noise=(t0,t1)=>{ const s=oc.createBufferSource(); s.buffer=nb; s.loop=true; s.start(Math.max(0,t0),R()*1.9); s.stop(t1); return s; };
      const K={oc,sr,R,G,wave,mix,pan,noise,cb:null};
@@ -1524,11 +1542,13 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
          w.g.gain.setTargetAtTime(0,t,0.05); t+=0.5+R()*2.6; } }
    }
    /* people letting go: ts when each starts, how long he holds it, and where his voice goes */
-   function sndYells(K,n,vows,when,hold,f0,f1,rise,fall,lvl){
+   function sndYells(K,n,vows,when,hold,f0,f1,rise,fall,lvl,rough){
      const R=K.R, NS=vows.length;
      for(let s=0;s<NS;s++){ const out=K.pan(NS>1?(s/(NS-1)*2-1)*0.85:0), tsc=0.9+R()*0.28, F=K.mouth(out,VOW[vows[s]],tsc,lvl);
        for(let v=0;v<n;v++){ const ts=when(), f=(f0+R()*(f1-f0))*(R()<0.15?1.7:1), h=hold(), a=0.5+R()*0.6, w=K.voice(f);
          F.forEach(x=>w.g.connect(x));
+         if(rough){ const j=K.noise(0,Math.min(K.oc.length/K.sr,ts+h+3)), jl=K.oc.createBiquadFilter(), jg=K.oc.createGain();     /* a shout is never steady */
+           jl.type='lowpass'; jl.frequency.value=22+R()*30; jg.gain.value=f*rough; j.connect(jl); jl.connect(jg); jg.connect(w.o.frequency); }
          w.o.frequency.setValueAtTime(f*(rise>1?0.8:1.06),ts); w.o.frequency.linearRampToValueAtTime(f*rise,ts+0.25+R()*0.2); w.o.frequency.linearRampToValueAtTime(f*fall*(0.92+R()*0.16),ts+h+0.6);
          w.g.gain.setValueAtTime(0,0); w.g.gain.setTargetAtTime(a,ts,0.04+R()*0.03); w.g.gain.setTargetAtTime(0,ts+h,0.22+R()*0.3);
          w.o.start(0); w.o.stop(Math.min(K.oc.length/K.sr,ts+h+3)); } }
@@ -1540,17 +1560,53 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        g.gain.setValueAtTime(0,t0); g.gain.linearRampToValueAtTime(a,t0+up); g.gain.setTargetAtTime(a*0.75,t0+up+0.2,0.4); g.gain.setTargetAtTime(0,t0+holdT,downTc);
        n.connect(bp); bp.connect(g); g.connect(K.pan(pv)); });
    }
-   function buildRoar(K,sec){                 /* a goal: it goes off all at once, hangs, and breaks into applause and whistles */
-     const R=K.R, G=K.G, t0=0.03;
-     sndSwell(K,sec,[[620,0.5,1,-0.5],[700,0.5,1,0.5],[1500,0.7,0.5,-0.3],[1700,0.7,0.5,0.3],[2900,0.8,0.16,0]],t0,0.3,1.9,1.0);
-     sndYells(K,7,'aaeaoe',()=>t0+Math.abs(G())*0.12+R()*0.1,()=>0.9+R()*1.9,170,360,1.18,0.9,0.55);
-     for(let w=0;w<5;w++) K.whistle(t0+0.5+R()*3.2,0.22+R()*0.35,2300+R()*1200,0.035);
-     K.play(sndGrains(K,sec,2600,()=>0.7+4.6*Math.pow(R(),1.4)),0,0.6);
+   /* tens of thousands at once: no single voice left in it, only the weight of them all with the shape of a mouth,
+      every part of the ground a touch out of step with the next. o: how fast it comes, how long it hangs, how it dies,
+      which vowels, and where the pitch of it goes [start, peak, end] */
+   const BIGK={wet:0.8, echo:0.28, body:1.8, grain:0.75, air:7, voice:0.5, clap:1.6, wh:3};
+   let SOLO='';
+   const sOn=c=>!SOLO||SOLO===c;
+   function sndMass(K,sec,o){
+     const oc=K.oc, R=K.R, t0=o.t0===undefined?0.03:o.t0, lvl=o.lvl||1, end=t0+o.up+o.hold, gl=o.glide||[1,1,1], sc=o.sc||1;
+     const env=(g,a,dl)=>{ const ts=t0+dl, up=o.up*(0.7+R()*0.6), e=end+dl;
+       g.gain.setValueAtTime(0,0); g.gain.setValueAtTime(0,ts); g.gain.linearRampToValueAtTime(a,ts+up);
+       for(let t=ts+up+0.12+R()*0.25; t<e; t+=0.2+R()*0.38) g.gain.linearRampToValueAtTime(a*(0.6+R()*0.4),t);
+       g.gain.setTargetAtTime(0,e,o.down*(0.75+R()*0.6)); };
+     const band=(f,q,a,pv,dl,gd)=>{ const n=K.noise(0,sec), bp=oc.createBiquadFilter(), g=oc.createGain(); bp.type='bandpass'; bp.Q.value=q;
+       if(gd){ bp.frequency.setValueAtTime(f*gl[0],0); bp.frequency.setValueAtTime(f*gl[0],t0+dl); bp.frequency.linearRampToValueAtTime(f*gl[1],t0+dl+o.up+o.hold*0.35);
+         bp.frequency.linearRampToValueAtTime(f*gl[2],end+dl+o.down*2); } else bp.frequency.value=f;
+       env(g,a*lvl,dl); n.connect(bp); bp.connect(g); g.connect(K.pan(pv)); };
+     [[170,0.8,0.45],[300,0.8,0.7],[560,0.9,0.8]].forEach(b=>[-0.6,0.6].forEach(pv=>band(b[0]*sc*(0.94+R()*0.12),b[1],b[2]*(o.body||1)*BIGK.body,pv,R()*0.1,false)));
+     if(o.bright) [[2500,0.7,0.1],[3900,0.7,0.04]].forEach(b=>[-0.4,0.4].forEach(pv=>band(b[0],b[1],b[2]*o.bright*BIGK.air,pv,R()*0.1,false)));
+     for(let i=0;i<o.n;i++){ const vw=VOW[o.vows[i%o.vows.length]], r=R(), k=r<0.36?0:r<0.76?1:2, f=vw[k]*sc*(0.78+R()*0.44), q=5+R()*9;
+       band(f,q,[1,0.75,0.35][k]*Math.sqrt(q*700/f)*BIGK.grain,R()*1.8-0.9,R()*0.22,true); }
    }
-   function buildOoh(K,sec){                  /* so close: a whole stand breathing out */
+   function buildRoar(K,sec){                 /* a goal: the whole ground at once, a second wave as it sinks in, then applause and whistles */
      const R=K.R, G=K.G, t0=0.03;
-     sndSwell(K,sec,[[420,0.6,0.6,-0.5],[460,0.6,0.6,0.5]],t0,0.25,0.8,0.5);
-     sndYells(K,6,'uouou',()=>t0+Math.abs(G())*0.07+R()*0.05,()=>0.55+R()*0.5,210,330,1.0,0.7,0.6);
+     if(sOn('m')){ sndMass(K,sec,{t0,up:0.2,hold:3.7,down:1.5,vows:'aaeo',n:46,glide:[0.84,1.1,0.94],bright:1});
+       sndMass(K,sec,{t0:t0+2.1,up:0.7,hold:1.6,down:1.5,vows:'ae',n:20,glide:[0.95,1.06,0.92],bright:0.8,lvl:0.5,body:0.6}); }
+     if(sOn('v')) sndYells(K,14,'aaeaoe',()=>t0+Math.abs(G())*0.14+R()*0.12,()=>1.2+R()*2.6,165,370,1.2,0.9,0.5*BIGK.voice,1);
+     if(sOn('w')) for(let w=0;w<9;w++) K.whistle(t0+0.6+R()*5,0.22+R()*0.4,2300+R()*1300,0.03*BIGK.wh);
+     if(sOn('c')) K.play(sndGrains(K,sec,5200,()=>1.0+7.4*Math.pow(R(),1.25)),0,0.55*BIGK.clap);
+   }
+   function buildOoh(K,sec){                  /* so close: every stand breathing out together, then a hand for the effort */
+     const R=K.R, G=K.G, t0=0.03;
+     if(sOn('m')) sndMass(K,sec,{t0,up:0.16,hold:0.45,down:0.5,vows:'ouo',n:34,glide:[1.08,0.98,0.74],bright:0.35,sc:0.95});
+     if(sOn('v')) sndYells(K,8,'uouou',()=>t0+Math.abs(G())*0.07+R()*0.06,()=>0.5+R()*0.55,190,330,1.0,0.68,0.5*BIGK.voice,1);
+     if(sOn('c')) K.play(sndGrains(K,sec,900,()=>1.0+2.2*Math.pow(R(),1.3)),0,0.3*BIGK.clap);
+   }
+   function buildBoo(K,sec){                  /* they did not like that: a low drone of it, and whistling from all round the ground */
+     const R=K.R, t0=0.03;
+     if(sOn('m')) sndMass(K,sec,{t0,up:0.55,hold:2.0,down:0.8,vows:'uuo',n:36,glide:[1.0,0.96,0.86],bright:0.15,sc:0.82,body:1.3});
+     if(sOn('v')) sndYells(K,9,'uouu',()=>t0+R()*0.7,()=>1.2+R()*1.6,100,165,0.97,0.86,0.55*BIGK.voice,1);
+     if(sOn('w')) for(let w=0;w<24;w++) K.whistle(t0+0.2+R()*2.6,0.45+R()*0.9,2500+R()*1300,0.022*BIGK.wh);
+   }
+   function buildCheer(K,sec){                /* a save, a kick-off: a shout that turns straight into applause */
+     const R=K.R, G=K.G, t0=0.03;
+     if(sOn('m')) sndMass(K,sec,{t0,up:0.22,hold:0.8,down:0.75,vows:'aea',n:30,glide:[0.9,1.06,0.95],bright:0.8,lvl:0.8});
+     if(sOn('v')) sndYells(K,7,'aeae',()=>t0+Math.abs(G())*0.12+R()*0.1,()=>0.5+R()*0.9,180,380,1.15,0.92,0.45*BIGK.voice,1);
+     if(sOn('c')) K.play(sndGrains(K,sec,3000,()=>0.25+3.6*Math.pow(R(),1.5)),0,0.6*BIGK.clap);
+     if(sOn('w')) for(let w=0;w<4;w++) K.whistle(t0+0.4+R()*2,0.2+R()*0.35,2300+R()*1200,0.028*BIGK.wh);
    }
    function buildOva(K,sec){                  /* an ovation: clapping without a gap, cheers and whistles over the top */
      const R=K.R;
@@ -1576,17 +1632,17 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    }
    function sndRender(key){
      const kind=key.split('|')[0], def=kind==='c'||kind==='g'?chantDef(key):null;
-     const sec = def ? def.dur+1.7 : kind==='amb'?10.2 : kind==='roar'?5.8 : kind==='ooh'?2.8 : 7.7;
+     const sec = def ? def.dur+1.7 : kind==='amb'?10.2 : kind==='roar'?9.6 : kind==='ooh'?3.8 : kind==='boo'?4.8 : kind==='cheer'?4.6 : 7.7;
      const C=window.OfflineAudioContext||window.webkitOfflineAudioContext; if(!C) return Promise.resolve(null);
      let oc=null; for(const sr of [22050,44100]){ try{ oc=new C(2,Math.ceil(sec*sr),sr); break; }catch(e){ oc=null; } }
      if(!oc) return Promise.resolve(null);
-     const K=sndKit(oc,rng(hashS(key)));
+     const K=sndKit(oc,rng(hashS(key)),/^(roar|ooh|boo|cheer)$/.test(kind));
      if(def) buildChant(K,def.P,def.beat,def.f0,0.12,def.reps,def.one);
-     else if(kind==='amb') buildAmb(K,sec); else if(kind==='roar') buildRoar(K,sec); else if(kind==='ooh') buildOoh(K,sec); else buildOva(K,sec);
+     else if(kind==='amb') buildAmb(K,sec); else if(kind==='roar') buildRoar(K,sec); else if(kind==='ooh') buildOoh(K,sec); else if(kind==='boo') buildBoo(K,sec); else if(kind==='cheer') buildCheer(K,sec); else buildOva(K,sec);
      return new Promise(res=>{ oc.oncomplete=e=>res(e.renderedBuffer); const p=oc.startRendering(); if(p&&p.then) p.then(res,()=>res(null)); })
        .then(b=>{ if(!b) return null;
          if(kind==='amb') b=sndLoop(b,0.6,8,1.2); else if(kind==='ova') b=sndLoop(b,0.5,6,1);
-         return sndNorm(b, kind==='amb'?0.07:kind==='roar'?0.2:kind==='ooh'?0.12:kind==='ova'?0.1:0.13, key); });
+         return sndNorm(b, kind==='amb'?0.07:kind==='roar'?0.2:kind==='ooh'?0.12:kind==='boo'?0.12:kind==='cheer'?0.13:kind==='ova'?0.1:0.13, key); });
    }
    function sndGet(key){
      if(SBUF[key]) return Promise.resolve(SBUF[key]); if(SPEND[key]) return SPEND[key];
@@ -1595,7 +1651,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    }
    function sndWarm(){                         /* get tonight's sounds ready, one after another, so nothing has to wait for them later */
      warmFor=((kits[0]||{}).n||'')+'|'+((kits[1]||{}).n||'');
-     const keys=['amb','roar','ooh'];
+     const keys=['amb','roar','ooh','cheer','boo'];
      [0,1].forEach(s=>{ const nm=(kits[s]||{}).n||'', c=CHANTS[nm]; (c||[0]).forEach((_,i)=>keys.push('c|'+nm+'|'+i)); });
      GEN.forEach((_,i)=>keys.push('g|'+i)); keys.push('ova');
      Object.keys(SBUF).forEach(k=>{ if(k[0]==='c' && keys.indexOf(k)<0) delete SBUF[k]; });
@@ -1603,7 +1659,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    }
    const sndOK=()=>AC && sndOn && AC.state==='running';
    function sndPlay(key,o){
-     o=o||{}; const b=SBUF[key]; if(!b||!sndOK()) return null;
+     o=o||{}; const b=recPick(key)||SBUF[key]; if(!b||!sndOK()) return null;
      const s=AC.createBufferSource(), g=AC.createGain(), t=AC.currentTime+(o.at||0.02), v=o.vol===undefined?1:o.vol;
      s.buffer=b; s.loop=!!o.loop; g.gain.setValueAtTime(v,t); s.connect(g);
      if(AC.createStereoPanner && o.pan){ const sp=AC.createStereoPanner(); sp.pan.value=o.pan; g.connect(sp); sp.connect(sndG); } else g.connect(sndG);
@@ -1615,8 +1671,11 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      const r=cv.getBoundingClientRect(), vis=sndOn && started && r.width>2 && r.bottom>60 && r.top<innerHeight-60, t=AC.currentTime;
      sndG.gain.setTargetAtTime(vis?0.6:0, t, 0.25);
      if(((kits[0]||{}).n||'')+'|'+((kits[1]||{}).n||'')!==warmFor) sndWarm();
-     if(!ambH && SBUF.amb && sndOK()) ambH=sndPlay('amb',{loop:true,vol:0});
-     if(ambH) ambH.g.gain.setTargetAtTime(!vis?0 : cheer>0?0.9 : chant?0.55 : over?0.5 : 0.6+0.4*crowdT, t, 0.5);
+     if(!ambH && (SBUF.amb||RBUF.amb1) && sndOK()) ambH=sndPlay('amb',{loop:true,vol:0});
+     if(ambH) ambH.g.gain.setTargetAtTime(!vis?0 : cheer>0?0.9 : chant?0.55 : over?0.5 : 0.55+0.7*crowdT, t, 0.5);
+     /* a second, livelier bed over the first: it comes up as an attack builds and after a goal */
+     if(!amb2H && RBUF.amb2 && sndOK()) amb2H=sndPlay('amb2',{loop:true,vol:0});
+     if(amb2H) amb2H.g.gain.setTargetAtTime(!vis?0 : cheer>0?0.8 : over?0.3 : Math.min(0.9,0.14+0.9*crowdT)*(chant?0.6:1), t, 0.6);
      if(chH && chObj!==chant){ sndStop(chH,0.3); chH=null; chObj=null; }
      if(chant && chant===chObj && chant.endAt && t>chant.endAt && chant.t>16) chant.t=16;      /* the words go when the voices do */
      const ov=post && post.ov>0.02 ? post.ov : 0;                                               /* the stand you have walked over to */
@@ -1625,7 +1684,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    }
    function sndChant(c,kind){
      if(!sndOK()) return;
-     if(kind) sndRoar(kind===2?0.6:1, c.side);
+     if(kind) sndRoar(kind===2?0.85:1, c.side);
      if(chH){ sndStop(chH,0.25); chH=null; chObj=null; }
      const go=()=>{ if(chant!==c || !sndOK() || chH) return;
        chH=sndPlay(c.key,{vol:0.95,pan:c.all?0:(c.side?0.45:-0.45),at:c.lead}); chObj=c;
@@ -1636,7 +1695,14 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      if(!sndOK()) return; const now=performance.now(); if(now-roarLast<1200) return; roarLast=now;
      sndPlay('roar',{vol:vol||1,pan:side===undefined?0:(side?0.3:-0.3)});
    }
-   function sndOoh(){ if(sndOK() && cheer<=0) sndPlay('ooh',{vol:0.85}); }
+   function sndOoh(){ if(sndOK() && cheer<=0) sndPlay('ooh',{vol:0.9}); }
+   let booLast=0, saveLast=0;
+   const sidePan=s=>s===undefined?0:(s?0.3:-0.3);
+   function sndBoo(vol,side){ if(!sndOK()) return; const now=performance.now(); if(now-booLast<2600) return; booLast=now; sndPlay('boo',{vol:vol||1,pan:sidePan(side)}); }
+   function sndCheer(vol,side,at){ if(sndOK()) sndPlay('cheer',{vol:vol||1,pan:sidePan(side),at:at||0.02}); }
+   function sndSave(side){                    /* side: the keeper's. The other end groans, his own get to their feet */
+     if(!sndOK()) return; const now=performance.now(); if(now-saveLast<1500) return; saveLast=now;
+     sndPlay('ooh',{vol:0.7,pan:sidePan(1-side)}); sndCheer(0.75,side,0.3); }
    function sndWhistle(){
      if(!sndOK()) return; const t0=AC.currentTime+0.05;
      [[0,0.22],[0.36,0.22],[0.72,0.85]].forEach(([d,len])=>{ const t=t0+d, g=AC.createGain();
@@ -1916,7 +1982,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      lastT=now;
      if(cdT>0){                           /* nobody moves until the whistle */
        cdT-=dt; charging=false; charge=0;
-       if(cdT<=0){ cdT=0; frozen=Math.min(frozen,6); }
+       if(cdT<=0){ cdT=0; frozen=Math.min(frozen,6); sndCheer(0.8); }
        return;
      }
      if(pen){ stepPens(); return; }         /* the shootout runs outside the match clock */
@@ -2860,7 +2926,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      let kind = sev==='slide' ? ((lastMan&&r<0.85)||r<0.12 ? 'r' : r<0.78 ? 'y' : '') : (r<0.05 ? 'r' : r<0.4 ? 'y' : '');
      if(!kind && p.sq.st.fouls>=2 && !p.sq.st.yc) kind='y';
      if(kind==='y' && p.sq.st.yc) kind='r';                                   /* second yellow */
-     if(kind){ card={p, kind, t:TUNE.cardT, shown:false}; }
+     if(kind){ card={p, kind, t:TUNE.cardT, shown:false}; sndBoo(kind==='r'?1:0.75, 1-p.team); }
      if(kind==='r') say(p.sq.st.yc?'Second yellow... he is off!':'RED CARD!',2400);
      else if(kind==='y') say('Yellow card.',1800);
      else say(p.team===1?['Foul!','He is hacked down.','Free kick to you.'][Math.floor(Math.random()*3)]:['Foul, referee says.','You caught him.','Free kick to them.'][Math.floor(Math.random()*3)],1300);
@@ -2869,7 +2935,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      const inBox = Math.abs(x-own)<W*0.11 && Math.abs(y-cy)<gh*0.975;
      ball.vx=0; ball.vy=0; ball.vz=0; ball.z=0; hold=0; charging=false; charge=0;
      lastP=null; lastKind=''; shotLive=null; passLive=null; feed=null;
-     if(inBox){ if(card){ bookNow(); } say('PENALTY!',2000); startPen(victim); return; }
+     if(inBox){ if(card){ bookNow(); } say('PENALTY!',2000); sndCheer(0.9,victim); sndBoo(0.7,1-victim); startPen(victim); return; }
      ball.x=Math.max(10,Math.min(W-10,x)); ball.y=Math.max(FT+10,Math.min(FB-10,y));
      restart={kind:'freekick', team:victim}; frozen=TUNE.outPause+(card?TUNE.cardT:0);
      msg.textContent=victim===0?'Free kick to you.':'Free kick to them.'; msg.className='penmsg';
@@ -2991,12 +3057,12 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
                 :pick(['They score.','Tucked away.','Into the side netting.']),1500);
      } else if(how==='save'){
        ball.vx=-ball.vx*0.36; ball.vy=(Math.random()-0.5)*5; ball.vz=2.1;
-       if(t===1){ cheer=70; cheerT=0; }
+       if(t===1){ cheer=70; cheerT=0; } sndSave(1-t);
        say(t===0?pick(['Saved!','The keeper guessed right.','Kept out!'])
                 :pick(['YOU SAVE IT!','What a stop!','Denied!']),1600);
      } else if(how==='post'){
-       ball.vx=-ball.vx*0.45; ball.vy=-ball.vy*0.5; ball.vz=1.6; say('Off the post!',1500);
-     } else say(t===0?'Dragged wide!':'They put it wide!',1500);
+       ball.vx=-ball.vx*0.45; ball.vy=-ball.vy*0.5; ball.vz=1.6; say('Off the post!',1500); sndOoh();
+     } else { say(t===0?'Dragged wide!':'They put it wide!',1500); sndOoh(); }
      paint();
    }
    function endPens(w){
@@ -4187,7 +4253,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        padIdx=i; usingPad=true; setLegend(); break; }
    },1200);
    buildRoles(); paint(); loop();
-   window.__soccer={goal,reset,step,draw,burst,post:()=>post,shake:()=>userShake(),chant:()=>chant,startChant,snd:()=>({on:sndOn,ac:AC&&AC.state}),sndDbg:{get:sndGet,warm:sndWarm,stat:()=>SSTAT,keys:()=>Object.keys(SBUF),buf:k=>SBUF[k],def:chantDef,GEN,CHANTS,tick:sndTick,h:()=>({amb:!!ambH,ch:!!chH,ova:!!ovaH,g:sndG&&sndG.gain.value,ag:ambH&&ambH.g.gain.value,og:ovaH&&ovaH.g.gain.value})},
+   window.__soccer={goal,reset,step,draw,burst,post:()=>post,shake:()=>userShake(),chant:()=>chant,startChant,snd:()=>({on:sndOn,ac:AC&&AC.state}),sndDbg:{rec:()=>Object.keys(RBUF),a2:()=>amb2H&&amb2H.g.gain.value,render:(k,solo)=>{ SOLO=solo||''; let p; try{ p=sndRender(k); } finally { SOLO=''; } return p; },BIGK,get:sndGet,warm:sndWarm,stat:()=>SSTAT,keys:()=>Object.keys(SBUF),buf:k=>SBUF[k],def:chantDef,GEN,CHANTS,tick:sndTick,h:()=>({amb:!!ambH,ch:!!chH,ova:!!ovaH,g:sndG&&sndG.gain.value,ag:ambH&&ambH.g.gain.value,og:ovaH&&ovaH.g.gain.value})},
      state:()=>({score,over,ball,players,conf,fans,stuck,FT,FB,W,H,clock,half,htPause}),
      setMouse:(x,y)=>{mouse={x,y};usingKeys=false;started=true;cdT=0;},
      setKeys:(...k)=>{keys.clear();k.forEach(x=>keys.add(x));usingKeys=true;started=true;cdT=0;},
