@@ -1,0 +1,23 @@
+{
+ "name": "Soccer",
+ "short_name": "Soccer",
+ "start_url": "/?play=1",
+ "scope": "/",
+ "display": "fullscreen",
+ "orientation": "landscape",
+ "background_color": "#05070c",
+ "theme_color": "#05070c",
+ "icons": [
+  {
+   "src": "/assets/site/app/icon-180.png",
+   "sizes": "180x180",
+   "type": "image/png"
+  },
+  {
+   "src": "/assets/site/app/icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any maskable"
+  }
+ ]
+}

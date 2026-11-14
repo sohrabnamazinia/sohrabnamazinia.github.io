@@ -6,6 +6,8 @@ permalink: /
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="manifest" href="/assets/site/app/manifest.webmanifest"><link rel="apple-touch-icon" href="/assets/site/app/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Soccer">
 <title>Sohrab Namazi Nia</title>
 <meta name="description" content="Sohrab (Spencer) Namazi Nia, Computer Science PhD candidate at NJIT's Big Data Analytics Lab. Agentic data management, RL-powered optimization, personalized recommendation, and human-LLM collaboration in data science pipelines.">
 <link rel="canonical" href="https://sohrabnamazinia.github.io/">
@@ -337,6 +339,60 @@ section{padding:84px 0;border-top:1px solid var(--line)}
  background:rgba(6,8,15,.5);backdrop-filter:blur(2px);
  font:500 12.4px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:#eef1f8;transition:opacity .35s}
 .kick.off{opacity:0}
+/* phones: the match full screen, sideways */
+html.pitchfs,html.pitchfs body{overflow:hidden!important;overscroll-behavior:none}
+.fsui{display:none}
+.pen.touch .kick{pointer-events:auto;cursor:pointer}
+.pen.touch .kick.off{display:none}
+.pen.fs{position:fixed!important;top:0;left:0;z-index:5000;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;max-width:none!important;
+ background:#05070c!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:none!important;opacity:1!important;transform:none!important;transition:none!important;
+ overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;color:#eef1f8;
+ --sl:0px;--sr:0px;--st:0px;--sb:0px;--gl:84px;--pw:400px;--pt:0px}
+.pen.fs.rot{transform-origin:0 0!important;transform:rotate(90deg)!important}
+.pen.fs>.penhead,.pen.fs>.penkeys,.pen.fs>.rolepick,.pen.fs>.penfoot,.pen.fs>.coach{display:none!important}
+.pen.fs>.pitchwrap{position:absolute;border-radius:8px}
+.pen.fs #pitchCv{width:100%;height:100%;aspect-ratio:auto}
+.pen.fs>.penmsg{position:absolute;z-index:3;margin:0;min-height:0;left:50%;transform:translateX(-50%);top:calc(var(--pt) + 4px);max-width:calc(var(--pw) - 20px);
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;font:600 10.5px/1 Sora;color:#e8edf7;background:rgba(6,9,16,.66);padding:5px 10px;border-radius:999px}
+.pen.fs>.penmsg.goal{color:#6ee7b7}.pen.fs>.penmsg.save{color:#fdba74}
+.pen.fs>.mrep{display:none}
+.pen.fs.rep>.mrep:not([hidden]){display:block;position:absolute;inset:0;z-index:9;margin:0;border:0;overflow:auto;background:var(--bg);color:var(--ink);
+ padding:calc(var(--st) + 48px) calc(var(--sr) + 16px) calc(var(--sb) + 24px) calc(var(--sl) + 16px);touch-action:none}
+.pen.fs>.setup{z-index:10;place-items:start center;touch-action:none;padding:calc(var(--st) + 12px) calc(var(--sr) + 84px) calc(var(--sb) + 14px) calc(var(--sl) + 84px)}
+.pen.fs>.setup .sbox{max-height:none;margin:auto}
+.pen.fs>.setup .grid{overflow:visible;grid-template-columns:repeat(auto-fill,minmax(128px,1fr))}
+.setup .srole{align-items:center;gap:6px}
+.setup .srole span{font:500 9.6px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:#a9b2c7;margin-right:2px}
+.setup .srole button.on{background:rgba(125,211,252,.2);border-color:rgba(125,211,252,.8)}
+.pen.fs .fsui{display:block}
+.fsui>*{position:absolute}
+.fsl{left:calc(var(--sl) + 7px);top:calc(var(--st) + 8px);width:calc(var(--gl) - 14px);z-index:4;display:flex;flex-direction:column;align-items:center;gap:7px;pointer-events:none}
+.fsclk{font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#fdba74;padding:4px 8px;border-radius:999px;border:1px solid rgba(253,186,116,.35);background:rgba(253,186,116,.1);white-space:nowrap}
+.fssc{display:flex;align-items:center;gap:5px}
+.fssc img,.fssc svg{width:19px;height:19px;object-fit:contain;display:block}
+.fssc b{font:600 14px/1 'IBM Plex Mono',monospace;letter-spacing:.02em;white-space:nowrap}
+.fssc.long{flex-wrap:wrap;justify-content:center}.fssc.long b{font-size:10.5px;order:3;flex-basis:100%;text-align:center}
+.fsr{right:calc(var(--sr) + 7px);top:calc(var(--st) + 8px);width:calc(var(--gl) - 14px);z-index:11;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px}
+.fsr button{min-width:31px;height:31px;padding:0 8px;border-radius:9px;font:600 11px/1 Sora;color:#eef1f8;background:rgba(20,24,34,.86);border:1px solid rgba(255,255,255,.22);cursor:pointer}
+.fsr button.off{opacity:.45;text-decoration:line-through}
+.pen.fs.rep .fsr{width:auto;flex-wrap:nowrap}
+.pen.fs:has(>.setup.on) .fsr [data-f=new],.pen.fs:has(>.setup.on) .fsr [data-f=rep],.pen.fs.rep .fsr [data-f=rep]{display:none}
+.fstouch{inset:0;z-index:2;touch-action:none}
+.fsjoy{z-index:3;width:104px;height:104px;margin:-52px 0 0 -52px;border-radius:50%;border:1.5px solid rgba(255,255,255,.24);background:rgba(255,255,255,.05);pointer-events:none;opacity:.5}
+.fsjoy i{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:rgba(255,255,255,.3);border:1px solid rgba(255,255,255,.55)}
+.fsjoy.on{opacity:1}
+.fsb{z-index:4;border-radius:50%;display:grid;place-items:center;color:#fff;font:700 10.5px/1 Sora;letter-spacing:.05em;text-transform:uppercase;touch-action:none;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.fsb span{pointer-events:none;display:block}
+.fsshoot{width:78px;height:78px;right:calc(var(--sr) + 20px);bottom:calc(var(--sb) + 26px);background:radial-gradient(circle at 35% 30%,#fb7185,#be123c);border:2px solid rgba(255,255,255,.6);box-shadow:0 6px 18px rgba(190,18,60,.45)}
+.fsalt{width:60px;height:60px;right:calc(var(--sr) + 29px);bottom:calc(var(--sb) + 120px);background:rgba(56,189,248,.28);border:2px solid rgba(125,211,252,.75)}
+.fsb.on{filter:brightness(1.3)}
+.fsb[hidden]{display:none}
+.pen.fs.ismgr .fsb,.pen.fs.ismgr .fsjoy,.pen.fs.ismgr .fstouch,.pen.fs.ismgr .fshint{display:none}
+.pen.fs.ismgr>.coach:not([hidden]){display:grid!important;position:absolute;z-index:4;left:calc(var(--sl) + var(--gl));bottom:calc(var(--sb) + 4px);width:var(--pw);margin:0;box-sizing:border-box;background:rgba(6,9,16,.82)}
+.fshint{left:50%;transform:translateX(-50%);bottom:calc(var(--sb) + 12px);z-index:3;pointer-events:none;font:500 10.5px/1.45 Sora;text-align:center;color:#dbe4f5;background:rgba(6,9,16,.78);
+ padding:7px 12px;border-radius:10px;width:max-content;max-width:calc(var(--pw) - 24px);transition:opacity .6s}
+.fshint b{color:#7dd3fc;font-weight:600}
+.fshint.off{opacity:0}
 .kick.hid{display:none}
 .penhead .pnew{order:9;font:600 11.2px/1 Sora;letter-spacing:-.01em;color:var(--ink);cursor:pointer;padding:7px 12px;border-radius:999px;
  border:1px solid color-mix(in srgb,var(--n2) 55%,transparent);background:color-mix(in srgb,var(--n2) 14%,transparent);transition:.2s}
@@ -378,7 +434,7 @@ section{padding:84px 0;border-top:1px solid var(--line)}
 .setup .sfoot{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .setup .cred{font:500 8.6px/1.3 'IBM Plex Mono',monospace;color:#7d869e;letter-spacing:.02em}
 .setup .cred a{color:inherit}
-@media (max-width:620px){.pitchwrap:has(.setup.on){min-height:min(600px,calc(100vh - 140px))}.setup{place-items:start center}.setup .grid{grid-template-columns:1fr 1fr}.setup .grid button{padding:6px 7px;gap:6px}.setup .stop{flex-wrap:wrap}.setup .big{min-width:0;flex:1}}
+@media (max-width:620px){.pitchwrap:has(.setup.on){min-height:300px}.pitchwrap:has(.setup.on .grid){min-height:min(600px,calc(100vh - 140px))}.setup{place-items:start center}.setup .grid{grid-template-columns:1fr 1fr}.setup .grid button{padding:6px 7px;gap:6px}.setup .stop{flex-wrap:wrap}.setup .big{min-width:0;flex:1}}
 .penmsg{margin:13px 0 0;font:500 13.2px/1.5 Sora;min-height:21px;color:var(--mute)}
 .penkeys{margin:9px 0 0;display:flex;gap:7px;flex-wrap:wrap}
 .penkeys span{font:500 10.4px/1 'IBM Plex Mono',monospace;letter-spacing:.06em;color:var(--dim);
@@ -1163,7 +1219,8 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
  (function(){
    const cv=$('#pitchCv'); if(!cv) return;
    const ctx=cv.getContext('2d'), msg=$('#penMsg'), kick=$('#kickOff');
-   const DPR=Math.min(devicePixelRatio||1,2);
+   const TOUCH=QS.get('touch')==='1'||(QS.get('touch')!=='0'&&!!window.matchMedia&&matchMedia('(hover:none) and (pointer:coarse)').matches);
+   const DPR0=Math.min(devicePixelRatio||1,TOUCH?3:2); let DPR=DPR0;
    let W=0,H=0,PAD=0,FT=0,FB=0;
    let mouse=null, started=false, score=[0,0], frozen=0, over=false, stuck=0;
    let clock=0, half=1, lastT=0, htPause=0;        /* 90 match minutes in 60 real seconds */
@@ -1978,6 +2035,15 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      const r=cv.getBoundingClientRect();
      if(r.width<2||r.height<2) return false;
      const first = W<2;
+     if(TOUCH){                          /* same pitch whatever the size of the glass; only the picture is resized */
+       const cw=cv.clientWidth||r.width, bw=Math.max(2,Math.min(1800,Math.round(cw*DPR0))), NW=900, NH=NW*9.9/16;
+       if(!first && cv.width===bw) return true;
+       DPR=bw/NW; cv.width=bw; cv.height=Math.round(NH*DPR); ctx.setTransform(DPR,0,0,DPR,0,0);
+       if(!first) return true;
+       W=NW; H=NH; PAD=Math.max(16,Math.min(34,H*0.085)); FT=PAD; FB=H-PAD;
+       buildFans(); reset(true);
+       return true;
+     }
      W=r.width; H=r.height;
      PAD=Math.max(16,Math.min(34,H*0.085)); FT=PAD; FB=H-PAD;
      cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
@@ -2027,6 +2093,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      msg.textContent='Attacking the '+(d>0?'right':'left')+'-hand goal. '
        +(myRole.k==='gk'?'You are in goal.':'You are playing '+myRole.n.toLowerCase()+'.')
        +' Tap to pass, hold to shoot; without the ball a tap is a sliding tackle.';
+     if(TOUCH && !cv.closest('.ismgr')) msg.textContent = d>0 ? 'You attack the right-hand goal \u2192' : '\u2190 You attack the left-hand goal';
      msg.className='penmsg'; };
    const goalH=()=>(FB-FT)*0.31;   /* the pitch grew, the goal did not */
    const fhOf=()=>FB-FT;
@@ -4016,20 +4083,21 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      if(pen) drawPens();
      /* commentary */
      if(comm && performance.now()<commT){
-       ctx.save(); ctx.font="600 15px Sora,sans-serif"; ctx.textAlign='center';
-       const bw=ctx.measureText(comm).width+30, bh=32, bx=W/2-bw/2, by=FT+10+(pen?62:0);
+       ctx.save(); ctx.font="600 "+(TOUCH?21:15)+"px Sora,sans-serif"; ctx.textAlign='center';
+       const bw=ctx.measureText(comm).width+30, bh=TOUCH?42:32, bx=W/2-bw/2, by=FT+10+(pen?62:0);
        const fade=Math.min(1,(commT-performance.now())/260);
        ctx.globalAlpha=0.92*fade; ctx.fillStyle='rgba(8,11,18,.88)';
        ctx.beginPath();
        if(ctx.roundRect) ctx.roundRect(bx,by,bw,bh,16); else ctx.rect(bx,by,bw,bh);
        ctx.fill(); ctx.strokeStyle='rgba(34,211,238,.45)'; ctx.lineWidth=1; ctx.stroke();
        ctx.globalAlpha=fade; ctx.fillStyle='#eaeef7';
-       ctx.fillText(comm, W/2, by+21); ctx.restore(); ctx.globalAlpha=1;
+       ctx.fillText(comm, W/2, by+(TOUCH?28:21)); ctx.restore(); ctx.globalAlpha=1;
      }
      /* celebration paper */
      conf.forEach(c=>{ ctx.save(); ctx.translate(c.x,c.y); ctx.rotate(c.rot);
        ctx.globalAlpha=Math.min(1,c.life/28); ctx.fillStyle=c.c;
        ctx.fillRect(-c.w/2,-c.h/2,c.w,c.h); ctx.restore(); ctx.globalAlpha=1; });
+     if(TOUCH) touchDraw();
    }
    function pollPad(){
      if(padIdx===null || !navigator.getGamepads) return;
@@ -4168,8 +4236,9 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      if(all) all.onclick=()=>{ const c=hl.clips[0]; hlGif(hl.clips,`highlights-${slug(c.teams[0])}-${score[0]}-${score[1]}-${slug(c.teams[1])}.gif`,all); };
      hlWatch(hl.clips,root);
    }
-   function loop(){ pollPad(); sndTick(); if(W>=2&&H>=2){ if(started&&!setupOn) step(); draw(); hlCap(); } requestAnimationFrame(loop); }
+   function loop(){ pollPad(); sndTick(); if(W>=2&&H>=2){ if(started&&!setupOn&&!(TOUCH&&!fsOn)) step(); draw(); hlCap(); } requestAnimationFrame(loop); }
    cv.addEventListener('pointermove',e=>{
+     if(TOUCH) return;
      const r=cv.getBoundingClientRect();
      const ny=e.clientY-r.top, nx=UNPJ(e.clientX-r.left,ny);
      if(!mouse||Math.hypot(nx-mouse.x,ny-mouse.y)>1.5){ usingKeys=false; usingPad=false; padMag=0; }
@@ -4212,6 +4281,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    }
    function setLegend(){
      const kb=$('#penKeys'); if(!kb) return;
+     if(TOUCH && !cv.closest('.ismgr')){ kb.innerHTML=[['Move','left thumb, anywhere on the left'],['Pass','swipe on the right: its line and its length'],['Find a man','tap him'],['Shoot','pull the red button back and let go'],['Tackle','blue button']].map(([k,v])=>`<span><b>${k}</b> ${v}</span>`).join(''); return; }
      const rows = padIdx!==null
        ? [['Move','left stick'],['Pass / tackle','tap A'],['Shoot','hold A'],['Sprint','automatic'],['Restart','Start']]
        : [['Move','mouse / arrows / WASD'],['Pass / tackle','tap'],['Shoot','hold click or Space'],['Sprint','automatic']];
@@ -4276,12 +4346,12 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    /* Your pass goes where your arrow points. The team-mate it is for is whoever can get to that line
       soonest: if the line runs right to him it is played to his feet, if it runs in front of him it is a
       through ball he runs onto, and if nobody is near it, it goes into space for whoever is closest. */
-   function passPlan(me){
+   function passPlan(me,want){
      const ux=aimX, uy=aimY; let to=null, bc=1e9, along0=0, lat0=0;
      players.forEach(p=>{ if(p.team!==0||p.user||p.gk) return;
        const rx=p.x+p.vx*6-ball.x, ry=p.y+p.vy*6-ball.y, along=rx*ux+ry*uy; if(along<26) return;
        const lat=Math.abs(-rx*uy+ry*ux); if(lat>Math.max(80,along*0.55)) return;
-       const cost=lat*1.7+along*0.12; if(cost<bc){ bc=cost; to=p; along0=along; lat0=lat; } });
+       const cost=lat*1.7+(want?Math.abs(along-want)*0.3:along*0.12); if(cost<bc){ bc=cost; to=p; along0=along; lat0=lat; } });
      if(!to){                                          /* nobody on that line: the man closest to it, to his feet */
        let bq=null, ba=-1;
        players.forEach(p=>{ if(p.team!==0||p.user||p.gk) return; const rx=p.x+p.vx*6-ball.x, ry=p.y+p.vy*6-ball.y, d=Math.hypot(rx,ry); if(d<30||d>W*0.6) return;
@@ -4289,7 +4359,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        if(bq && ba>0.2){ const rx=bq.x+bq.vx*6-ball.x, ry=bq.y+bq.vy*6-ball.y, d=Math.hypot(rx,ry)||1; return {ux:rx/d,uy:ry/d,L:d,kind:'mate',to:bq}; }
      }
      if(!to){                                          /* into space: whoever is nearest chases it */
-       const L=125, sx=ball.x+ux*L, sy=ball.y+uy*L;
+       const L=want||125, sx=ball.x+ux*L, sy=ball.y+uy*L;
        to=players.filter(p=>p.team===0&&!p.user&&!p.gk).sort((a,b)=>Math.hypot(a.x-sx,a.y-sy)-Math.hypot(b.x-sx,b.y-sy))[0]||null;
        return to ? {ux,uy,L,kind:'space',to} : null;
      }
@@ -4297,12 +4367,15 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      /* in front of him: weighted to where he meets it, a little beyond so he runs onto it */
      return {ux,uy,L:along0+lat0*0.45+18,kind:(ux*dirFor(0)>0.2?'through':'mate'),to};
    }
-   function doPass(){
+   function doPass(o){
      if(pen||over||htPause>0||cdT>0) return;
      const me=ME(); if(!me) return;
      { const near=Math.hypot(ball.x-me.x,ball.y-me.y);
        if(!(hold>0 || (lastTouch===0 && near<PR+BR+4) || (restart && restart.taker===me && near<PR+BR+12))) return; }   /* you can only pass a ball you have */
-     const plan=passPlan(me); if(!plan) return;
+     let plan;
+     if(o&&o.to){ const q=o.to, rx=q.x+q.vx*6-ball.x, ry=q.y+q.vy*6-ball.y, d=Math.hypot(rx,ry)||1; aimX=rx/d; aimY=ry/d; plan={ux:aimX,uy:aimY,L:d,kind:'mate',to:q}; }
+     else { if(o&&o.dir){ aimX=o.dir[0]; aimY=o.dir[1]; } plan=passPlan(me,o&&o.want); }
+     if(!plan) return;
      let {ux,uy,L,kind}=plan, best=plan.to;
      const tx=ball.x+ux*L, ty=ball.y+uy*L;
      const chip = lane({x:tx,y:ty},0,PR+BR+2)===2;       /* a man in the way: it goes over him */
@@ -4315,7 +4388,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      dribbleLock=22; hold=0; note(me,'pass'); aimAt={q:best,t:tick};
      say(kind==='through'?'Threaded through!':kind==='space'?'Into space.':chip?'Chips it over.':L>W*0.3?'Switches the play.':'Lays it off.',900);
    }
-   cv.addEventListener('pointerdown',e=>{ cv.focus({preventScroll:true}); sndInit(); beginCharge(); });
+   cv.addEventListener('pointerdown',e=>{ if(TOUCH){ if(!setupOn) fsEnter(); return; } cv.focus({preventScroll:true}); sndInit(); beginCharge(); });
    cv.addEventListener('pointerup',releaseShot);
    cv.addEventListener('pointercancel',releaseShot);
    function showPitch(){
@@ -4344,7 +4417,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    }
    function setupClose(){ setupOn=false; setupEl.classList.remove('on'); setupEl.innerHTML=''; kick.classList.remove('hid'); }
    function setupGo(a,b){
-     nextKits=a&&b?[a,b]:null; setupClose(); reset(true); aim(); begin(); showPitch();
+     nextKits=a&&b?[a,b]:null; setupClose(); reset(true); aim(); if(TOUCH) fsEnter(); begin(); if(!TOUCH) showPitch();
      try{ cv.focus({preventScroll:true}); }catch(e){}
    }
    const baseOf=k=>CLUBS.find(c=>c.n===(k||{}).n)||null;
@@ -4357,7 +4430,9 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
          <button type="button" class="big" data-s="pick">Choose teams<small>Who you play for and against</small></button>
          ${again?`<button type="button" class="big" data-s="again">Rematch<small>${a.n} v ${b.n}</small></button>`:''}
        </div>
+       ${touchRoles()}
        ${setupCan?'<div class="sopts"><button type="button" class="sm" data-s="back">Back to the match</button></div>':''}</div>`;
+     setupEl.querySelectorAll('[data-role]').forEach(b=>b.onclick=()=>{ const t=document.querySelector('#rolePick button[data-r="'+b.dataset.role+'"]'); if(t){ t.click(); setupHome(); } });
      setupEl.querySelector('[data-s=quick]').onclick=()=>setupGo();
      setupEl.querySelector('[data-s=pick]').onclick=()=>{ const m=baseOf(kits[0]);
        sel={me:null,op:null,step:'me',lg:(m&&m.lg)||'en'}; setupPick(); };
@@ -4390,6 +4465,209 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    setupEl.addEventListener('keydown',e=>{ if(e.key==='Escape'&&setupCan){ e.preventDefault(); setupClose(); } });
    const newMatch=()=>{ setupOpen(true); showPitch(); };
    $('#penReset').onclick=newMatch; $('#penNew').onclick=newMatch;
+   /* ================= phones: full screen, thumbs on the glass =================
+      The left thumb is a stick that appears wherever it lands. On the right, a swipe is a pass: its direction is the
+      line of the ball and its length says how far, so a short one finds the near man and a long one the far man; a tap
+      on a team-mate plays it to him. The red button is the shot: pull it back like a catapult, the arrow on the pitch
+      shows where and how hard, and let go (power still has to be wound up, as with a mouse). Held upright, the whole
+      thing is drawn turned on its side, so a phone with rotation locked plays the same. */
+   const penEl=cv.closest('.pen'), wrapEl=cv.parentNode, statsEl=$('#penStats');
+   let fsOn=false, fsRot=false, fsHold=null, fsVp=null, tStick=null, tGest=null, tShot=null, tAim=null, tQ=null, tHintT=0;
+   const hasBall=me=>{ if(!me||pen||over) return false; const near=Math.hypot(ball.x-me.x,ball.y-me.y);
+     return hold>0 || (lastTouch===0 && near<PR+BR+4) || !!(restart && restart.taker===me && near<PR+BR+12); };
+   const touchRoles=()=>{ if(!TOUCH) return ''; const mg=penEl.classList.contains('ismgr');
+     return '<div class="sopts srole"><span>You play</span>'+ROLES.filter(r=>LINEUP.includes(r.k)).map(r=>`<button type="button" class="sm ${!mg&&r.k===myRole.k?'on':''}" data-role="${r.k}">${r.n}</button>`).join('')+'</div>'
+       + (/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone ? '<p class="ssub" style="margin:0">Tip: Share → Add to Home Screen plays without the browser bars</p>' : ''); };
+   const fsPt=e=> fsRot ? {x:e.clientY, y:innerWidth-e.clientX} : {x:e.clientX, y:e.clientY};       /* a finger, in the turned layout's own axes */
+   const toPitch=p=>{ const k=W/Math.max(1,wrapEl.clientWidth), py=(p.y-wrapEl.offsetTop)*k; return {x:UNPJ((p.x-wrapEl.offsetLeft)*k,py), y:py}; };
+   function touchDraw(){
+     if(!fsOn) return;
+     const me=ME(), now=performance.now();
+     if(tQ){ if(tick>tQ.until||!me) tQ=null; else if(hasBall(me)){ const o=tQ.o; tQ=null; doPass(o); } }      /* a pass asked for a moment early is played first time */
+     /* the scoreboard and the buttons keep up with the match */
+     { const set=(el,v)=>{ if(el&&el.textContent!==v) el.textContent=v; };
+       set(fsEl.clk,$('#penClock').textContent); { const t=$('#penSc').textContent.replace(/ : /g,':'); set(fsEl.sc,t); fsEl.sc.parentNode.classList.toggle('long',t.length>6); }
+       const kk=(kits[0]||{}).n+'|'+(kits[1]||{}).n; if(fsEl.kk!==kk){ fsEl.kk=kk; fsEl.a.innerHTML=crest(kits[0]); fsEl.b.innerHTML=crest(kits[1]); }
+       const mine=hasBall(me), alt=pen||post?'':mine?'Pass':'Tackle', sh=post?'Shake':pen?(pen.taker&&pen.taker.user?'Kick':''):'Shoot';
+       set(fsEl.altL,alt); fsEl.alt.hidden=!alt; if(sh) set(fsEl.shootL,sh); fsEl.shoot.hidden=!sh&&!tShot;
+       fsEl.rep.hidden=statsEl.hidden; if(statsEl.hidden) penEl.classList.remove('rep');
+       fsEl.snd.classList.toggle('off',!sndOn);
+       if(tHintT && now>tHintT){ tHintT=0; fsEl.hint.classList.add('off'); } }
+     if(!me||!tAim||pen||over) return;
+     const mineNow=hasBall(me), bx=mineNow?ball.x:me.x, by=mineNow?ball.y:me.y, line=(ux,uy,L,col,w)=>{ const ex=bx+ux*L, ey=by+uy*L, a=Math.atan2(ey-by,PJ(ex,ey)-PJ(bx,by));
+       ctx.strokeStyle=col; ctx.fillStyle=col; ctx.lineWidth=w; ctx.lineCap='round';
+       ctx.beginPath(); ctx.moveTo(PJ(bx,by),by); ctx.lineTo(PJ(ex,ey),ey); ctx.stroke();
+       ctx.beginPath(); ctx.moveTo(PJ(ex,ey)+Math.cos(a)*12,ey+Math.sin(a)*12); ctx.lineTo(PJ(ex,ey)+Math.cos(a+2.5)*11,ey+Math.sin(a+2.5)*11); ctx.lineTo(PJ(ex,ey)+Math.cos(a-2.5)*11,ey+Math.sin(a-2.5)*11); ctx.closePath(); ctx.fill(); };
+     ctx.save();
+     if(tAim.kind==='pass'){
+       const ax=aimX, ay=aimY; aimX=tAim.ux; aimY=tAim.uy; const plan=passPlan(me,tAim.want); aimX=ax; aimY=ay;
+       { const LL=plan&&plan.kind!=='space'?plan.L:tAim.want; line(tAim.ux,tAim.uy,LL,'rgba(8,11,18,.4)',7); line(tAim.ux,tAim.uy,LL,'rgba(125,211,252,.95)',4); }
+       if(plan&&plan.to){ const q=plan.to; ctx.beginPath(); ctx.ellipse(PJ(q.x,q.y),q.y+PR*0.8,PR*1.7,PR*0.8,0,0,7); ctx.strokeStyle='rgba(125,211,252,.95)'; ctx.lineWidth=3; ctx.stroke(); }
+     } else {
+       const pw=Math.min(tAim.pull,charge), hot=pw>0.7;
+       line(tAim.ux,tAim.uy,50+tAim.pull*190,'rgba(8,11,18,.38)',6); line(tAim.ux,tAim.uy,50+tAim.pull*190,'rgba(255,255,255,.6)',2);
+       line(tAim.ux,tAim.uy,50+pw*190,hot?'rgba(248,113,113,.95)':'rgba(251,191,36,.95)',5);
+     }
+     ctx.restore();
+   }
+   const fsEl={};
+   function fsSafe(){ const d=document.createElement('div');
+     d.style.cssText='position:fixed;left:0;top:0;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)';
+     document.body.appendChild(d); const c=getComputedStyle(d), s={t:parseFloat(c.paddingTop)||0,r:parseFloat(c.paddingRight)||0,b:parseFloat(c.paddingBottom)||0,l:parseFloat(c.paddingLeft)||0}; d.remove(); return s; }
+   function fsLayout(){
+     if(!fsOn) return;
+     const vw=innerWidth, vh=innerHeight; fsRot=vh>vw;
+     const Wd=fsRot?vh:vw, Hd=fsRot?vw:vh, s=fsSafe();
+     const sl=fsRot?s.t:s.l, sr=fsRot?s.b:s.r, st=fsRot?s.r:s.t, sb=fsRot?s.l:s.b;
+     penEl.classList.toggle('rot',fsRot);
+     penEl.style.width=Wd+'px'; penEl.style.height=Hd+'px'; penEl.style.left=(fsRot?vw:0)+'px';
+     const aw=Wd-sl-sr, ah=Hd-st-sb-(fsRot?0:Math.min(8,sb?0:4)), G=84;
+     const pw=Math.max(120,Math.floor(Math.min(aw-2*G, ah*16/9.9))), ph=Math.floor(pw*9.9/16);
+     const left=sl+(aw-pw)/2, top=st+(ah-ph)/2;
+     wrapEl.style.left=left+'px'; wrapEl.style.top=top+'px'; wrapEl.style.width=pw+'px'; wrapEl.style.height=ph+'px';
+     [['--sl',sl],['--sr',sr],['--st',st],['--sb',sb],['--gl',left-sl],['--pw',pw],['--pt',top]].forEach(([k,v])=>penEl.style.setProperty(k,v+'px'));
+     if(!tStick){ fsEl.joy.style.left=(sl+Math.max(64,(left-sl)/2+8))+'px'; fsEl.joy.style.top=(Hd-sb-78)+'px'; }
+     layout();
+   }
+   function fsEnter(){
+     if(!TOUCH||fsOn) return;
+     fsOn=true; sndInit();
+     fsHold=document.createComment('pitch'); penEl.parentNode.insertBefore(fsHold,penEl);
+     fsHold.parentNode.style.minHeight=penEl.offsetHeight+'px';
+     document.body.appendChild(penEl); penEl.classList.add('fs'); penEl.appendChild(setupEl);
+     document.documentElement.classList.add('pitchfs');
+     { const m=document.querySelector('meta[name=viewport]'); if(m){ fsVp=m.content; m.content=fsVp+',viewport-fit=cover,maximum-scale=1,user-scalable=no'; } }
+     try{ const de=document.documentElement;                         /* where the browser can really go full screen and turn, it does */
+       if(de.requestFullscreen && /Android/i.test(navigator.userAgent)) de.requestFullscreen({navigationUI:'hide'}).then(()=>{ try{ screen.orientation.lock('landscape').catch(()=>{}); }catch(e){} }).catch(()=>{}); }catch(e){}
+     usingPad=true; usingKeys=false; padMag=0; mouse=null; tStick=tGest=tShot=tAim=tQ=null; lastT=0;
+     { let n=0; try{ n=+localStorage.getItem('pitchTouchHint')||0; localStorage.setItem('pitchTouchHint',n+1); }catch(e){}
+       fsEl.hint.classList.toggle('off',n>=4); tHintT = n<4 ? performance.now()+9000 : 0; }
+     if(started) kick.classList.add('off');
+     fsLayout(); setTimeout(fsLayout,350);
+   }
+   function fsExit(){
+     if(!fsOn) return;
+     fsOn=false; penEl.classList.remove('fs','rot','rep');
+     ['width','height','left'].forEach(k=>penEl.style[k]=''); ['left','top','width','height'].forEach(k=>wrapEl.style[k]='');
+     wrapEl.appendChild(setupEl);
+     if(fsHold&&fsHold.parentNode){ fsHold.parentNode.style.minHeight=''; fsHold.parentNode.insertBefore(penEl,fsHold); fsHold.remove(); } fsHold=null;
+     document.documentElement.classList.remove('pitchfs');
+     { const m=document.querySelector('meta[name=viewport]'); if(m&&fsVp!==null) m.content=fsVp; fsVp=null; }
+     try{ if(document.fullscreenElement) document.exitFullscreen().catch(()=>{}); if(screen.orientation&&screen.orientation.unlock) screen.orientation.unlock(); }catch(e){}
+     padMag=0; charging=false; charge=0; tStick=tGest=tShot=tAim=tQ=null;
+     if(started&&!over){ kick.textContent='Paused \u00b7 tap to keep playing'; kick.classList.remove('off'); }
+     layout(); try{ penEl.scrollIntoView({block:'center'}); }catch(e){}
+   }
+   if(TOUCH){
+     penEl.classList.add('touch');
+     const ui=document.createElement('div'); ui.className='fsui';
+     ui.innerHTML='<div class="fsl"><span class="fsclk"></span><div class="fssc"><span class="fca"></span><b></b><span class="fcb"></span></div></div>'
+       +'<div class="fsr"><button type="button" data-f="x" aria-label="Leave full screen">✕</button><button type="button" data-f="snd" aria-label="Crowd sound">♪</button><button type="button" data-f="new">New</button><button type="button" data-f="rep" hidden>Report</button></div>'
+       +'<div class="fstouch"></div><div class="fsjoy"><i></i></div>'
+       +'<div class="fshint"><b>Left thumb</b> moves · <b>swipe</b> on the right to pass, or <b>tap a team-mate</b> · pull the <b>red button</b> back and let go to shoot</div>'
+       +'<button type="button" class="fsb fsalt"><span>Pass</span></button><button type="button" class="fsb fsshoot"><span>Shoot</span></button>';
+     penEl.appendChild(ui);
+     const q=s=>ui.querySelector(s);
+     Object.assign(fsEl,{clk:q('.fsclk'),sc:q('.fssc b'),a:q('.fca'),b:q('.fcb'),rep:q('[data-f=rep]'),snd:q('[data-f=snd]'),joy:q('.fsjoy'),knob:q('.fsjoy i'),
+       hint:q('.fshint'),alt:q('.fsalt'),altL:q('.fsalt span'),shoot:q('.fsshoot'),shootL:q('.fsshoot span'),layer:q('.fstouch')});
+     q('[data-f=x]').onclick=()=>{ if(penEl.classList.contains('rep')) penEl.classList.remove('rep'); else fsExit(); };
+     q('[data-f=snd]').onclick=()=>{ const b=$('#penSnd'); if(b) b.click(); };
+     q('[data-f=new]').onclick=()=>{ penEl.classList.remove('rep'); newMatch(); };
+     fsEl.rep.onclick=()=>{ penEl.classList.toggle('rep'); statsEl.scrollTop=0; };
+     kick.textContent='Tap to play';
+     kick.addEventListener('click',()=>{ if(!setupOn) fsEnter(); });
+     /* the left thumb: a stick wherever it lands, which follows if the thumb strays past its rim */
+     const R=44, DZ=7, L=fsEl.layer;
+     const stickEnd=()=>{ tStick=null; padMag=0; fsEl.joy.classList.remove('on'); fsEl.knob.style.transform=''; fsLayout(); };
+     L.addEventListener('pointerdown',e=>{
+       if(!fsOn||setupOn) return; e.preventDefault(); sndInit();
+       const p=fsPt(e); try{ L.setPointerCapture(e.pointerId); }catch(x){}
+       if(p.x<penEl.clientWidth*0.42){ if(tStick) return;
+         tStick={id:e.pointerId,ox:p.x,oy:p.y,t0:performance.now(),still:true}; usingPad=true; usingKeys=false; padMag=0;
+         fsEl.joy.style.left=p.x+'px'; fsEl.joy.style.top=p.y+'px'; fsEl.joy.classList.add('on'); }
+       else if(!tGest) tGest={id:e.pointerId,x0:p.x,y0:p.y,t0:performance.now()};
+     });
+     L.addEventListener('pointermove',e=>{
+       if(!fsOn) return; const p=fsPt(e);
+       if(tStick&&e.pointerId===tStick.id){
+         let dx=p.x-tStick.ox, dy=p.y-tStick.oy, l=Math.hypot(dx,dy);
+         if(l>R){ tStick.ox+=dx/l*(l-R); tStick.oy+=dy/l*(l-R); dx*=R/l; dy*=R/l; l=R; fsEl.joy.style.left=tStick.ox+'px'; fsEl.joy.style.top=tStick.oy+'px'; }
+         if(l>DZ+3) tStick.still=false;
+         if(l>DZ){ padX=dx/l; padY=dy/l; padMag=Math.min(1,(l-DZ)/(R-DZ-6)); } else padMag=0;
+         usingPad=true; usingKeys=false; fsEl.knob.style.transform=`translate(${dx}px,${dy}px)`;
+       } else if(tGest&&e.pointerId===tGest.id){
+         const dx=p.x-tGest.x0, dy=p.y-tGest.y0, l=Math.hypot(dx,dy);
+         tAim = l>16 && !pen && !over ? {kind:'pass',ux:dx/l,uy:dy/l,want:50+Math.min(1,(l-16)/150)*W*0.5} : null;
+       }
+     });
+     const lift=(e,fire)=>{
+       let g=null, onLeft=false;
+       if(tStick&&e.pointerId===tStick.id){ const s=tStick; stickEnd();                     /* a quick touch on the left that never became a push is a tap too */
+         if(!s.still||performance.now()-s.t0>260) return; g={x0:s.ox,y0:s.oy,t0:s.t0}; onLeft=true; }
+       else if(tGest&&e.pointerId===tGest.id){ g=tGest; tGest=null; tAim=null; }
+       else return;
+       const p=fsPt(e);
+       if(!fire||!fsOn||setupOn||pen||over||htPause>0||cdT>0) return;
+       const me=ME(); if(!me) return;
+       const dx=p.x-g.x0, dy=p.y-g.y0, l=Math.hypot(dx,dy); let o=null;
+       if(l>16) o={dir:[dx/l,dy/l],want:50+Math.min(1,(l-16)/150)*W*0.5};                    /* a swipe: its line and its length */
+       else if(performance.now()-g.t0<450){ const t=toPitch(p); let best=null, bd=95;        /* a tap: the team-mate under the thumb, or the one you face */
+         players.forEach(m=>{ if(m.team!==0||m===me) return; const d=Math.hypot(m.x-t.x,m.y-t.y); if(d<bd){ bd=d; best=m; } });
+         o = best ? {to:best} : onLeft ? null : {}; }
+       if(!o) return;
+       if(hasBall(me)) doPass(o); else if(lastTouch===0||l>16) tQ={o,until:tick+16};
+     };
+     L.addEventListener('pointerup',e=>lift(e,true)); L.addEventListener('pointercancel',e=>lift(e,false));
+     /* the red button: hold for power, pull it back to aim, let go */
+     const PD=10, PR2=50, S=fsEl.shoot;
+     S.addEventListener('pointerdown',e=>{
+       if(!fsOn||setupOn||tShot) return; e.preventDefault(); e.stopPropagation(); sndInit();
+       try{ S.setPointerCapture(e.pointerId); }catch(x){}
+       const p=fsPt(e); tShot={id:e.pointerId,ox:p.x,oy:p.y,pull:0,plain:!!(pen||post)}; S.classList.add('on');
+       beginCharge();
+     });
+     S.addEventListener('pointermove',e=>{
+       if(!tShot||e.pointerId!==tShot.id||tShot.plain) return;
+       const p=fsPt(e), dx=p.x-tShot.ox, dy=p.y-tShot.oy, l=Math.hypot(dx,dy), c=Math.min(l,PD+PR2);
+       fsEl.shootL.style.transform = l>2 ? `translate(${dx/l*c*0.5}px,${dy/l*c*0.5}px)` : '';
+       if(l>PD){ tShot.pull=Math.min(1,(l-PD)/PR2); tShot.ux=-dx/l; tShot.uy=-dy/l; aimX=tShot.ux; aimY=tShot.uy;
+         tAim={kind:'shot',ux:tShot.ux,uy:tShot.uy,pull:tShot.pull}; }
+       else { tShot.pull=0; tAim=null; }
+     });
+     const shotEnd=(e,fire)=>{
+       if(!tShot||e.pointerId!==tShot.id) return;
+       const t=tShot; tShot=null; tAim=null; S.classList.remove('on'); fsEl.shootL.style.transform='';
+       if(t.plain||pen||post){ if(fire) releaseShot(); else { charging=false; charge=0; } return; }
+       if(!charging) return;
+       charging=false; const held=charge; charge=0;
+       const me=ME(); if(!fire||!me) return;
+       if(!t.pull){ const gx=dirFor(0)>0?W:0, gy=(FT+FB)/2, l=Math.hypot(gx-me.x,gy-me.y)||1; aimX=(gx-me.x)/l; aimY=(gy-me.y)/l; }   /* no pull: at goal */
+       else { aimX=t.ux; aimY=t.uy; }
+       shotPower=0.18+0.82*Math.max(0.1,t.pull?Math.min(t.pull,held):held);
+       shotArmed=16;
+       if(Math.hypot(ball.x-me.x,ball.y-me.y)<PR+BR+18) strike(me);
+     };
+     S.addEventListener('pointerup',e=>shotEnd(e,true)); S.addEventListener('pointercancel',e=>shotEnd(e,false));
+     /* the blue button: a pass the way you face with the ball, a sliding tackle without it */
+     fsEl.alt.addEventListener('pointerdown',e=>{ if(!fsOn||setupOn) return; e.preventDefault(); e.stopPropagation(); sndInit();
+       const me=ME(); if(!me||pen||post) return; if(hasBall(me)) doPass(); else slideTackle(); });
+     /* nothing on the glass scrolls, zooms or selects while the match is up; the report and the club list are dragged by hand,
+        so they move the right way when the picture is turned */
+     ['touchstart','touchmove'].forEach(t=>[L,S,fsEl.alt].forEach(el=>el.addEventListener(t,e=>{ if(fsOn) e.preventDefault(); },{passive:false})));
+     penEl.addEventListener('contextmenu',e=>{ if(fsOn) e.preventDefault(); });
+     penEl.addEventListener('touchmove',e=>{ if(fsOn) e.preventDefault(); },{passive:false});
+     ['gesturestart','gesturechange'].forEach(t=>document.addEventListener(t,e=>{ if(fsOn) e.preventDefault(); },{passive:false}));
+     [setupEl,statsEl].forEach(el=>{ let d=null;
+       el.addEventListener('pointerdown',e=>{ if(fsOn) d={id:e.pointerId,y:fsPt(e).y,top:el.scrollTop}; });
+       el.addEventListener('pointermove',e=>{ if(fsOn&&d&&e.pointerId===d.id) el.scrollTop=d.top-(fsPt(e).y-d.y); });
+       ['pointerup','pointercancel','pointerleave'].forEach(t=>el.addEventListener(t,e=>{ if(d&&e.pointerId===d.id) d=null; }));
+       el.addEventListener('touchmove',e=>{ if(fsOn) e.preventDefault(); },{passive:false}); });
+     addEventListener('resize',fsLayout); addEventListener('orientationchange',()=>setTimeout(fsLayout,250));
+     if(window.visualViewport) visualViewport.addEventListener('resize',fsLayout);
+     document.addEventListener('visibilitychange',()=>{ if(document.hidden){ padMag=0; if(tStick) stickEnd(); tGest=tShot=tAim=null; charging=false; charge=0; } });
+     if(QS.get('play')==='1'||navigator.standalone||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches))
+       setTimeout(()=>{ const f=document.querySelector('#fun'); if(f) try{ f.scrollIntoView(); }catch(e){} fsEnter(); },60);
+   }
    setupOpen(false);
    { const b=$('#penSnd'); if(b){ const lab=()=>{ b.textContent='Crowd sound: '+(sndOn?'on':'off'); b.setAttribute('aria-pressed',sndOn?'true':'false'); }; lab();
      b.onclick=()=>{ sndOn=!sndOn; try{ localStorage.setItem('pitchSnd',sndOn?'1':'0'); }catch(e){} if(sndOn) sndInit(); else if(AC){ try{ AC.suspend(); }catch(e){} } lab(); }; } }
