@@ -2095,6 +2095,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        if(started) cdT=CDSTEP*3;
        say(kits[0].n+' vs '+kits[1].n+'. Kick off.',2200); }
      if(!squad[0].length) buildSquad();
+     actClear();
      const fh=FB-FT;
      ball.x=W/2; ball.y=FT+fh/2; ball.vx=0; ball.vy=0; ball.z=0; ball.vz=0; ball.rot=0; stuck=0; conf=[];
      shotArmed=0; shotCool=0; nearMiss=0; lastTouch=-1;
@@ -2989,6 +2990,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      el.hidden=false; hlWire(el);
    }
    function outOfPlay(kind, x, y){
+     actClear();
      const fh=FB-FT, gh=goalH();
      if(kind==='throw'){
        ball.x=Math.max(W*0.06, Math.min(W*0.94, x));
@@ -3111,7 +3113,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      const victim=1-p.team; p.sq.st.fouls++;
      /* how bad was it: a slide is reckless, a slide on a man clean through is a red; persistent fouling is a yellow */
      const u=players.find(q=>q.team===victim&&Math.hypot(q.x-x,q.y-y)<PR*2.2);
-     if(u){ u.act=null; actSet(u,'fall',36,u.x-p.x,u.y-p.y); } actSet(p,'lunge',12,x-p.x,y-p.y);
+     actClear(); if(u) actSet(u,'fall',36,u.x-p.x,u.y-p.y); actSet(p,'lunge',12,x-p.x,y-p.y);
      const own=dirFor(p.team)>0?0:W, cy=(FT+FB)/2, gh=goalH();
      let lastMan=false;
      if(u){ const toGoal=Math.abs(u.x-own); lastMan = toGoal<W*0.5 && !players.some(q=>q.team===p.team&&q!==p&&!q.gk&&Math.abs(q.x-own)<toGoal-10); }
@@ -3674,8 +3676,11 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    const ACTP={fall:6,dive:6,down:5,slide:5,smother:5,parry:4,lunge:3,stumble:3,kick:2,trap:1};      /* which wins when two happen at once */
    function actSet(p,k,T,dx,dy,big){ if(!p||p.ref) return; const a=p.act; if(a&&a.t>0&&ACTP[a.k]>ACTP[k]) return;
      const l=Math.hypot(dx||0,dy||0)||1; p.act={k,t:T,T,dx:(dx||0)/l,dy:(dy||0)/l,big:!!big}; }
+   function actClear(){ players.forEach(p=>{ p.act=null; p.dvT=0; p.dvOn=false; p.jo=null; }); }      /* play has stopped: everyone is back on his feet */
    function poseOf(p,bw,bh){
-     const a=p.act, o={rot:null,add:0,ox:0,oy:0,L:null,R:null,arms:null,spray:0};
+     const o={rot:null,add:0,ox:0,oy:0,L:null,R:null,arms:null,spray:0};
+     if(over||post||pen||htPause>0||cdT>0) return o;                    /* the whistle has gone: bodies at rest */
+     const a=p.act;
      const f=p.gk?dirFor(p.team):1;
      if(a){ const ph=1-a.t/a.T, s=a.dx>=0?1:-1, bell=Math.sin(Math.PI*Math.min(1,ph));
        if(a.k==='kick'){ const w=a.big?1:0.62, sw=s*(-3+11*Math.min(1,ph*1.7))*w, lift=(1.4+3.2*bell)*w+Math.max(0,-a.dy)*2.4*bell;   /* drawn back, then through it */
@@ -3705,7 +3710,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        else if(p.user && bs>6 && (f>0?ball.vx<-3:ball.vx>3) && pv>2 && Math.abs(p.vy)>Math.abs(p.vx)){ const dy=p.vy>0?1:-1;            /* you, flinging yourself at it */
          o.rot=(dy<0?f*0.55:f*2.45); o.oy=dy*PR*0.55-4.5; o.L=[-1.2,0]; o.R=[1.2,0];
          o.arms={HL:[-1.9,-bh*1.42],HR:[1.9,-bh*1.42],EL:[-bw*0.32,-bh*0.98],ER:[bw*0.32,-bh*0.98]}; }
-       else if(Math.abs(ball.x-p.x)<W*0.3) o.arms={HL:[-bw*1.05,-bh*0.3],HR:[bw*1.05,-bh*0.3],EL:[-bw*0.72,-bh*0.42],ER:[bw*0.72,-bh*0.42]};     /* set: arms wide, on his toes */
+       else if(!restart && frozen<=0 && Math.abs(ball.x-p.x)<W*0.3) o.arms={HL:[-bw*1.05,-bh*0.3],HR:[bw*1.05,-bh*0.3],EL:[-bw*0.72,-bh*0.42],ER:[bw*0.72,-bh*0.42]};     /* set: arms wide, on his toes */
        return o; }
      if(p.jo && tick-p.jo.t<=2 && !p.gk && !p.ref){ const s=p.jo.x>=0?1:-1; o.add=s*0.17;                  /* shoulder to shoulder: he leans in, the near arm across the other man */
        o.arms = s>0 ? {HR:[bw*1.2,-bh*0.46],ER:[bw*0.7,-bh*0.5]} : {HL:[-bw*1.2,-bh*0.46],EL:[-bw*0.7,-bh*0.5]}; }
@@ -4374,7 +4379,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    }
    function setLegend(){
      const kb=$('#penKeys'); if(!kb) return;
-     if(TOUCH && !cv.closest('.ismgr')){ kb.innerHTML=[['Move','left thumb, anywhere on the left'],['Pass','swipe on the right: its line and its length'],['Find a man','tap him'],['Shoot','pull the red button back and let go'],['Tackle','blue button']].map(([k,v])=>`<span><b>${k}</b> ${v}</span>`).join(''); return; }
+     if(TOUCH && !cv.closest('.ismgr')){ kb.innerHTML=[['Move','left thumb, anywhere on the left'],['Pass','swipe on the right: its line and its length'],['Find a man','tap him'],['Shoot','drag from the red button the way you want it, and let go'],['Tackle','blue button']].map(([k,v])=>`<span><b>${k}</b> ${v}</span>`).join(''); return; }
      const rows = padIdx!==null
        ? [['Move','left stick'],['Pass / tackle','tap A'],['Shoot','hold A'],['Sprint','automatic'],['Restart','Start']]
        : [['Move','mouse / arrows / WASD'],['Pass / tackle','tap'],['Shoot','hold click or Space'],['Sprint','automatic']];
@@ -4561,7 +4566,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    /* ================= phones: full screen, thumbs on the glass =================
       The left thumb is a stick that appears wherever it lands. On the right, a swipe is a pass: its direction is the
       line of the ball and its length says how far, so a short one finds the near man and a long one the far man; a tap
-      on a team-mate plays it to him. The red button is the shot: pull it back like a catapult, the arrow on the pitch
+      on a team-mate plays it to him. The red button is the shot: drag from it the way the ball should go, the arrow on the pitch
       shows where and how hard, and let go (power still has to be wound up, as with a mouse). Held upright, the whole
       thing is drawn turned on its side, so a phone with rotation locked plays the same. */
    const penEl=cv.closest('.pen'), wrapEl=cv.parentNode, statsEl=$('#penStats'), ONPLAY=/^\/play(\/|$)/.test(location.pathname);
@@ -4662,7 +4667,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      ui.innerHTML='<div class="fsl"><span class="fsclk"></span><div class="fssc"><span class="fca"></span><b></b><span class="fcb"></span></div></div>'
        +'<div class="fsr"><button type="button" data-f="x" aria-label="Leave full screen">✕</button><button type="button" data-f="snd" aria-label="Crowd sound">♪</button><button type="button" data-f="new">New</button><button type="button" data-f="rep" hidden>Report</button></div>'
        +'<div class="fstouch"></div><div class="fsjoy"><i></i></div>'
-       +'<div class="fshint"><b>Left thumb</b> moves · <b>swipe</b> on the right to pass, or <b>tap a team-mate</b> · pull the <b>red button</b> back and let go to shoot</div>'
+       +'<div class="fshint"><b>Left thumb</b> moves · <b>swipe</b> on the right to pass, or <b>tap a team-mate</b> · drag from the <b>red button</b> the way you want to shoot, and let go</div>'
        +'<button type="button" class="fsb fsalt"><span>Pass</span></button><button type="button" class="fsb fsshoot"><span>Shoot</span></button>';
      penEl.appendChild(ui);
      const q=s=>ui.querySelector(s);
@@ -4673,7 +4678,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      q('[data-f=new]').onclick=()=>{ penEl.classList.remove('rep'); newMatch(); };
      fsEl.rep.onclick=()=>{ penEl.classList.toggle('rep'); statsEl.scrollTop=0; };
      kick.textContent='Tap to play';
-     if(!penEl.classList.contains('ismgr')) msg.textContent='Kick-off opens the match full screen. Left thumb moves, swipe to pass, pull the red button back to shoot.';
+     if(!penEl.classList.contains('ismgr')) msg.textContent='Kick-off opens the match full screen. Left thumb moves, swipe to pass, drag from the red button to shoot.';
      kick.addEventListener('click',()=>{ if(!setupOn) fsEnter(); });
      /* the left thumb: a stick wherever it lands, which follows if the thumb strays past its rim */
      const R=44, DZ=7, L=fsEl.layer;
@@ -4717,8 +4722,8 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        if(hasBall(me)) doPass(o); else if(lastTouch===0||l>16) tQ={o,until:tick+16};
      };
      L.addEventListener('pointerup',e=>lift(e,true)); L.addEventListener('pointercancel',e=>lift(e,false));
-     /* the red button: hold for power, pull it back to aim, let go */
-     const PD=10, PR2=50, S=fsEl.shoot;
+     /* the red button: hold for power, drag from it toward the target (the same way a pass is aimed), let go */
+     const PD=8, PR2=40, S=fsEl.shoot;
      S.addEventListener('pointerdown',e=>{
        if(!fsOn||setupOn||tShot) return; e.preventDefault(); e.stopPropagation(); sndInit();
        try{ S.setPointerCapture(e.pointerId); }catch(x){}
@@ -4729,7 +4734,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        if(!tShot||e.pointerId!==tShot.id||tShot.plain) return;
        const p=fsPt(e), dx=p.x-tShot.ox, dy=p.y-tShot.oy, l=Math.hypot(dx,dy), c=Math.min(l,PD+PR2);
        fsEl.shootL.style.transform = l>2 ? `translate(${dx/l*c*0.5}px,${dy/l*c*0.5}px)` : '';
-       if(l>PD){ tShot.pull=Math.min(1,(l-PD)/PR2); tShot.ux=-dx/l; tShot.uy=-dy/l; aimX=tShot.ux; aimY=tShot.uy;
+       if(l>PD){ tShot.pull=Math.min(1,(l-PD)/PR2); tShot.ux=dx/l; tShot.uy=dy/l; aimX=tShot.ux; aimY=tShot.uy;
          tAim={kind:'shot',ux:tShot.ux,uy:tShot.uy,pull:tShot.pull}; }
        else { tShot.pull=0; tAim=null; }
      });
