@@ -6,8 +6,7 @@ permalink: /
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<link rel="manifest" href="/assets/site/app/manifest.webmanifest"><link rel="apple-touch-icon" href="/assets/site/app/icon2-180.png">
-<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Soccer">
+<!--pitch-app-->
 <title>Sohrab Namazi Nia</title>
 <meta name="description" content="Sohrab (Spencer) Namazi Nia, Computer Science PhD candidate at NJIT's Big Data Analytics Lab. Agentic data management, RL-powered optimization, personalized recommendation, and human-LLM collaboration in data science pipelines.">
 <link rel="canonical" href="https://sohrabnamazinia.github.io/">
@@ -4501,13 +4500,15 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
       on a team-mate plays it to him. The red button is the shot: pull it back like a catapult, the arrow on the pitch
       shows where and how hard, and let go (power still has to be wound up, as with a mouse). Held upright, the whole
       thing is drawn turned on its side, so a phone with rotation locked plays the same. */
-   const penEl=cv.closest('.pen'), wrapEl=cv.parentNode, statsEl=$('#penStats');
+   const penEl=cv.closest('.pen'), wrapEl=cv.parentNode, statsEl=$('#penStats'), ONPLAY=/^\/play(\/|$)/.test(location.pathname);
    let fsOn=false, fsRot=false, fsHold=null, fsVp=null, tStick=null, tGest=null, tShot=null, tAim=null, tQ=null, tHintT=0;
    const hasBall=me=>{ if(!me||pen||over) return false; const near=Math.hypot(ball.x-me.x,ball.y-me.y);
      return hold>0 || (lastTouch===0 && near<PR+BR+4) || !!(restart && restart.taker===me && near<PR+BR+12); };
    const touchRoles=()=>{ if(!TOUCH) return ''; const mg=penEl.classList.contains('ismgr');
      return '<div class="sopts srole"><span>You play</span>'+ROLES.filter(r=>LINEUP.includes(r.k)).map(r=>`<button type="button" class="sm ${!mg&&r.k===myRole.k?'on':''}" data-role="${r.k}">${r.n}</button>`).join('')+'</div>'
-       + (/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone ? '<p class="ssub" style="margin:0">Tip: Share → Add to Home Screen plays without the browser bars</p>' : ''); };
+       + (navigator.standalone||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches) ? ''
+          : ONPLAY ? '<p class="ssub" style="margin:0">Tip: Share → Add to Home Screen plays without the browser bars</p>'
+          : '<p class="ssub" style="margin:0">Want it as an app? <a href="/play/" style="color:#7dd3fc">Open the game\'s own page</a> and add that to your Home Screen</p>'); };
    const fsPt=e=> fsRot ? {x:e.clientY, y:innerWidth-e.clientX} : {x:e.clientX, y:e.clientY};       /* a finger, in the turned layout's own axes */
    const toPitch=p=>{ const k=W/Math.max(1,wrapEl.clientWidth), py=(p.y-wrapEl.offsetTop)*k; return {x:UNPJ((p.x-wrapEl.offsetLeft)*k,py), y:py}; };
    function touchDraw(){
@@ -4700,9 +4701,10 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      addEventListener('resize',fsLayout); addEventListener('orientationchange',()=>setTimeout(fsLayout,250));
      if(window.visualViewport) visualViewport.addEventListener('resize',fsLayout);
      document.addEventListener('visibilitychange',()=>{ if(document.hidden){ padMag=0; if(tStick) stickEnd(); tGest=tShot=tAim=null; charging=false; charge=0; } });
-     if(QS.get('play')==='1'||navigator.standalone||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches))
+     if(ONPLAY||QS.get('play')==='1')
        setTimeout(()=>{ const f=document.querySelector('#fun'); if(f) try{ f.scrollIntoView(); }catch(e){} fsEnter(); },60);
    }
+   if(ONPLAY&&!TOUCH){ const go=()=>setTimeout(()=>{ const f=document.querySelector('#fun'); if(f) try{ f.scrollIntoView({behavior:'instant',block:'start'}); }catch(e){} },250); if(document.readyState==='complete') go(); else addEventListener('load',go); }   /* on a computer the game's page opens at the game */
    setupOpen(false);
    { const b=$('#penSnd'); if(b){ const lab=()=>{ b.textContent='Crowd sound: '+(sndOn?'on':'off'); b.setAttribute('aria-pressed',sndOn?'true':'false'); }; lab();
      b.onclick=()=>{ sndOn=!sndOn; try{ localStorage.setItem('pitchSnd',sndOn?'1':'0'); }catch(e){} if(sndOn) sndInit(); else if(AC){ try{ AC.suspend(); }catch(e){} } lab(); }; } }

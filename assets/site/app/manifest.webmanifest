@@ -1,11 +1,11 @@
 {
  "name": "Soccer",
  "short_name": "Soccer",
- "start_url": "/?play=1",
- "scope": "/",
+ "start_url": "/play/",
+ "scope": "/play/",
  "display": "fullscreen",
  "orientation": "landscape",
- "background_color": "#ffffff",
+ "background_color": "#05070c",
  "theme_color": "#05070c",
  "icons": [
   {
