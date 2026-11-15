@@ -415,7 +415,7 @@ html.pitchfs,html.pitchfs body{overflow:hidden!important;overscroll-behavior:non
 .setup .stop .vs{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;font:600 13px/1.2 Sora;min-width:0}
 .setup .stop .vs span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .setup .stop .vs i{font:500 10px/1 'IBM Plex Mono',monospace;color:#7d869e;font-style:normal}
-.setup .stop .vs .q{color:#7d869e}
+.setup .stop .vs .vq{color:#7d869e}
 .setup .sm{padding:7px 11px;font:600 11px/1 Sora}
 .setup .lgs{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
 .setup .lgs button{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;font:600 11px/1 Sora;border-radius:999px}
@@ -536,6 +536,33 @@ footer p{color:var(--mute);max-width:52ch;margin:0 auto 30px}
  .sec{grid-template-columns:1fr;gap:22px}section{padding:56px 0}.sticky{position:static}
  .g2,.g3{grid-template-columns:1fr}.pub{grid-template-columns:1fr;gap:8px}.nv a:nth-child(n+5){display:none}
  .glgd{display:none}}
+@media (max-width:620px){
+ .pen:not(.fs) .pitchwrap:has(.setup.on){min-height:0;background:#0a0e16}
+ .pen:not(.fs) .pitchwrap:has(.setup.on) #pitchCv{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto;object-fit:cover}
+ .pen:not(.fs) .setup.on{position:relative;inset:auto;overflow:visible;padding:20px 12px 18px;place-items:center}
+ .pen:not(.fs) .setup .sbox{max-height:none;gap:14px}
+ .pen:not(.fs) .setup .grid{overflow:visible}
+ .pen:not(.fs) .setup .big{padding:14px 10px}
+ .setup .srole{gap:6px;flex-wrap:wrap}
+ .setup .srole span{flex-basis:100%;text-align:center;margin:0 0 2px}
+ .setup .srole button{flex:1 1 0;min-width:0;padding:9px 2px;font-size:10.6px;white-space:nowrap}
+ .setup .ssub{letter-spacing:.06em}
+ .setup .grid button small{letter-spacing:0;font-size:8.4px;white-space:nowrap}
+ .setup .grid button b{font-size:11px}
+ .setup .cr{width:27px;height:27px}.setup .cr img{width:21px;height:21px}
+ .setup .lgs button{padding:6px 9px;font-size:10.6px}
+ .setup .stop{justify-content:space-between}.setup .stop .vs{flex-basis:100%;order:3}
+ .nv{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:7px 8px 7px 16px;gap:2px}
+ .nv::-webkit-scrollbar{display:none}
+ .nv b{white-space:nowrap;flex:none;margin-right:10px;font-size:13.6px}
+ .nv a{white-space:nowrap;flex:none;padding:8px 10px;font-size:12.6px}
+ .nv a:nth-child(n+5){display:block}
+ .penhead{gap:9px 8px}
+ .penhead .clock{order:-3;margin-right:0}.penhead .pnew{order:-2;margin-left:auto}
+ .penhead .wx{order:-1;flex-basis:100%;margin:0 0 0 2px}
+ .penhead #penTA{order:1;flex:1 1 0;min-width:0}.penhead .sc{order:2;flex:none;letter-spacing:.06em}.penhead #penTB{order:3;flex:1 1 0;min-width:0;justify-content:flex-end}
+ .penhead .tm span{overflow:hidden;text-overflow:ellipsis}.penhead .tm small{display:none}
+}
 @media(prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}.bl,.grain,h1 .g{animation:none}}
 </style></head><body>
 <div class="aur"><div class="bl b1"></div><div class="bl b2"></div><div class="bl b3"></div><div class="bl b4"></div></div>
@@ -4440,7 +4467,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      const bk=setupEl.querySelector('[data-s=back]'); if(bk) bk.onclick=setupClose;
    }
    function setupPick(){
-     const mine=sel.step==='me', tag=c=>c?`<span>${crest(c)}${c.n}</span>`:'<span class="q">?</span>';
+     const mine=sel.step==='me', tag=c=>c?`<span>${crest(c)}${c.n}</span>`:'<span class="vq">?</span>';
      const lgs=LEAGUES.filter(l=>CLUBS.some(c=>c.lg===l.k));
      const list=CLUBS.filter(c=>c.lg===sel.lg).slice().sort((p,q)=>(q.at+q.df)-(p.at+p.df)||p.n.localeCompare(q.n));
      setupEl.innerHTML=`<div class="sbox">
@@ -4575,6 +4602,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      q('[data-f=new]').onclick=()=>{ penEl.classList.remove('rep'); newMatch(); };
      fsEl.rep.onclick=()=>{ penEl.classList.toggle('rep'); statsEl.scrollTop=0; };
      kick.textContent='Tap to play';
+     if(!penEl.classList.contains('ismgr')) msg.textContent='Kick-off opens the match full screen. Left thumb moves, swipe to pass, pull the red button back to shoot.';
      kick.addEventListener('click',()=>{ if(!setupOn) fsEnter(); });
      /* the left thumb: a stick wherever it lands, which follows if the thumb strays past its rim */
      const R=44, DZ=7, L=fsEl.layer;
