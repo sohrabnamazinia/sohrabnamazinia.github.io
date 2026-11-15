@@ -385,8 +385,10 @@ html.pitchfs body>*:not(.pen){visibility:hidden!important}
 .fsjoy.on{opacity:1}
 .fsb{z-index:4;border-radius:50%;display:grid;place-items:center;color:#fff;font:700 10.5px/1 Sora;letter-spacing:.05em;text-transform:uppercase;touch-action:none;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .fsb span{pointer-events:none;display:block}
-.fsshoot{width:78px;height:78px;right:calc(var(--sr) + 20px);bottom:calc(var(--sb) + 26px);background:radial-gradient(circle at 35% 30%,#fb7185,#be123c);border:2px solid rgba(255,255,255,.6);box-shadow:0 6px 18px rgba(190,18,60,.45)}
-.fsalt{width:60px;height:60px;right:calc(var(--sr) + 29px);bottom:calc(var(--sb) + 120px);background:rgba(56,189,248,.28);border:2px solid rgba(125,211,252,.75)}
+.fsshoot{width:78px;height:78px;right:calc(var(--sr) + 62px);bottom:calc(var(--sb) + 20px);background:radial-gradient(circle at 35% 30%,#fb7185,#be123c);border:2px solid rgba(255,255,255,.6);box-shadow:0 6px 18px rgba(190,18,60,.45)}
+.fsalt{width:58px;height:58px;right:calc(var(--sr) + 14px);bottom:calc(var(--sb) + 186px);background:rgba(56,189,248,.28);border:2px solid rgba(125,211,252,.75)}
+.fslob{width:58px;height:58px;right:calc(var(--sr) + 14px);bottom:calc(var(--sb) + 112px);background:rgba(168,85,247,.34);border:2px solid rgba(216,180,254,.8)}
+.fsb.dim{opacity:.45}
 .fsb.on{filter:brightness(1.3)}
 .fsb[hidden]{display:none}
 .pen.fs.ismgr .fsb,.pen.fs.ismgr .fsjoy,.pen.fs.ismgr .fstouch,.pen.fs.ismgr .fshint{display:none}
@@ -1495,7 +1497,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        if(passLive && tick-passLive.t>6) passLive=null;
        if(shotLive && tick-shotLive.t>6) shotLive=null;
      }
-     if(p.user && restart) restart=null;
+     if(p.user && restart && kind!=='carry'){ rsT={t:tick,team:restart.team}; restart=null; }      /* a dead ball is played, not dribbled away */
      if(kind==='pass'){ s.pass++; passLive={p,t:tick}; }
      if(kind==='shot'){                                    /* hacking at his own blocked shot is still one attempt */
        const again = lastShot && lastShot.p===p && !lastShot.on && tick-lastShot.t<45;
@@ -2200,6 +2202,8 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
           && players.includes(restart.short) && Math.hypot(restart.short.x-ball.x,restart.short.y-ball.y)>72){ frozen=1; restart.wait=(restart.wait||0)+1; }
        if(frozen===0 && restart && restart.taker && !restart.taker.user) takeRestart();
      }
+     if(frozen<=0 && restart && restart.taker && restart.taker.user && !pen && !over){ restart.ut=(restart.ut||0)+1;
+       if(restart.ut>120){ takeRestart(true); dribbleLock=26; hold=0; say('Played quickly for you.',1100); } }                       /* two seconds over the ball, then it is taken for you */
      if(cheer>0) cheer--;
      tickChant();
      /* level: now one end strikes up, now the other; ahead, the side in front does most of the singing */
@@ -2423,6 +2427,16 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
          } else if(held[p.team]){
            /* his side has it: he goes looking for a free spot to take a pass */
            const spot=supportSpot(p); tx=spot.x; ty=spot.y; sp=(p.role==='df'?2.5:2.9)*(edge(p)?TUNE.oSup*(1+0.16*Q(p,'at')):1);
+           { const hd=holder[p.team];                       /* how often and how well depends on his club's attack and his own pace */
+             if(p.run && (tick>p.run.until || !hd || hd===p)) p.run=null;
+             if(p.role!=='df' && hd && hd!==p){
+               if(!p.run && tick>=(p.runT||0)){
+                 const iq=Math.max(0,Math.min(1,0.5+(((kits[p.team]||{}).at||84)-84)/16+(abv(p,'spd')-80)/40));
+                 p.runT=tick+Math.round((p.role==='fw'?60:115)*(1.5-iq)+Math.random()*40);
+                 if(prog(ball.x,p.team)>0.2 && Math.random()<0.5+0.45*iq){ const s2=throughSpot(p,p.team); if(s2) p.run={x:s2.x,y:s2.y,until:tick+52,t0:tick}; } }
+               if(p.run){ const lineU=OFFSIDE?offLine(p.team)-8/W:1, live=passLive&&passLive.p.team===p.team; let rx=p.run.x;
+                 if(!live && prog(rx,p.team)>lineU) rx=dir>0?lineU*W:W-lineU*W;                 /* he holds it level until the ball is on its way */
+                 tx=rx; ty=p.run.y; sp=Math.max(sp,3.5); p.hard=tick; } } }
          } else if((p.role==='mf' || (p.role==='fw' && edge(p) && prog(ball.x,p.team)<0.42+0.22*Q(p,'df'))) && lastTouch===1-p.team){   /* a good side's forward comes back to help too */
            /* they have it and someone else is on the ball: the midfielder screens, goal-side of their
               most advanced free man and in the lane to him */
@@ -2448,7 +2462,9 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        /* at a restart the other side stays back until it is taken */
        if(restart && !p.user && p!==restart.taker && (p.team!==restart.team || restart.kind==='goalkick')){ const rx=p.x-ball.x, ry=p.y-ball.y, rd=Math.hypot(rx,ry)||1;
          const lim=restart.kind==='goalkick' ? W*0.16 : TUNE.outDist+8;          /* a goal kick: his own side gives him room too */
-         if(rd<lim){ tx=ball.x+rx/rd*(lim+6); ty=ball.y+ry/rd*(lim+6); } }
+         if(rd<lim){ tx=ball.x+rx/rd*(lim+6); ty=ball.y+ry/rd*(lim+6);
+           if(rd<lim-14 && p.team!==restart.team){ p.x=Math.max(PR,Math.min(W-PR,ball.x+rx/rd*(lim-14))); p.y=Math.max(FT+PR,Math.min(FB-PR,ball.y+ry/rd*(lim-14))); p.vx*=0.4; p.vy*=0.4; } } }
+       if(rsT && tick-rsT.t<26 && p.team!==rsT.team && !p.user && !p.gk && sp) sp*=0.4;                     /* just taken: the other side is a beat late */
        const dx=tx-p.x, dy=ty-p.y, d=Math.hypot(dx,dy)||1;
        if(p.user){ sp=Math.min(sp, d*0.22+0.5); }        /* ease in to the cursor, no jitter */
        else if(!p.gk){
@@ -2545,20 +2561,23 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      const inMouth = ball.y>gTop && ball.y<gBot;
      const rightScorer = dirFor(0)>0 ? 0 : 1, leftScorer = 1-rightScorer;
      /* goal lines: in the net it counts, otherwise out for a goal kick */
-     if(ball.x<BR){ if(inMouth) return goal(leftScorer); return outOfPlay('kick', 0, ball.y); }
-     if(ball.x>W-BR){ if(inMouth) return goal(rightScorer); return outOfPlay('kick', W, ball.y); }
+     if(ball.x<BR || ball.x>W-BR){ const left=ball.x<BR;
+       if(inMouth && ball.z>ZBAR+1.6){ outOfPlay('kick', left?0:W, ball.y); say('Over the bar!',1700); return; }          /* the goal has a roof now */
+       if(inMouth && ball.z>ZBAR-1.6){ ball.x=left?BR+2:W-BR-2; ball.vx*=-0.42; ball.vy*=0.6; ball.vz=-Math.abs(ball.vz)*0.3-0.4; shotLive=null; say('Off the crossbar!',1500); sndOoh(); }
+       else { if(inMouth) return goal(left?leftScorer:rightScorer); return outOfPlay('kick', left?0:W, ball.y); } }
      /* ball vs players, resolved twice so it cannot be crushed between two of them */
      let touching=false;
      for(let k=0;k<2;k++) players.forEach(p=>{
        if(keepP) return;                      /* gathered this frame: it is his */
        const dx=ball.x-p.x, dy=ball.y-p.y, d=Math.hypot(dx,dy)||1;
        if(!p.user && p.tc>0) return;          /* he has just played it, give it a beat */
+       if(restart && (p.user ? restart.taker===p : p.team!==restart.team)) return;      /* a dead ball stays where it is until its taker plays it; the other side cannot touch it */
        const keeps = p.gk||(p.user&&myRole.k==='gk');
        /* once it is at your feet you keep a wider bubble, so you can turn with it */
        const reach = keeps ? PR+BR+1+(p.rush?TUNE.claim:0)
                    : p.user ? (hold>0&&dribbleLock<=0 ? PR+BR+13 : tick-toU<80 ? PR+BR+13 : PR+BR+6)
                    : PR+BR+(p.team===1&&hold>0?TUNE.reachDf*(1+2*F(1,'df')):0);
-       const high  = keeps ? PR*1.35 : PR*0.95;
+       const high  = keeps ? ((p.dive||p.rush||p.user) ? ZBAR-1.5 : PR*1.5) : PR*0.95;
        if(d<reach && ball.z<high){         /* a ball up in the air sails over them */
          touching=true;
          const ux=dx/d, uy=dy/d;
@@ -3049,8 +3068,8 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
          if(d<min){ q.x=ball.x+dx/d*min; q.y=ball.y+dy/d*min; q.x=Math.max(PR,Math.min(W-PR,q.x)); q.y=Math.max(FT+PR,Math.min(FB-PR,q.y)); } });
      }
    }
-   function takeRestart(){
-     const r=restart; restart=null; const p=r.taker; if(!p||p.user) return;
+   function takeRestart(force){
+     const r=restart; restart=null; rsT={t:tick,team:r.team}; const p=r.taker; if(!p||(p.user&&!force)) return;
      const t=r.team, dir=dirFor(t), their=dir>0?W:0, cy=(FT+FB)/2, gh=goalH();
      if(r.kind==='corner'){
        /* swung in high for the team-mate in the box with the most room around him */
@@ -3676,44 +3695,67 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    const ACTP={fall:6,dive:6,down:5,slide:5,smother:5,parry:4,lunge:3,stumble:3,kick:2,trap:1};      /* which wins when two happen at once */
    function actSet(p,k,T,dx,dy,big){ if(!p||p.ref) return; const a=p.act; if(a&&a.t>0&&ACTP[a.k]>ACTP[k]) return;
      const l=Math.hypot(dx||0,dy||0)||1; p.act={k,t:T,T,dx:(dx||0)/l,dy:(dy||0)/l,big:!!big}; }
-   function actClear(){ players.forEach(p=>{ p.act=null; p.dvT=0; p.dvOn=false; p.jo=null; }); }      /* play has stopped: everyone is back on his feet */
+   const ZBAR=24, SHOTVZ=pw=>0.7+4.7*Math.pow(pw,1.7);        /* the crossbar, and how much a shot rises for how long it was wound up */
+   let rsT=null;                                              /* the last restart taken: when, and whose */
+   function actClear(){ players.forEach(p=>{ p.act=null; p.dvT=0; p.dvOn=false; p.jo=null; p.run=null; }); }      /* play has stopped: everyone is back on his feet */
+   function runMarks(){
+     if(over||pen||post||cdT>0) return; const u=ME(); if(!u||u.gk||!(hold>0)) return;
+     players.forEach(p=>{ if(p.team!==0||p===u||!p.run||tick>p.run.until) return;
+       const d=dirFor(0), x=PJ(p.run.x,p.run.y), y=p.run.y, k=Math.min(1,(tick-p.run.t0)/5,(p.run.until-tick)/8);
+       ctx.save(); ctx.globalAlpha=0.75*k; ctx.lineCap='round'; ctx.lineJoin='round';
+       for(let i=0;i<3;i++){ const cx=x+d*(i*7-7); ctx.beginPath(); ctx.moveTo(cx-d*3.5,y-4.5); ctx.lineTo(cx+d*1.5,y); ctx.lineTo(cx-d*3.5,y+4.5);
+         ctx.strokeStyle='rgba(8,11,18,.5)'; ctx.lineWidth=4; ctx.stroke(); ctx.strokeStyle='rgba(190,242,100,.95)'; ctx.lineWidth=2; ctx.stroke(); }
+       ctx.restore(); });
+   }
    function poseOf(p,bw,bh){
-     const o={rot:null,add:0,ox:0,oy:0,L:null,R:null,arms:null,spray:0};
+     const o={rot:null,add:0,ox:0,oy:0,L:null,R:null,arms:null,ab:1,spray:0};
      if(over||post||pen||htPause>0||cdT>0) return o;                    /* the whistle has gone: bodies at rest */
-     const a=p.act;
-     const f=p.gk?dirFor(p.team):1;
-     if(a){ const ph=1-a.t/a.T, s=a.dx>=0?1:-1, bell=Math.sin(Math.PI*Math.min(1,ph));
+     const a=p.act, f=p.gk?dirFor(p.team):1;
+     const slideP=(s,up,spr)=>{ o.rot=-s*1.22*up; o.ox=s*3.5*up; o.oy=2.5*up;                 /* feet first, lying back, one knee up, a hand down behind him */
+       if(s>0){ o.R=[0.4,0]; o.L=[-2.6,3.4*up]; } else { o.L=[-0.4,0]; o.R=[2.6,3.4*up]; }
+       o.arms={HL:[-bw*0.95,-bh*(s>0?0.78:0.3)],HR:[bw*0.95,-bh*(s>0?0.3:0.78)]}; o.ab=up; if(spr) o.spray=s; return o; };
+     if(p.user && (slide>0||down>0)) return slideP(slideDir[0]>=0?1:-1, slide>0?1:Math.min(1,down/9), slide>0);
+     if(a){ const ph=1-a.t/a.T, s=a.dx>=0?1:-1, bell=Math.sin(Math.PI*Math.min(1,ph)), env=Math.min(1,(a.T-a.t)/3,a.t/3);   /* env: in over three frames, out over three */
        if(a.k==='kick'){ const w=a.big?1:0.62, sw=s*(-3+11*Math.min(1,ph*1.7))*w, lift=(1.4+3.2*bell)*w+Math.max(0,-a.dy)*2.4*bell;   /* drawn back, then through it */
-         if(s>0) o.R=[sw,lift]; else o.L=[sw,lift]; o.add=-s*0.1*bell*w; }
+         if(s>0) o.R=[sw,lift]; else o.L=[sw,lift]; o.add=-s*0.1*bell*w;
+         o.arms = s>0 ? {HL:[-bw*0.95,-bh*0.42],HR:[bw*0.55,-bh*0.2]} : {HL:[-bw*0.55,-bh*0.2],HR:[bw*0.95,-bh*0.42]}; o.ab=bell*w; }      /* the far arm out for balance */
        else if(a.k==='trap'){ const sw=s*4*bell; if(s>0) o.R=[sw,2.2*bell]; else o.L=[sw,2.2*bell]; }                                  /* a foot out to kill it */
-       else if(a.k==='lunge'){ const e=1-ph*0.6; o.add=s*0.42*e; if(s>0){ o.R=[7*e,0.8]; o.L=[-3*e,0]; } else { o.L=[-7*e,0.8]; o.R=[3*e,0]; }   /* a leg stretched in */
-         o.arms={HL:[-bw*1.0,-bh*0.5],HR:[bw*1.0,-bh*0.5]}; }
-       else if(a.k==='stumble'){ o.add=-s*0.36*bell+Math.sin(ph*9)*0.08; o.L=[-2.5,1.5*bell]; o.R=[2.5,0];                             /* knocked off his stride, arms out for balance */
-         o.arms={HL:[-bw*1.15,-bh*(0.6+0.22*bell)],HR:[bw*1.15,-bh*(0.6+0.22*bell)]}; }
-       else if(a.k==='slide'){ const up=ph>0.7?(1-ph)/0.3:1; o.rot=s*1.15*up; o.L=[-1.4,0]; o.R=[1.4,0]; if(ph<0.6) o.spray=s; }        /* in on the ground, then up */
-       else if(a.k==='fall'){ const dn=Math.min(1,ph/0.12), up=ph>0.74?(1-ph)/0.26:1; o.rot=s*1.5*dn*up; o.oy=2*dn*up; o.L=[-1.2,0]; o.R=[1.2,0];   /* brought down: he stays there a while */
-         o.arms={HL:[-bw*0.9,-bh*0.95],HR:[bw*0.9,-bh*0.95]}; }
-       else if(a.k==='smother'){ o.rot=s*1.2; o.ox=s*3; o.L=[-1.2,0]; o.R=[1.2,0];                                                      /* down at the forward's feet, hands first */
-         o.arms={HL:[-1.8,-bh*1.35],HR:[1.8,-bh*1.35],EL:[-bw*0.3,-bh*0.95],ER:[bw*0.3,-bh*0.95]}; }
+       else if(a.k==='lunge'){ const e=env*(1-ph*0.35); o.add=s*0.3*e; o.oy=1.6*e;                                                      /* a step in: low, the leg stretched at the ball */
+         if(s>0){ o.R=[8*e,0.4+Math.max(0,-a.dy)*2*e]; o.L=[-4*e,0]; } else { o.L=[-8*e,0.4+Math.max(0,-a.dy)*2*e]; o.R=[4*e,0]; }
+         o.arms={HL:[-bw*(s>0?1.0:0.85),-bh*(s>0?0.55:0.16)],HR:[bw*(s>0?0.85:1.0),-bh*(s>0?0.16:0.55)]}; o.ab=e; }
+       else if(a.k==='stumble'){ o.add=(-s*0.3*bell+Math.sin(ph*9)*0.07)*env; o.L=[-2.5*env,1.6*bell]; o.R=[2.5*env,0];                 /* knocked off his stride: one arm thrown up, the other out */
+         o.arms={HL:[-bw*1.05,-bh*(s>0?0.82:0.36)],HR:[bw*1.05,-bh*(s>0?0.36:0.82)]}; o.ab=env; }
+       else if(a.k==='slide') return slideP(s, ph>0.68?(1-ph)/0.32:Math.min(1,ph/0.12+0.4), ph<0.6);
+       else if(a.k==='fall'){                                                                                                            /* brought down: over he goes, lies there, then sits up */
+         const dn=Math.min(1,ph/0.1), sit=ph>0.6?Math.min(1,(ph-0.6)/0.22):0, up=ph>0.84?(1-ph)/0.16:1;
+         o.rot=s*(1.48-0.95*sit)*dn*up; o.oy=(2.4-1.2*sit)*dn*up; o.L=[-1.4,0.6*sit]; o.R=[1.4,2.2*sit];
+         o.arms = sit ? {HL:[-bw*0.9,-bh*0.12],HR:[bw*0.9,-bh*0.12]} : {HL:[-2.6,-bh*1.22],HR:[2.6,-bh*1.3]}; o.ab=dn*up; }                /* hands out to break it; then on the grass beside him */
+       else if(a.k==='smother'){ o.rot=s*1.2*env; o.ox=s*3*env; o.oy=2*env; o.L=[-1.6,0]; o.R=[1.2,1.4];                               /* down at the forward's feet, hands first */
+         o.arms={HL:[-2.4,-bh*1.36],HR:[1.6,-bh*1.3],EL:[-bw*0.3,-bh*0.95],ER:[bw*0.3,-bh*0.95]}; o.ab=env; }
        else if(a.k==='dive'||a.k==='down'){
-         const e = a.k==='dive' ? Math.min(1,(p.dvT||0)/5) : (ph<0.45?1:(1-ph)/0.55);      /* thrown full length; then he lies a moment and gets up */
-         if(a.k==='dive'){ o.rot=(a.dy<0 ? f*0.55 : f*2.45)*e; o.oy=a.dy*PR*0.55*e-4.5*e; }
+         const e = a.k==='dive' ? Math.min(1,(p.dvT||0)/4) : (ph<0.4?1:(1-ph)/0.6);      /* thrown full length; then he lies a moment and gets up */
+         const hi = a.k==='dive' ? Math.max(0,Math.min(1,(ball.z-9)/12)) : 0;             /* a high one: he goes up for it more than across */
+         if(a.k==='dive'){ o.rot=(a.dy<0 ? f*(0.55-0.3*hi) : f*(2.45-1.5*hi))*e; o.oy=a.dy*PR*0.55*e-(4.5+7*hi)*e; }
          else { o.rot=(a.dy<0 ? f*1.2 : f*1.95)*e; o.oy=(a.dy*PR*0.4+3)*e; }                 /* on the floor he is flat on his side */
-         o.L=[-1.2,0]; o.R=[1.2,0];
-         o.arms={HL:[-1.9,-bh*1.42],HR:[1.9,-bh*1.42],EL:[-bw*0.32,-bh*0.98],ER:[bw*0.32,-bh*0.98]}; }                                  /* both hands out for it */
+         o.L=[-2.0,0]; o.R=[1.4,a.k==='dive'?1.6:0.4];
+         o.arms={HL:[-2.7,-bh*1.44],HR:[1.3,-bh*1.34],EL:[-bw*0.36,-bh*0.98],ER:[bw*0.3,-bh*0.95]}; o.ab=e; }                              /* the top hand leads */
        else if(a.k==='parry'){ const hx=a.dx*bw*1.25, hy=-bh*0.78+a.dy*bw*0.9; o.add=a.dx*0.18*bell;                                    /* a strong hand to it */
-         o.arms={HL:[hx-1.6,hy],HR:[hx+1.6,hy],EL:[hx*0.5-bw*0.3,-bh*0.6],ER:[hx*0.5+bw*0.3,-bh*0.6]}; }
+         o.arms={HL:[hx-1.6,hy],HR:[hx+1.6,hy+2],EL:[hx*0.5-bw*0.3,-bh*0.6],ER:[hx*0.5+bw*0.3,-bh*0.55]}; o.ab=env; }
        return o; }
-     if(p.gk && !pen && !post && !over){
+     if(p.gk){
        const bs=Math.hypot(ball.vx,ball.vy), pv=Math.hypot(p.vx,p.vy);
        if(keepP===p){ const hx=f*bw*0.42; o.arms={HL:[hx-1.7,-bh*0.36],HR:[hx+1.7,-bh*0.36],EL:[-bw*0.5,-bh*0.22],ER:[bw*0.5,-bh*0.22]}; }       /* held to his chest */
        else if(p.user && bs>6 && (f>0?ball.vx<-3:ball.vx>3) && pv>2 && Math.abs(p.vy)>Math.abs(p.vx)){ const dy=p.vy>0?1:-1;            /* you, flinging yourself at it */
-         o.rot=(dy<0?f*0.55:f*2.45); o.oy=dy*PR*0.55-4.5; o.L=[-1.2,0]; o.R=[1.2,0];
-         o.arms={HL:[-1.9,-bh*1.42],HR:[1.9,-bh*1.42],EL:[-bw*0.32,-bh*0.98],ER:[bw*0.32,-bh*0.98]}; }
-       else if(!restart && frozen<=0 && Math.abs(ball.x-p.x)<W*0.3) o.arms={HL:[-bw*1.05,-bh*0.3],HR:[bw*1.05,-bh*0.3],EL:[-bw*0.72,-bh*0.42],ER:[bw*0.72,-bh*0.42]};     /* set: arms wide, on his toes */
+         o.rot=(dy<0?f*0.55:f*2.45); o.oy=dy*PR*0.55-4.5; o.L=[-2.0,0]; o.R=[1.4,1.6];
+         o.arms={HL:[-2.7,-bh*1.44],HR:[1.3,-bh*1.34],EL:[-bw*0.36,-bh*0.98],ER:[bw*0.3,-bh*0.95]}; }
+       else if(!restart && frozen<=0 && Math.abs(ball.x-p.x)<W*0.3){ const k=Math.max(0,Math.min(1,1.6-Math.abs(ball.x-p.x)/(W*0.19)));   /* set: a crouch, hands low and open, the closer it gets the more of it */
+         o.oy=1.4*k; o.arms={HL:[-bw*0.86,-bh*0.16],HR:[bw*0.86,-bh*0.16],EL:[-bw*0.66,-bh*0.4],ER:[bw*0.66,-bh*0.4]}; o.ab=k; o.L=[-2.6*k,0]; o.R=[2.6*k,0]; }
        return o; }
-     if(p.jo && tick-p.jo.t<=2 && !p.gk && !p.ref){ const s=p.jo.x>=0?1:-1; o.add=s*0.17;                  /* shoulder to shoulder: he leans in, the near arm across the other man */
-       o.arms = s>0 ? {HR:[bw*1.2,-bh*0.46],ER:[bw*0.7,-bh*0.5]} : {HL:[-bw*1.2,-bh*0.46],EL:[-bw*0.7,-bh*0.5]}; }
+     if(p.ref) return o;
+     if(p.jo && tick-p.jo.t<=2){ const s=p.jo.x>=0?1:-1; o.add=s*0.16;                               /* shoulder to shoulder: he leans in, a forearm across the other man */
+       o.arms = s>0 ? {HR:[bw*1.02,-bh*0.5],ER:[bw*0.82,-bh*0.3]} : {HL:[-bw*1.02,-bh*0.5],EL:[-bw*0.82,-bh*0.3]}; }
+     else if(p.run && tick-p.run.t0<38){ const s=dirFor(p.team), k=Math.min(1,(tick-p.run.t0)/4,(38-(tick-p.run.t0))/5);   /* making a run: an arm up, pointing where he wants it */
+       o.arms = s>0 ? {HR:[bw*1.3,-bh*1.0],ER:[bw*0.7,-bh*0.68]} : {HL:[-bw*1.3,-bh*1.0],EL:[-bw*0.7,-bh*0.68]}; o.ab=k; }
      return o;
    }
    function drawPerson(p){
@@ -3747,7 +3789,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      const sw=Math.sin(p.step)*amp;
      /* a stride: the forward leg lifts at the knee, the trailing leg stretches out behind, and the
         faster he goes the longer the stride and the more he leans into it */
-     const sliding = p.user && (slide>0||down>0);
+     const sliding = false;        /* your slide is a pose like any other now: see poseOf */
      const lean = sliding ? (slideDir[0]>=0?1.15:-1.15)*(down>0&&slide===0?0.75:1) : Math.max(-0.22,Math.min(0.22,p.vx*TUNE.ppace*0.06));
      if(sliding && slide>0){ ctx.fillStyle='rgba(120,200,120,.35)';
        for(let i=1;i<=3;i++){ ctx.beginPath(); ctx.ellipse(-slideDir[0]*i*9,bh*0.6+(Math.random()-0.5)*3,6-i,2.2,0,0,7); ctx.fill(); } }
@@ -3785,9 +3827,9 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        else if(m.clap>0){                               /* applauding the stands, hands above the head */
          const c=Math.abs(Math.sin(post.t*0.45+p.x))*bw*0.3;
          HL[0]=-c-0.6; HL[1]=-bh*1.12; EL[0]=-bw*0.62; EL[1]=-bh*0.8; HR[0]=c+0.6; HR[1]=-bh*1.12; ER[0]=bw*0.62; ER[1]=-bh*0.8; } }
-     if(pz.arms){ const A2=pz.arms;
-       if(A2.HL){ HL[0]=A2.HL[0]; HL[1]=A2.HL[1]; if(A2.EL){ EL[0]=A2.EL[0]; EL[1]=A2.EL[1]; } else { EL[0]=(HL[0]-shX)/2; EL[1]=(HL[1]+shY)/2+1.5; } }
-       if(A2.HR){ HR[0]=A2.HR[0]; HR[1]=A2.HR[1]; if(A2.ER){ ER[0]=A2.ER[0]; ER[1]=A2.ER[1]; } else { ER[0]=(HR[0]+shX)/2; ER[1]=(HR[1]+shY)/2+1.5; } } }
+     if(pz.arms){ const A2=pz.arms, kb=pz.ab===undefined?1:Math.max(0,Math.min(1,pz.ab)), mix=(v,t)=>{ v[0]+=(t[0]-v[0])*kb; v[1]+=(t[1]-v[1])*kb; };
+       if(A2.HL){ mix(HL,A2.HL); mix(EL, A2.EL || [(A2.HL[0]-shX)/2-0.8, (A2.HL[1]+shY)/2+2.2]); }      /* no elbow given: a soft bend between shoulder and hand */
+       if(A2.HR){ mix(HR,A2.HR); mix(ER, A2.ER || [(A2.HR[0]+shX)/2+0.8, (A2.HR[1]+shY)/2+2.2]); } }
      ctx.beginPath(); ctx.moveTo(-shX,shY); ctx.lineTo(EL[0],EL[1]); ctx.lineTo(HL[0],HL[1]); ctx.stroke();
      ctx.beginPath(); ctx.moveTo( shX,shY); ctx.lineTo(ER[0],ER[1]); ctx.lineTo(HR[0],HR[1]); ctx.stroke();
      /* short sleeves over the top of the arm */
@@ -4133,17 +4175,18 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        const me=ME();
        if(me && !me.gk){ const pl=passPlan(me);
          if(pl){ const L2=Math.min(pl.L,150), x0=ball.x+pl.ux*14, y0=ball.y+pl.uy*14, x1=ball.x+pl.ux*L2, y1=ball.y+pl.uy*L2;
-           ctx.save(); ctx.setLineDash([3,6]); ctx.lineCap='round'; ctx.strokeStyle='rgba(125,211,252,.55)'; ctx.lineWidth=2;
+           ctx.save(); if(TOUCH) ctx.globalAlpha=0; ctx.setLineDash([3,6]); ctx.lineCap='round'; ctx.strokeStyle='rgba(125,211,252,.55)'; ctx.lineWidth=2;
            ctx.beginPath(); ctx.moveTo(PJ(x0,y0),y0); ctx.lineTo(PJ(x1,y1),y1); ctx.stroke(); ctx.setLineDash([]);
            const an=Math.atan2(y1-y0,PJ(x1,y1)-PJ(x0,y0)), hx=PJ(x1,y1);
            ctx.fillStyle='rgba(125,211,252,.7)'; ctx.beginPath(); ctx.moveTo(hx+Math.cos(an)*6,y1+Math.sin(an)*6);
            ctx.lineTo(hx+Math.cos(an+2.5)*6,y1+Math.sin(an+2.5)*6); ctx.lineTo(hx+Math.cos(an-2.5)*6,y1+Math.sin(an-2.5)*6); ctx.closePath(); ctx.fill();
+           ctx.globalAlpha=1;
            if(pl.to && pl.kind!=='space'){ const q=pl.to, sc=SC(q.y); ctx.strokeStyle=pl.kind==='through'?'rgba(52,211,153,.8)':'rgba(125,211,252,.7)'; ctx.lineWidth=1.6;
              ctx.beginPath(); ctx.ellipse(PJ(q.x,q.y),q.y+PR*0.9*sc,PR*1.1*sc,PR*0.45*sc,0,0,7); ctx.stroke(); }
            ctx.restore(); } }
      }
      /* where the shot is going, growing with the power */
-     if(!pen && charging && charge>0.12){
+     if(!TOUCH && !pen && charging && charge>0.12){
        const me=ME();
        if(me && Math.hypot(ball.x-me.x,ball.y-me.y)<PR+BR+20){
          const v=shotVec(ball.x,ball.y,charge,true), L=40+95*charge;
@@ -4195,6 +4238,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      conf.forEach(c=>{ ctx.save(); ctx.translate(c.x,c.y); ctx.rotate(c.rot);
        ctx.globalAlpha=Math.min(1,c.life/28); ctx.fillStyle=c.c;
        ctx.fillRect(-c.w/2,-c.h/2,c.w,c.h); ctx.restore(); ctx.globalAlpha=1; });
+     runMarks();
      if(TOUCH) touchDraw();
    }
    function pollPad(){
@@ -4379,7 +4423,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    }
    function setLegend(){
      const kb=$('#penKeys'); if(!kb) return;
-     if(TOUCH && !cv.closest('.ismgr')){ kb.innerHTML=[['Move','left thumb, anywhere on the left'],['Pass','swipe on the right: its line and its length'],['Find a man','tap him'],['Shoot','drag from the red button the way you want it, and let go'],['Tackle','blue button']].map(([k,v])=>`<span><b>${k}</b> ${v}</span>`).join(''); return; }
+     if(TOUCH && !cv.closest('.ismgr')){ kb.innerHTML=[['Move','left thumb, anywhere on the left'],['Pass','swipe on the right: its line and its length'],['Find a man','tap him'],['Shoot','drag from the red button the way you want it; hold longer and it rises'],['Lob','drag from the purple button: a cross or a ball over the top'],['Tackle','blue button']].map(([k,v])=>`<span><b>${k}</b> ${v}</span>`).join(''); return; }
      const rows = padIdx!==null
        ? [['Move','left stick'],['Pass / tackle','tap A'],['Shoot','hold A'],['Sprint','automatic'],['Restart','Start']]
        : [['Move','mouse / arrows / WASD'],['Pass / tackle','tap'],['Shoot','hold click or Space'],['Sprint','automatic']];
@@ -4421,7 +4465,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      const pw=(7.6+shotPower*8.4)*myRole.shot*(1+0.4*A(me,'sho'));
      const v=shotVec(ball.x,ball.y,shotPower,false);
      ball.x=me.x+v[0]*(PR+BR+1); ball.y=me.y+v[1]*(PR+BR+1);
-     ball.vx=v[0]*pw; ball.vy=v[1]*pw; ball.vz=0.8+shotPower*2.6;
+     ball.vx=v[0]*pw; ball.vy=v[1]*pw; ball.vz=SHOTVZ(shotPower);
      shotArmed=0; shotCool=18; dribbleLock=14; hold=0;
      note(me, v[2]?'shot':'pass');                  /* aimed nowhere near goal, it is a long ball */
      say(shotPower>0.75?'He absolutely leathers it!':shotPower>0.45?'He lets fly!':'Quick shot!',1100);
@@ -4471,7 +4515,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      { const near=Math.hypot(ball.x-me.x,ball.y-me.y);
        if(!(hold>0 || (lastTouch===0 && near<PR+BR+4) || (restart && restart.taker===me && near<PR+BR+12))) return; }   /* you can only pass a ball you have */
      let plan;
-     if(o&&o.to){ const q=o.to, rx=q.x+q.vx*6-ball.x, ry=q.y+q.vy*6-ball.y, d=Math.hypot(rx,ry)||1; aimX=rx/d; aimY=ry/d; plan={ux:aimX,uy:aimY,L:d,kind:'mate',to:q}; }
+     if(o&&o.to){ const q=o.to, rn=!!(q.run&&tick<=q.run.until), rx=(rn?q.run.x:q.x+q.vx*6)-ball.x, ry=(rn?q.run.y:q.y+q.vy*6)-ball.y, d=Math.hypot(rx,ry)||1; aimX=rx/d; aimY=ry/d; plan={ux:aimX,uy:aimY,L:d,kind:rn?'through':'mate',to:q}; }
      else { if(o&&o.dir){ aimX=o.dir[0]; aimY=o.dir[1]; } plan=passPlan(me,o&&o.want); }
      if(!plan) return;
      let {ux,uy,L,kind}=plan, best=plan.to;
@@ -4483,8 +4527,10 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      const err=0.35*Math.max(0.3,1-2*F(0,'at'))*wxErr();
      ball.x=me.x+ux*(PR+BR+2); ball.y=me.y+uy*(PR+BR+2);
      ball.vx=ux*pw+(Math.random()-0.5)*err; ball.vy=uy*pw+(Math.random()-0.5)*err; ball.vz=chip?4.2:0.35;
+     if(o&&o.lob){ const T=Math.max(16,Math.min(26,L/(6.5*TUNE.pace))), v=L/(T*TUNE.pace)*1.04;
+       ball.vx=ux*v+(Math.random()-0.5)*err*0.6; ball.vy=uy*v+(Math.random()-0.5)*err*0.6; ball.z=0; ball.vz=0.21*(T+1); }
      dribbleLock=22; hold=0; note(me,'pass'); aimAt={q:best,t:tick};
-     say(kind==='through'?'Threaded through!':kind==='space'?'Into space.':chip?'Chips it over.':L>W*0.3?'Switches the play.':'Lays it off.',900);
+     say(o&&o.lob?(kind==='mate'?'Floated up to him.':'Lofted over the top!'):kind==='through'?'Threaded through!':kind==='space'?'Into space.':chip?'Chips it over.':L>W*0.3?'Switches the play.':'Lays it off.',900);
    }
    cv.addEventListener('pointerdown',e=>{ if(TOUCH){ if(!setupOn) fsEnter(); return; } cv.focus({preventScroll:true}); sndInit(); beginCharge(); });
    cv.addEventListener('pointerup',releaseShot);
@@ -4589,24 +4635,37 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        set(fsEl.clk,$('#penClock').textContent); { const t=$('#penSc').textContent.replace(/ : /g,':'); set(fsEl.sc,t); fsEl.sc.parentNode.classList.toggle('long',t.length>6); }
        const kk=(kits[0]||{}).n+'|'+(kits[1]||{}).n; if(fsEl.kk!==kk){ fsEl.kk=kk; fsEl.a.innerHTML=crest(kits[0]); fsEl.b.innerHTML=crest(kits[1]); }
        const mine=hasBall(me), alt=pen||post?'':mine?'Pass':'Tackle', sh=post?'Shake':pen?(pen.taker&&pen.taker.user?'Kick':''):'Shoot';
-       set(fsEl.altL,alt); fsEl.alt.hidden=!alt; if(sh) set(fsEl.shootL,sh); fsEl.shoot.hidden=!sh&&!tShot;
+       set(fsEl.altL,alt); fsEl.alt.hidden=!alt; fsEl.lob.hidden=!!(pen||post); fsEl.lob.classList.toggle('dim',!mine); if(sh) set(fsEl.shootL,sh); fsEl.shoot.hidden=!sh&&!tShot;
        fsEl.rep.hidden=statsEl.hidden; if(statsEl.hidden) penEl.classList.remove('rep');
        fsEl.snd.classList.toggle('off',!sndOn);
        if(tHintT && now>tHintT){ tHintT=0; fsEl.hint.classList.add('off'); } }
      if(!me||!tAim||pen||over) return;
-     const mineNow=hasBall(me), bx=mineNow?ball.x:me.x, by=mineNow?ball.y:me.y, line=(ux,uy,L,col,w)=>{ const ex=bx+ux*L, ey=by+uy*L, a=Math.atan2(ey-by,PJ(ex,ey)-PJ(bx,by));
-       ctx.strokeStyle=col; ctx.fillStyle=col; ctx.lineWidth=w; ctx.lineCap='round';
-       ctx.beginPath(); ctx.moveTo(PJ(bx,by),by); ctx.lineTo(PJ(ex,ey),ey); ctx.stroke();
-       ctx.beginPath(); ctx.moveTo(PJ(ex,ey)+Math.cos(a)*12,ey+Math.sin(a)*12); ctx.lineTo(PJ(ex,ey)+Math.cos(a+2.5)*11,ey+Math.sin(a+2.5)*11); ctx.lineTo(PJ(ex,ey)+Math.cos(a-2.5)*11,ey+Math.sin(a-2.5)*11); ctx.closePath(); ctx.fill(); };
+     const mineNow=hasBall(me), bx=mineNow?ball.x:me.x, by=mineNow?ball.y:me.y;
+     const dots=(pts,col,r)=>{ ctx.fillStyle=col; pts.forEach(q=>{ ctx.beginPath(); ctx.arc(PJ(q[0],q[1]),q[1]-(q[2]||0)*0.85,r,0,7); ctx.fill(); }); };
+     const ring=(x,y,rx,col,w)=>{ ctx.beginPath(); ctx.ellipse(PJ(x,y),y,rx,rx*0.52,0,0,7); ctx.strokeStyle=col; ctx.lineWidth=w; ctx.stroke(); };
      ctx.save();
-     if(tAim.kind==='pass'){
+     if(tAim.kind==='pass'||tAim.kind==='lob'){
        const ax=aimX, ay=aimY; aimX=tAim.ux; aimY=tAim.uy; const plan=passPlan(me,tAim.want); aimX=ax; aimY=ay;
-       { const LL=plan&&plan.kind!=='space'?plan.L:tAim.want; line(tAim.ux,tAim.uy,LL,'rgba(8,11,18,.4)',7); line(tAim.ux,tAim.uy,LL,'rgba(125,211,252,.95)',4); }
-       if(plan&&plan.to){ const q=plan.to; ctx.beginPath(); ctx.ellipse(PJ(q.x,q.y),q.y+PR*0.8,PR*1.7,PR*0.8,0,0,7); ctx.strokeStyle='rgba(125,211,252,.95)'; ctx.lineWidth=3; ctx.stroke(); }
+       const lob=tAim.kind==='lob', L=plan?plan.L:tAim.want, ex=bx+tAim.ux*L, ey=by+tAim.uy*L, col=lob?'rgba(216,180,254,.96)':'rgba(125,211,252,.96)';
+       const n=Math.max(4,Math.round(L/15)), T=Math.max(16,Math.min(26,L/(6.5*TUNE.pace))), pts=[];
+       for(let i=1;i<n;i++){ const k=i/n; pts.push([bx+tAim.ux*L*k, by+tAim.uy*L*k, lob ? 0.21*T*T*k*(1-k)*1.05 : 0]); }     /* a lob's height along the way */
+       if(lob) dots(pts.map(q=>[q[0],q[1],0]),'rgba(8,11,18,.3)',2);                  /* its shadow on the grass */
+       dots(pts,'rgba(8,11,18,.45)',3.6); dots(pts,col,2.4);
+       ring(ex,ey,PR*1.15,'rgba(8,11,18,.5)',5.5); ring(ex,ey,PR*1.15,col,2.6);       /* where it will arrive */
+       ctx.beginPath(); ctx.arc(PJ(ex,ey),ey,2.4,0,7); ctx.fillStyle=col; ctx.fill();
+       if(plan&&plan.to){ const q=plan.to; ring(q.x,q.y+PR*0.8,PR*1.7,col,3); }       /* and who it is for */
      } else {
-       const pw=Math.min(tAim.pull,charge), hot=pw>0.7;
-       line(tAim.ux,tAim.uy,50+tAim.pull*190,'rgba(8,11,18,.38)',6); line(tAim.ux,tAim.uy,50+tAim.pull*190,'rgba(255,255,255,.6)',2);
-       line(tAim.ux,tAim.uy,50+pw*190,hot?'rgba(248,113,113,.95)':'rgba(251,191,36,.95)',5);
+       const sp=0.18+0.82*Math.max(0.1,Math.min(tAim.pull,charge)), ax=aimX, ay=aimY; aimX=tAim.ux; aimY=tAim.uy; const v=shotVec(bx,by,sp,true); aimX=ax; aimY=ay;
+       const gx=dirFor(0)>0?W:0, pts=[]; let x=bx, y=by, z=0, vz=SHOTVZ(sp), vv=(7.6+sp*8.4)*myRole.shot, end=null;
+       for(let t=1;t<=80;t++){ x+=v[0]*vv*TUNE.pace; y+=v[1]*vv*TUNE.pace; vv*=Math.pow(z>1.2?0.995:0.986,TUNE.pace*wxFric());
+         vz-=0.42; z+=vz; if(z<=0){ z=0; vz=vz<-1.2?-vz*0.42:0; }
+         if(gx>0?x>=gx:x<=0){ end={x:gx,y,z}; break; } if(y<FT||y>FB||vv<1.1) break; if(t%2===0) pts.push([x,y,z]); }
+       const gh=goalH(), gTop=FT+((FB-FT)-gh)/2, on=!!end&&end.y>gTop&&end.y<gTop+gh, sky=on&&end.z>ZBAR, col=on&&!sky?'rgba(251,191,36,.97)':'rgba(248,113,113,.97)';
+       dots(pts.map(q=>[q[0],q[1],0]),'rgba(8,11,18,.3)',2); dots(pts,'rgba(8,11,18,.45)',3.4); dots(pts,col,2.2);
+       if(end){ const X=PJ(end.x,end.y), Y=end.y-end.z*0.85;                           /* the spot in the goal it is heading for; red if it is going over or wide */
+         ctx.beginPath(); ctx.arc(X,Y,7,0,7); ctx.strokeStyle='rgba(8,11,18,.55)'; ctx.lineWidth=5; ctx.stroke(); ctx.strokeStyle=col; ctx.lineWidth=2.6; ctx.stroke();
+         ctx.beginPath(); ctx.moveTo(X-10,Y); ctx.lineTo(X+10,Y); ctx.moveTo(X,Y-10); ctx.lineTo(X,Y+10); ctx.lineWidth=1.6; ctx.stroke();
+         if(sky||!on){ ctx.font='700 11px Sora,sans-serif'; ctx.textAlign='center'; ctx.lineWidth=3; ctx.strokeStyle='rgba(8,11,18,.7)'; const tx2=sky?'OVER':'WIDE'; ctx.strokeText(tx2,X-(gx>0?26:-26),Y-12); ctx.fillStyle=col; ctx.fillText(tx2,X-(gx>0?26:-26),Y-12); } }
      }
      ctx.restore();
    }
@@ -4667,18 +4726,18 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      ui.innerHTML='<div class="fsl"><span class="fsclk"></span><div class="fssc"><span class="fca"></span><b></b><span class="fcb"></span></div></div>'
        +'<div class="fsr"><button type="button" data-f="x" aria-label="Leave full screen">✕</button><button type="button" data-f="snd" aria-label="Crowd sound">♪</button><button type="button" data-f="new">New</button><button type="button" data-f="rep" hidden>Report</button></div>'
        +'<div class="fstouch"></div><div class="fsjoy"><i></i></div>'
-       +'<div class="fshint"><b>Left thumb</b> moves · <b>swipe</b> on the right to pass, or <b>tap a team-mate</b> · drag from the <b>red button</b> the way you want to shoot, and let go</div>'
-       +'<button type="button" class="fsb fsalt"><span>Pass</span></button><button type="button" class="fsb fsshoot"><span>Shoot</span></button>';
+       +'<div class="fshint"><b>Left thumb</b> moves · <b>swipe</b> on the right to pass, or <b>tap a team-mate</b> · drag from <b>Shoot</b> to aim it: the longer you hold, the higher it goes \u00b7 drag from <b>Lob</b> for a ball over the top</div>'
+       +'<button type="button" class="fsb fsalt"><span>Pass</span></button><button type="button" class="fsb fslob"><span>Lob</span></button><button type="button" class="fsb fsshoot"><span>Shoot</span></button>';
      penEl.appendChild(ui);
      const q=s=>ui.querySelector(s);
      Object.assign(fsEl,{clk:q('.fsclk'),sc:q('.fssc b'),a:q('.fca'),b:q('.fcb'),rep:q('[data-f=rep]'),snd:q('[data-f=snd]'),joy:q('.fsjoy'),knob:q('.fsjoy i'),
-       hint:q('.fshint'),alt:q('.fsalt'),altL:q('.fsalt span'),shoot:q('.fsshoot'),shootL:q('.fsshoot span'),layer:q('.fstouch')});
+       hint:q('.fshint'),alt:q('.fsalt'),altL:q('.fsalt span'),lob:q('.fslob'),shoot:q('.fsshoot'),shootL:q('.fsshoot span'),layer:q('.fstouch')});
      q('[data-f=x]').onclick=()=>{ if(penEl.classList.contains('rep')) penEl.classList.remove('rep'); else fsExit(); };
      q('[data-f=snd]').onclick=()=>{ const b=$('#penSnd'); if(b) b.click(); };
      q('[data-f=new]').onclick=()=>{ penEl.classList.remove('rep'); newMatch(); };
      fsEl.rep.onclick=()=>{ penEl.classList.toggle('rep'); statsEl.scrollTop=0; };
      kick.textContent='Tap to play';
-     if(!penEl.classList.contains('ismgr')) msg.textContent='Kick-off opens the match full screen. Left thumb moves, swipe to pass, drag from the red button to shoot.';
+     if(!penEl.classList.contains('ismgr')) msg.textContent='Kick-off opens the match full screen. Left thumb moves, swipe to pass, drag from Shoot to shoot, from Lob for a ball over the top.';
      kick.addEventListener('click',()=>{ if(!setupOn) fsEnter(); });
      /* the left thumb: a stick wherever it lands, which follows if the thumb strays past its rim */
      const R=44, DZ=7, L=fsEl.layer;
@@ -4752,6 +4811,18 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        if(Math.hypot(ball.x-me.x,ball.y-me.y)<PR+BR+18) strike(me);
      };
      S.addEventListener('pointerup',e=>shotEnd(e,true)); S.addEventListener('pointercancel',e=>shotEnd(e,false));
+     { const B=fsEl.lob; let tL=null;
+       const want=l=>70+Math.min(1,Math.max(0,l-8)/46)*W*0.55;
+       B.addEventListener('pointerdown',e=>{ if(!fsOn||setupOn||tL||pen||post) return; e.preventDefault(); e.stopPropagation(); sndInit();
+         try{ B.setPointerCapture(e.pointerId); }catch(x){} const p=fsPt(e); tL={id:e.pointerId,ox:p.x,oy:p.y}; B.classList.add('on'); });
+       B.addEventListener('pointermove',e=>{ if(!tL||e.pointerId!==tL.id) return; const p=fsPt(e), dx=p.x-tL.ox, dy=p.y-tL.oy, l=Math.hypot(dx,dy);
+         tAim = l>8 ? {kind:'lob',ux:dx/l,uy:dy/l,want:want(l)} : null; });
+       const end=(e,fire)=>{ if(!tL||e.pointerId!==tL.id) return; const t=tL, p=fsPt(e); tL=null; tAim=null; B.classList.remove('on');
+         if(!fire||pen||over||htPause>0||cdT>0) return; const me=ME(); if(!me) return;
+         const dx=p.x-t.ox, dy=p.y-t.oy, l=Math.hypot(dx,dy), o = l>8 ? {dir:[dx/l,dy/l],want:want(l),lob:true} : {want:W*0.26,lob:true};    /* a tap: a clip forward the way you face */
+         if(hasBall(me)) doPass(o); else if(lastTouch===0) tQ={o,until:tick+16}; };
+       B.addEventListener('pointerup',e=>end(e,true)); B.addEventListener('pointercancel',e=>end(e,false));
+       ['touchstart','touchmove'].forEach(t=>B.addEventListener(t,e=>{ if(fsOn) e.preventDefault(); },{passive:false})); }
      /* the blue button: a pass the way you face with the ball, a sliding tackle without it */
      fsEl.alt.addEventListener('pointerdown',e=>{ if(!fsOn||setupOn) return; e.preventDefault(); e.stopPropagation(); sndInit();
        const me=ME(); if(!me||pen||post) return; if(hasBall(me)) doPass(); else slideTackle(); });
