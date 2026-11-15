@@ -4265,17 +4265,17 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
       The last few seconds of play are kept as small frames in a ring. When a goal goes in, that
       build-up and a couple of seconds of celebration are kept as a clip (JPEG frames). After the
       match the report shows them: watch them back, or save one goal or the whole reel as a GIF. */
-   const HL_W=400, HL_EVERY=4, HL_PRE=52, HL_POST=34, HL_MS=67;
+   const HL_W=TOUCH?544:704, HL_EVERY=3, HL_PRE=70, HL_POST=46, HL_MS=50, HL_GIF=560;      /* frame width, one frame in three (20 a second), 3.5 s before the goal and 2.3 s after; GIFs no wider than HL_GIF */
    const hl={pool:[], i:0, n:0, f:0, clips:[], pend:null, w:0, h:0, play:null, cur:-1};
    function hlClear(){ hl.clips=[]; hl.pend=null; hl.i=0; hl.n=0; hlStop(); }
-   function hlBlob(c){ return new Promise(r=>c.toBlob(b=>r(b),'image/jpeg',0.86)); }
+   function hlBlob(c){ return new Promise(r=>c.toBlob(b=>r(b),'image/jpeg',0.93)); }
    function hlCap(){
      if(!started || (over && !hl.pend) || pen && pen.phase && !pen.single) return;
      if((++hl.f)%HL_EVERY) return;
      const w=HL_W, h=Math.round(HL_W*H/W);
      if(w!==hl.w||h!==hl.h){ hl.w=w; hl.h=h; hl.pool=[]; hl.i=0; hl.n=0; }
      let c=hl.pool[hl.i]; if(!c){ c=document.createElement('canvas'); c.width=w; c.height=h; hl.pool[hl.i]=c; }
-     const g=c.getContext('2d'); g.drawImage(cv,0,0,w,h);
+     const g=c.getContext('2d'); g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high'; g.drawImage(cv,0,0,w,h);
      hl.i=(hl.i+1)%HL_PRE; hl.n=Math.min(HL_PRE,hl.n+1);
      if(hl.pend){ hl.pend.frames.push(hlBlob(c)); if(--hl.pend.left<=0) hl.pend=null; }
    }
@@ -4339,18 +4339,19 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      try{
        gifLib = gifLib || await import('https://cdn.jsdelivr.net/npm/gifenc@1.0.3/dist/gifenc.esm.js');
        const {GIFEncoder,quantize,applyPalette}=gifLib, enc=GIFEncoder();
-       const w=list[0].w, h=list[0].h, oc=document.createElement('canvas'); oc.width=w; oc.height=h;
-       const g=oc.getContext('2d',{willReadFrequently:true});
+       const cw=list[0].w, ch=list[0].h, sc=Math.min(1,HL_GIF/cw), w=Math.round(cw*sc), h=Math.round(ch*sc), oc=document.createElement('canvas'); oc.width=w; oc.height=h;
+       const g=oc.getContext('2d',{willReadFrequently:true}); g.imageSmoothingQuality='high'; g.setTransform(sc,0,0,sc,0,0);
        const all=[]; for(const clip of list){ const bm=await hlBitmaps(clip); bm.forEach((_,k)=>all.push([clip,bm,k])); }
-       /* one palette for the whole reel, from a handful of its frames: faster and smaller */
-       const pick=all.filter((_,n)=>n%Math.max(1,Math.floor(all.length/8))===0).slice(0,10), px=w*h*4;
-       const big=new Uint8ClampedArray(px*pick.length);
-       pick.forEach(([clip,bm,k],j)=>{ hlFrame(g,clip,bm,k); big.set(g.getImageData(0,0,w,h).data,j*px); });
-       const pal=quantize(big,256);
+       /* each goal gets its own 256 colours, picked from a handful of its own frames: day, night, rain and kits all differ */
+       const px=w*h*4, pals=new Map();
+       for(const clip of list){ const mine=all.filter(a=>a[0]===clip), pick=mine.filter((_,n)=>n%Math.max(1,Math.floor(mine.length/8))===0).slice(0,9);
+         const big=new Uint8ClampedArray(px*pick.length);
+         pick.forEach(([c2,bm,k],j)=>{ hlFrame(g,c2,bm,k); big.set(g.getImageData(0,0,w,h).data,j*px); });
+         pals.set(clip,quantize(big,256)); }
        for(let n=0;n<all.length;n++){
-         const [clip,bm,k]=all[n]; hlFrame(g,clip,bm,k);
+         const [clip,bm,k]=all[n], pal=pals.get(clip); hlFrame(g,clip,bm,k);
          const idx=applyPalette(g.getImageData(0,0,w,h).data,pal);
-         enc.writeFrame(idx,w,h,n===0?{palette:pal, delay:HL_MS}:{delay:k===bm.length-1?1000:HL_MS});
+         enc.writeFrame(idx,w,h,(n===0||k===0)?{palette:pal, delay:HL_MS}:{delay:k===bm.length-1?1000:HL_MS});
          if(n%3===0){ btn.textContent='Saving '+Math.round(n/all.length*100)+'%'; await new Promise(r=>setTimeout(r,0)); }
        }
        enc.finish();
