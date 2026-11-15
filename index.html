@@ -340,7 +340,8 @@ section{padding:84px 0;border-top:1px solid var(--line)}
  font:500 12.4px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:#eef1f8;transition:opacity .35s}
 .kick.off{opacity:0}
 /* phones: the match full screen, sideways */
-html.pitchfs,html.pitchfs body{overflow:hidden!important;overscroll-behavior:none}
+html.pitchfs,html.pitchfs body{overflow:hidden!important;overscroll-behavior:none;background:#05070c!important;color-scheme:dark}
+html.pitchfs body>*:not(.pen){visibility:hidden!important}
 .fsui{display:none}
 .pen.touch .kick{pointer-events:auto;cursor:pointer}
 .pen.touch .kick.off{display:none}
@@ -371,7 +372,9 @@ html.pitchfs,html.pitchfs body{overflow:hidden!important;overscroll-behavior:non
 .fssc{display:flex;align-items:center;gap:5px}
 .fssc img,.fssc svg{width:19px;height:19px;object-fit:contain;display:block}
 .fssc b{font:600 14px/1 'IBM Plex Mono',monospace;letter-spacing:.02em;white-space:nowrap}
-.fssc.long{flex-wrap:wrap;justify-content:center}.fssc.long b{font-size:10.5px;order:3;flex-basis:100%;text-align:center}
+.fssc.long,.fssc.slim{flex-wrap:wrap;justify-content:center}.fssc.long b{font-size:10.5px;order:3;flex-basis:100%;text-align:center}
+.fssc.slim b{order:3;flex-basis:100%;text-align:center;font-size:13px}.fsl{min-width:46px}.fsclk{padding:4px 6px}
+.fsb{opacity:.93}
 .fsr{right:calc(var(--sr) + 7px);top:calc(var(--st) + 8px);width:calc(var(--gl) - 14px);z-index:11;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px}
 .fsr button{min-width:31px;height:31px;padding:0 8px;border-radius:9px;font:600 11px/1 Sora;color:#eef1f8;background:rgba(20,24,34,.86);border:1px solid rgba(255,255,255,.22);cursor:pointer}
 .fsr button.off{opacity:.45;text-decoration:line-through}
@@ -1588,7 +1591,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    const rng=s=>{ s=(s>>>0)||1; return ()=>{ s^=s<<13; s>>>=0; s^=s>>>17; s^=s<<5; s>>>=0; return s/4294967296; }; };
    function sndInit(){                         /* browsers only allow this after a click or a key */
      if(!sndOn) return;
-     if(AC){ if(AC.state==='suspended' && !document.hidden) AC.resume(); return; }
+     if(AC){ if(AC.state!=='running' && AC.state!=='closed' && !document.hidden){ try{ const p=AC.resume(); if(p&&p.catch) p.catch(()=>{}); }catch(e){} } return; }
      const C=window.AudioContext||window.webkitAudioContext; if(!C) return;
      try{ AC=new C(); }catch(e){ AC=null; return; }
      sndG=AC.createGain(); sndG.gain.value=0;
@@ -4548,11 +4551,12 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      const sl=fsRot?s.t:s.l, sr=fsRot?s.b:s.r, st=fsRot?s.r:s.t, sb=fsRot?s.l:s.b;
      penEl.classList.toggle('rot',fsRot);
      penEl.style.width=Wd+'px'; penEl.style.height=Hd+'px'; penEl.style.left=(fsRot?vw:0)+'px';
-     const aw=Wd-sl-sr, ah=Hd-st-sb-(fsRot?0:Math.min(8,sb?0:4)), G=84;
+     const aw=Wd-sl-sr, ah=Hd-st-sb-(fsRot?0:Math.min(8,sb?0:4)), G=Math.max(56,Math.min(84,(aw-ah*16/9.9)/2));   /* room for the thumbs, but the pitch comes first */
      const pw=Math.max(120,Math.floor(Math.min(aw-2*G, ah*16/9.9))), ph=Math.floor(pw*9.9/16);
      const left=sl+(aw-pw)/2, top=st+(ah-ph)/2;
      wrapEl.style.left=left+'px'; wrapEl.style.top=top+'px'; wrapEl.style.width=pw+'px'; wrapEl.style.height=ph+'px';
      [['--sl',sl],['--sr',sr],['--st',st],['--sb',sb],['--gl',left-sl],['--pw',pw],['--pt',top]].forEach(([k,v])=>penEl.style.setProperty(k,v+'px'));
+     fsEl.sc.parentNode.classList.toggle('slim',left-sl<80);
      if(!tStick){ fsEl.joy.style.left=(sl+Math.max(64,(left-sl)/2+8))+'px'; fsEl.joy.style.top=(Hd-sb-78)+'px'; }
      layout();
    }
@@ -4564,6 +4568,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      document.body.appendChild(penEl); penEl.classList.add('fs'); penEl.appendChild(setupEl);
      document.documentElement.classList.add('pitchfs');
      { const m=document.querySelector('meta[name=viewport]'); if(m){ fsVp=m.content; m.content=fsVp+',viewport-fit=cover,maximum-scale=1,user-scalable=no'; } }
+     { let t=document.querySelector('meta[name=theme-color][data-fs]'); if(!t){ t=document.createElement('meta'); t.name='theme-color'; t.setAttribute('data-fs','1'); document.head.appendChild(t); } t.content='#05070c'; }
      try{ const de=document.documentElement;                         /* where the browser can really go full screen and turn, it does */
        if(de.requestFullscreen && /Android/i.test(navigator.userAgent)) de.requestFullscreen({navigationUI:'hide'}).then(()=>{ try{ screen.orientation.lock('landscape').catch(()=>{}); }catch(e){} }).catch(()=>{}); }catch(e){}
      usingPad=true; usingKeys=false; padMag=0; mouse=null; tStick=tGest=tShot=tAim=tQ=null; lastT=0;
@@ -4580,6 +4585,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      if(fsHold&&fsHold.parentNode){ fsHold.parentNode.style.minHeight=''; fsHold.parentNode.insertBefore(penEl,fsHold); fsHold.remove(); } fsHold=null;
      document.documentElement.classList.remove('pitchfs');
      { const m=document.querySelector('meta[name=viewport]'); if(m&&fsVp!==null) m.content=fsVp; fsVp=null; }
+     { const t=document.querySelector('meta[name=theme-color][data-fs]'); if(t) t.remove(); }
      try{ if(document.fullscreenElement) document.exitFullscreen().catch(()=>{}); if(screen.orientation&&screen.orientation.unlock) screen.orientation.unlock(); }catch(e){}
      padMag=0; charging=false; charge=0; tStick=tGest=tShot=tAim=tQ=null;
      if(started&&!over){ kick.textContent='Paused \u00b7 tap to keep playing'; kick.classList.remove('off'); }
@@ -4683,6 +4689,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
         so they move the right way when the picture is turned */
      ['touchstart','touchmove'].forEach(t=>[L,S,fsEl.alt].forEach(el=>el.addEventListener(t,e=>{ if(fsOn) e.preventDefault(); },{passive:false})));
      penEl.addEventListener('contextmenu',e=>{ if(fsOn) e.preventDefault(); });
+     ['touchend','pointerup','click'].forEach(t=>document.addEventListener(t,()=>{ if(sndOn&&(AC||fsOn)) sndInit(); },{capture:true,passive:true}));
      penEl.addEventListener('touchmove',e=>{ if(fsOn) e.preventDefault(); },{passive:false});
      ['gesturestart','gesturechange'].forEach(t=>document.addEventListener(t,e=>{ if(fsOn) e.preventDefault(); },{passive:false}));
      [setupEl,statsEl].forEach(el=>{ let d=null;
