@@ -1482,6 +1482,8 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
          /* a scramble is one duel, not ten: each man is credited once per spell */
          if(!p.gk && tick-(p.sq.tW||-99)>45){ p.sq.tW=tick; s.won++; if(fresh) s.tkl++; }
          if(fresh && tick-(prev.sq.tL||-99)>45){ prev.sq.tL=tick; prev.sq.st.lost++; }
+         if(fresh && !p.gk && !prev.gk && !(p.user&&slide>0)){ if(p.role==='df'&&!p.user&&Math.random()<0.4) actSet(p,'slide',13,ball.x-p.x,ball.y-p.y); else actSet(p,'lunge',10,ball.x-p.x,ball.y-p.y);
+           actSet(prev,'stumble',11,prev.x-p.x,prev.y-p.y); }
          if(!p.gk) feed=null;                                 /* a keeper's hand on it does not wipe out the assist */
          passLive=null;
        } else {
@@ -1499,6 +1501,9 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        const again = lastShot && lastShot.p===p && !lastShot.on && tick-lastShot.t<45;
        if(!again) s.shots++;
        shotLive={p,t:tick,on:false}; lastShot=shotLive; passLive=null; }
+     if(kind==='shot') actSet(p,'kick',13,ball.vx,ball.vy,1);
+     else if(kind==='pass'||kind==='clear') actSet(p,'kick',9,ball.vx,ball.vy);
+     else if(kind==='carry' && prev && prev!==p && lastKind==='pass') actSet(p,'trap',8,ball.x-p.x,ball.y-p.y);
      lastP=p; lastKind=kind; lastPT=tick; lastTouch=p.team;
    }
    function noteKeep(p){                                   /* a keeper gets something on it */
@@ -2027,7 +2032,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
    const TAP=150;
    const TUNE={antic:0.5, dive:3.5, wob0:0.3, wob1:0.42, tackle:0.7, gkRead:0.3, gkMe:5, gkDive:3.0, sway0:4, sway1:18, rush:3.5, lunge:5.6, claim:7,
      aiAim:0.4, aiPow:12, myErr:0.46, myLag:0.07, myAntic:0.55, myDive:0.94, mySp:2.5, myParryV:7, myParryP:0.5,
-     tackleDf:0.88, dfSp:4.3, jockMin:22, jockMax:58, kErr:0.26, kLag:0.12, kAntic:1.1, kDive:1.15, kPos:0.31, kPosW:1.6, mark:0.4, pressW:0.8, pressR:48, kAcc:0.7, myPos:0.7, myAcc:0.5, gkAim:0.2, gkPow:9.8, mateAim:0.3, matePow:9.8, aiTackle:0.22, carry:0.86, pressSp:4.0, pace:0.9, ppace:0.7, gpace:0.8, meJog:3.5, meSprint:4.2, aiAcc:0.75, settle:16, abW:0.6, xDodge:1, xShield:1, xNoRet:1, xProt:1, xHold:1, lkGap:14, lkFwd:0.45, lkSq:0.22, lkMin:0, wMin:0, lkR:95, omRoom:40, lkHold:70, wAny:0, nrT:45, kvB:2.2, kvM:0.8, shFar:0.15, shMid:0.6, shFree:0.32, cover:0.6, readPass:8, reachDf:4, foul:0.14, slideLen:14, slideSp:6.2, outPause:90, outDist:76, cardT:110, stDrain:0.0038, stRegen:0.0035, fatDist:15000, aiDrain:0.0009, aiRegen:0.003, gain:2.8, curve:6, oTk:1.05, oPress:1.05, oSup:1.12, oRange:1.06, oBlk:1.3, oMix:0.14, oAim:0.75, oSide:0.34, drW:0.5, oFlat:0.3, oLift:0.02, qB:0.4, qS:0.3};   /* balance knobs */                         /* under this and it is a pass, over it a shot */
+     tackleDf:0.88, dfSp:4.3, jockMin:22, jockMax:58, kErr:0.26, kLag:0.12, kAntic:1.1, kDive:1.15, kPos:0.31, kPosW:1.6, mark:0.4, pressW:0.8, pressR:48, kAcc:0.7, myPos:0.7, myAcc:0.5, gkAim:0.2, gkPow:9.8, mateAim:0.3, matePow:9.8, aiTackle:0.22, carry:0.86, pressSp:4.0, pace:0.9, ppace:0.7, gpace:0.8, meJog:3.5, meSprint:4.2, aiAcc:0.75, settle:16, abW:0.6, kDown:0.4, xDodge:1, xShield:1, xNoRet:1, xProt:1, xHold:1, lkGap:14, lkFwd:0.45, lkSq:0.22, lkMin:0, wMin:0, lkR:95, omRoom:40, lkHold:70, wAny:0, nrT:45, kvB:2.2, kvM:0.8, shFar:0.15, shMid:0.6, shFree:0.32, cover:0.6, readPass:8, reachDf:4, foul:0.14, slideLen:14, slideSp:6.2, outPause:90, outDist:76, cardT:110, stDrain:0.0038, stRegen:0.0035, fatDist:15000, aiDrain:0.0009, aiRegen:0.003, gain:2.8, curve:6, oTk:1.05, oPress:1.05, oSup:1.12, oRange:1.06, oBlk:1.3, oMix:0.14, oAim:0.75, oSide:0.34, drW:0.5, oFlat:0.3, oLift:0.02, qB:0.4, qS:0.3};   /* balance knobs */                         /* under this and it is a pass, over it a shot */
    const ROLES=[{k:'gk',n:'Goalkeeper',sp:0.95,shot:1.0, pass:1.08},
                 {k:'df',n:'Defender',  sp:1.04,shot:0.97,pass:1.12},
                 {k:'mf',n:'Midfielder',sp:1.02,shot:1.02,pass:1.16},
@@ -2208,6 +2213,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      if(nearMiss>0) nearMiss--;
      if(dribbleLock>0) dribbleLock--;
      if(hold>0) hold--;
+     players.forEach(p=>{ if(p.act && --p.act.t<=0) p.act=null; });
      if(charging){ charge=Math.min(1,charge+0.034); }
      /* sprint looks after itself: keep pushing in a direction and the player breaks into a run */
      {
@@ -2273,7 +2279,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
            if(db<PR+BR+9 && ball.z<PR){                      /* ball first: a clean tackle */
              ball.x=p.x+slideDir[0]*(PR+BR+2); ball.y=p.y+slideDir[1]*(PR+BR+2);
              ball.vx=slideDir[0]*7; ball.vy=slideDir[1]*7; ball.vz=0.8; note(p,'clear'); p.sq.st.tkl++; p.sq.st.won++;
-             if(opp && od<PR*2.2){ opp.tc=22; opp.vx*=0.2; opp.vy*=0.2; }
+             if(opp && od<PR*2.2){ opp.tc=22; opp.vx*=0.2; opp.vy*=0.2; actSet(opp,'stumble',16,opp.x-p.x,opp.y-p.y); }
              say('Clean tackle!',900); slide=0; down=10;
            } else if(opp && od<PR*2.1 && Math.hypot(ball.x-opp.x,ball.y-opp.y)<PR+BR+16){   /* man first: a foul */
              slide=0; down=22; opp.vx*=0.2; opp.vy*=0.2; foulBy(p, opp.x, opp.y, 'slide');
@@ -2339,7 +2345,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
          const cyK=(FT+FB)/2, offK=Math.abs(p.x-(dir>0?0:W))+18, farK=Math.max(30,Math.abs(ball.x-(dir>0?0:W)));
          const posK=Math.min(1,Math.max(mine?TUNE.myPos:Math.max(0.17,Math.min(0.42,TUNE.kPos*(1-TUNE.kPosW*F(p.team,'df')))), offK/farK));   /* a better side's keeper leaves less of the far post open */
          p.ky += (cyK+(ball.y-cyK)*posK+p.err-p.ky)*(ours?(mine?TUNE.myLag:TUNE.kLag):0.035);
-         p.dive=false;
+         p.dive=false; p.dvOn=false;
          ty = ours ? p.ky : (FT+FB)/2;
          sp = 2.65;
          /* a struck ball coming his way: he reads some of it and throws himself across */
@@ -2348,9 +2354,13 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
            const cross = ball.y + ball.vy*((lineX-ball.x)/ball.vx);
            const a = Math.min(0.95, TUNE.antic*(mine?TUNE.myAntic:TUNE.kAntic)*(1+1.2*F(p.team,'df')));
            ty = ty*(1-a) + (cross+p.err*0.5)*a;
-           sp = TUNE.dive*(mine?TUNE.myDive:TUNE.kDive); p.dive=true;
+           sp = TUNE.dive*(mine?TUNE.myDive:TUNE.kDive); p.dive=true; p.dvOn=((shotLive&&shotLive.p.team!==p.team)||bs>9) && Math.abs(cross-cyK)<gh*0.5+16 && Math.abs(ball.x-lineX)<W*0.42;
          }
          ty = Math.max(gTop-6, Math.min(gBot+6, ty));
+         if(p.dive && p.dvOn && keepP!==p){                    /* once he has gone he is committed until the shot is dealt with */
+           if(!p.dvT){ if(Math.abs(ty-p.y)>PR*0.8){ p.dvT=1; p.dvD=ty>p.y?1:-1; } } else p.dvT++;
+           if(p.dvT) actSet(p,'dive',3,0,p.dvD); }
+         else { if((p.dvT||0)>=4 && keepP!==p){ p.act=null; actSet(p,'down',18,0,p.dvD||1); } p.dvT=0; }
          const gap = Math.abs(ball.x-lineX);
          tx = lineX + (dir>0?1:-1)*Math.max(0, Math.min(W*0.05, (W*0.17-gap)*0.42));
          /* one on one: a ball walked at him, or loose in his box, is there to be won.
@@ -2364,8 +2374,10 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
              const bx=ball.x+ball.vx*5, by=ball.y+ball.vy*5, dk=Math.hypot(bx-p.x,by-p.y);
              tx=bx; ty=by; p.rush=true;
              sp = dk<PR*4.2 ? TUNE.lunge : TUNE.rush*(mine?1.05:1);
+             if(dk<PR*4.2) actSet(p,'smother',5,bx-p.x,by-p.y);
            }
          }
+         if(p.act && p.act.k==='down') sp*=TUNE.kDown;                 /* getting up */
        }
        else {
          const dir=dirFor(p.team), skill = p.team===1 ? 1 : 0;
@@ -2477,15 +2489,17 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      for(let k=0;k<2;k++)
        for(let i=0;i<bodies.length;i++)for(let j=i+1;j<bodies.length;j++){
          const a=bodies[i],b=bodies[j];let dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1;
-         if(d<PR*2){const o=(PR*2-d)/2,ux=dx/d,uy=dy/d;
-           a.x-=ux*o;a.y-=uy*o;b.x+=ux*o;b.y+=uy*o;}
+         if(d<PR*2){const o=(PR*2-d)/2,ux=dx/d,uy=dy/d; let wa=1,wb=1;
+           if(!a.ref&&!b.ref&&a.team!==b.team&&!a.gk&&!b.gk&&!pen&&!post){ const sa=abv(a,'def')*0.5+(a.bld||1)*60, sb=abv(b,'def')*0.5+(b.bld||1)*60, g=Math.max(-0.45,Math.min(0.45,(sa-sb)/40));
+             wa=1-g; wb=1+g; a.jo={x:ux,y:uy,t:tick}; b.jo={x:-ux,y:-uy,t:tick}; }
+           a.x-=ux*o*wa;a.y-=uy*o*wa;b.x+=ux*o*wb;b.y+=uy*o*wb;}
        }
      if(frozen>0||over){ keepP=null; return; }
      tick++; if(lastTouch>=0) poss[lastTouch]++;
      if(shotLive && tick-shotLive.t>140) shotLive=null;
      if(keepP){                           /* in the keeper's hands: nobody can get at it */
        const k=keepP, dir=dirFor(k.team), cy=(FT+FB)/2, fh=FB-FT;
-       ball.x=k.x+dir*PR*0.6; ball.y=k.y; ball.z=PR*0.9; ball.vx=0; ball.vy=0; ball.vz=0; stuck=0; hold=0;
+       ball.x=k.x+dir*PR*0.55; ball.y=k.y; ball.z=PR*0.42; ball.vx=0; ball.vy=0; ball.vz=0; stuck=0; hold=0;
        if(--keepT<=0){
          /* he throws it out: to you if he is yours, otherwise to the emptier flank */
          const u=ME(); let tx2, ty2;
@@ -2564,7 +2578,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
            } else if(spd2>8.5 && Math.random()<0.55){          /* can only palm that one away */
              ball.vx=-ball.vx*0.34+(dir>0?2.2:-2.2); ball.vy=ball.vy*0.35+(Math.random()-0.5)*5.5;
              ball.vz=1.9;
-             say(p.team===1?'Parried back into play!':'Your keeper palms it clear.',1200); p.tc=9;
+             say(p.team===1?'Parried back into play!':'Your keeper palms it clear.',1200); p.tc=9; actSet(p,'parry',12,ux,uy);
            } else if(!p.user){                          /* he gathers it and holds on */
              keepP=p; keepT=32; ball.vx=0; ball.vy=0; ball.vz=0; p.tc=48; p.rush=false;
              if(spd2>7) say(p.team===1?['Saved!','Held by the keeper!','Denied!'][Math.floor(Math.random()*3)]
@@ -2572,7 +2586,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
            } else {
              let cx2=dir>0?W*0.62:W*0.38, ty2=ball.y<cy?ball.y-fhOf()*0.28:ball.y+fhOf()*0.28;
              let sx=cx2-ball.x, sy=ty2-ball.y; const sl=Math.hypot(sx,sy)||1; sx/=sl; sy/=sl;
-             ball.vx=sx*8.6; ball.vy=sy*8.6; ball.vz=2.6; p.tc=12;
+             ball.vx=sx*8.6; ball.vy=sy*8.6; ball.vz=2.6; p.tc=12; actSet(p,'parry',12,ux,uy);
              if(spd2>7) say(p.team===1?['Saved!','A glove to it!','Denied!'][Math.floor(Math.random()*3)]
                                       :'Your keeper holds firm.',1300);
            }
@@ -2605,7 +2619,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
              const pt=Math.min(0.93,(p.role==='df'?TUNE.tackleDf:TUNE.tackle)*(0.72+0.45*into)*(1+3*A(p,'def')-1.5*A(u2,'dri')-TUNE.drW*RB(u2,'dri'))*TUNE.oTk*(0.93+0.16*Q(p,'df')));   /* his defending against your dribbling */
              if(Math.random()>pt){
                if(Math.random()<TUNE.foul*(1-A(p,'def'))){ p.tc=30; p.vx*=0.2; p.vy*=0.2; foulBy(p, u2.x, u2.y, 'tackle'); return; }
-               p.tc=p.role==='df'?14:16; p.vx*=-0.5; p.vy*=-0.5;
+               p.tc=p.role==='df'?14:16; p.vx*=-0.5; p.vy*=-0.5; actSet(p,'stumble',14,p.x-u2.x,p.y-u2.y);
                { const u=ME(); if(u) u.sq.st.drib++; }      /* you beat your man */
                if(Math.random()<0.3) say(['Skips past him.','Rides the challenge.','Too quick for him.'][Math.floor(Math.random()*3)],800);
                return;
@@ -2615,7 +2629,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
            /* one AI man on another: a tackle has to be won here too, by the better side more often */
            if(lastP && lastP!==p && lastP.team!==p.team && !lastP.user && !lastP.gk && lastKind==='carry' && tick-lastPT<6){
              const pt=(TUNE.xProt && tick-(lastP.rcvT||-99)<18?0.4:1)*TUNE.aiTackle*(1+1.5*RB(p,'def'))*(1+3*A(p,'def')-1.5*A(lastP,'dri')-TUNE.drW*RB(lastP,'dri'))*(edge(p)?TUNE.oTk*(0.94+0.18*Q(p,'df')):1)*(edge(lastP)?1-0.22*Q(lastP,'at'):1);   /* a defender wins far more of these than a forward */
-             if(Math.random()>pt){ p.tc=20; p.vx*=-0.5; p.vy*=-0.5; return; }
+             if(Math.random()>pt){ p.tc=20; p.vx*=-0.5; p.vy*=-0.5; actSet(p,'stumble',12,p.x-lastP.x,p.y-lastP.y); return; }
            }
            /* the AI strikes toward goal instead of bundling it anywhere */
            const gx = dirFor(p.team)>0 ? W : 0, gy=(FT+FB)/2;
@@ -3097,6 +3111,7 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      const victim=1-p.team; p.sq.st.fouls++;
      /* how bad was it: a slide is reckless, a slide on a man clean through is a red; persistent fouling is a yellow */
      const u=players.find(q=>q.team===victim&&Math.hypot(q.x-x,q.y-y)<PR*2.2);
+     if(u){ u.act=null; actSet(u,'fall',36,u.x-p.x,u.y-p.y); } actSet(p,'lunge',12,x-p.x,y-p.y);
      const own=dirFor(p.team)>0?0:W, cy=(FT+FB)/2, gh=goalH();
      let lastMan=false;
      if(u){ const toGoal=Math.abs(u.x-own); lastMan = toGoal<W*0.5 && !players.some(q=>q.team===p.team&&q!==p&&!q.gk&&Math.abs(q.x-own)<toGoal-10); }
@@ -3655,6 +3670,47 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        g.fillStyle=i%2?'#facc15':'#f59e0b'; g.beginPath(); g.moveTo(fx,cy0-16); g.quadraticCurveTo(fx+4,cy0-15,fx+7.5,cy0-13.5); g.quadraticCurveTo(fx+4,cy0-11.5,fx,cy0-10.5); g.closePath(); g.fill(); });
      return pitchC;
    }
+   /* ---- what a body is doing beyond running. Game code calls actSet(); drawPerson() reads it through poseOf(). ---- */
+   const ACTP={fall:6,dive:6,down:5,slide:5,smother:5,parry:4,lunge:3,stumble:3,kick:2,trap:1};      /* which wins when two happen at once */
+   function actSet(p,k,T,dx,dy,big){ if(!p||p.ref) return; const a=p.act; if(a&&a.t>0&&ACTP[a.k]>ACTP[k]) return;
+     const l=Math.hypot(dx||0,dy||0)||1; p.act={k,t:T,T,dx:(dx||0)/l,dy:(dy||0)/l,big:!!big}; }
+   function poseOf(p,bw,bh){
+     const a=p.act, o={rot:null,add:0,ox:0,oy:0,L:null,R:null,arms:null,spray:0};
+     const f=p.gk?dirFor(p.team):1;
+     if(a){ const ph=1-a.t/a.T, s=a.dx>=0?1:-1, bell=Math.sin(Math.PI*Math.min(1,ph));
+       if(a.k==='kick'){ const w=a.big?1:0.62, sw=s*(-3+11*Math.min(1,ph*1.7))*w, lift=(1.4+3.2*bell)*w+Math.max(0,-a.dy)*2.4*bell;   /* drawn back, then through it */
+         if(s>0) o.R=[sw,lift]; else o.L=[sw,lift]; o.add=-s*0.1*bell*w; }
+       else if(a.k==='trap'){ const sw=s*4*bell; if(s>0) o.R=[sw,2.2*bell]; else o.L=[sw,2.2*bell]; }                                  /* a foot out to kill it */
+       else if(a.k==='lunge'){ const e=1-ph*0.6; o.add=s*0.42*e; if(s>0){ o.R=[7*e,0.8]; o.L=[-3*e,0]; } else { o.L=[-7*e,0.8]; o.R=[3*e,0]; }   /* a leg stretched in */
+         o.arms={HL:[-bw*1.0,-bh*0.5],HR:[bw*1.0,-bh*0.5]}; }
+       else if(a.k==='stumble'){ o.add=-s*0.36*bell+Math.sin(ph*9)*0.08; o.L=[-2.5,1.5*bell]; o.R=[2.5,0];                             /* knocked off his stride, arms out for balance */
+         o.arms={HL:[-bw*1.15,-bh*(0.6+0.22*bell)],HR:[bw*1.15,-bh*(0.6+0.22*bell)]}; }
+       else if(a.k==='slide'){ const up=ph>0.7?(1-ph)/0.3:1; o.rot=s*1.15*up; o.L=[-1.4,0]; o.R=[1.4,0]; if(ph<0.6) o.spray=s; }        /* in on the ground, then up */
+       else if(a.k==='fall'){ const dn=Math.min(1,ph/0.12), up=ph>0.74?(1-ph)/0.26:1; o.rot=s*1.5*dn*up; o.oy=2*dn*up; o.L=[-1.2,0]; o.R=[1.2,0];   /* brought down: he stays there a while */
+         o.arms={HL:[-bw*0.9,-bh*0.95],HR:[bw*0.9,-bh*0.95]}; }
+       else if(a.k==='smother'){ o.rot=s*1.2; o.ox=s*3; o.L=[-1.2,0]; o.R=[1.2,0];                                                      /* down at the forward's feet, hands first */
+         o.arms={HL:[-1.8,-bh*1.35],HR:[1.8,-bh*1.35],EL:[-bw*0.3,-bh*0.95],ER:[bw*0.3,-bh*0.95]}; }
+       else if(a.k==='dive'||a.k==='down'){
+         const e = a.k==='dive' ? Math.min(1,(p.dvT||0)/5) : (ph<0.45?1:(1-ph)/0.55);      /* thrown full length; then he lies a moment and gets up */
+         if(a.k==='dive'){ o.rot=(a.dy<0 ? f*0.55 : f*2.45)*e; o.oy=a.dy*PR*0.55*e-4.5*e; }
+         else { o.rot=(a.dy<0 ? f*1.2 : f*1.95)*e; o.oy=(a.dy*PR*0.4+3)*e; }                 /* on the floor he is flat on his side */
+         o.L=[-1.2,0]; o.R=[1.2,0];
+         o.arms={HL:[-1.9,-bh*1.42],HR:[1.9,-bh*1.42],EL:[-bw*0.32,-bh*0.98],ER:[bw*0.32,-bh*0.98]}; }                                  /* both hands out for it */
+       else if(a.k==='parry'){ const hx=a.dx*bw*1.25, hy=-bh*0.78+a.dy*bw*0.9; o.add=a.dx*0.18*bell;                                    /* a strong hand to it */
+         o.arms={HL:[hx-1.6,hy],HR:[hx+1.6,hy],EL:[hx*0.5-bw*0.3,-bh*0.6],ER:[hx*0.5+bw*0.3,-bh*0.6]}; }
+       return o; }
+     if(p.gk && !pen && !post && !over){
+       const bs=Math.hypot(ball.vx,ball.vy), pv=Math.hypot(p.vx,p.vy);
+       if(keepP===p){ const hx=f*bw*0.42; o.arms={HL:[hx-1.7,-bh*0.36],HR:[hx+1.7,-bh*0.36],EL:[-bw*0.5,-bh*0.22],ER:[bw*0.5,-bh*0.22]}; }       /* held to his chest */
+       else if(p.user && bs>6 && (f>0?ball.vx<-3:ball.vx>3) && pv>2 && Math.abs(p.vy)>Math.abs(p.vx)){ const dy=p.vy>0?1:-1;            /* you, flinging yourself at it */
+         o.rot=(dy<0?f*0.55:f*2.45); o.oy=dy*PR*0.55-4.5; o.L=[-1.2,0]; o.R=[1.2,0];
+         o.arms={HL:[-1.9,-bh*1.42],HR:[1.9,-bh*1.42],EL:[-bw*0.32,-bh*0.98],ER:[bw*0.32,-bh*0.98]}; }
+       else if(Math.abs(ball.x-p.x)<W*0.3) o.arms={HL:[-bw*1.05,-bh*0.3],HR:[bw*1.05,-bh*0.3],EL:[-bw*0.72,-bh*0.42],ER:[bw*0.72,-bh*0.42]};     /* set: arms wide, on his toes */
+       return o; }
+     if(p.jo && tick-p.jo.t<=2 && !p.gk && !p.ref){ const s=p.jo.x>=0?1:-1; o.add=s*0.17;                  /* shoulder to shoulder: he leans in, the near arm across the other man */
+       o.arms = s>0 ? {HR:[bw*1.2,-bh*0.46],ER:[bw*0.7,-bh*0.5]} : {HL:[-bw*1.2,-bh*0.46],EL:[-bw*0.7,-bh*0.5]}; }
+     return o;
+   }
    function drawPerson(p){
      const k = p.ref ? REFKIT : p.gk ? GKKIT[p.team] : (kits[p.team]||kits[0]);
      const dz=SC(p.y);
@@ -3690,7 +3746,11 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
      const lean = sliding ? (slideDir[0]>=0?1.15:-1.15)*(down>0&&slide===0?0.75:1) : Math.max(-0.22,Math.min(0.22,p.vx*TUNE.ppace*0.06));
      if(sliding && slide>0){ ctx.fillStyle='rgba(120,200,120,.35)';
        for(let i=1;i<=3;i++){ ctx.beginPath(); ctx.ellipse(-slideDir[0]*i*9,bh*0.6+(Math.random()-0.5)*3,6-i,2.2,0,0,7); ctx.fill(); } }
-     ctx.rotate(lean);
+     const pz = sliding||p.ref ? {rot:null,add:0,ox:0,oy:0} : poseOf(p,bw,bh);
+     if(pz.spray){ ctx.fillStyle='rgba(120,200,120,.35)';
+       for(let i=1;i<=3;i++){ ctx.beginPath(); ctx.ellipse(-pz.spray*i*9,bh*0.6+(Math.random()-0.5)*3,6-i,2.2,0,0,7); ctx.fill(); } }
+     if(pz.ox||pz.oy) ctx.translate(pz.ox,pz.oy);
+     ctx.rotate(pz.rot!==null ? pz.rot : lean+pz.add);
      const liftL=Math.max(0,Math.sin(p.step))*amp*0.42, liftR=Math.max(0,-Math.sin(p.step))*amp*0.42;
      ctx.lineCap='round';
      /* long athletic legs: shorts to mid-thigh, a bare knee, socks down to the boot */
@@ -3704,7 +3764,8 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        ctx.strokeStyle='rgba(0,0,0,.16)'; ctx.lineWidth=0.8; ctx.beginPath(); ctx.moveTo(kx+0.6,ky+1); ctx.lineTo(fx+0.6,fy-0.5); ctx.stroke();
        ctx.strokeStyle=k.sh; ctx.lineWidth=3.3; ctx.beginPath(); ctx.moveTo(s0*hx*0.9,hipY); ctx.lineTo(tx,ty); ctx.stroke();
        ctx.strokeStyle=p.boot; ctx.lineWidth=2.2; ctx.beginPath(); ctx.moveTo(fx+s0*0.3,fy+0.2); ctx.lineTo(fx-s0*1.3,fy+1.3); ctx.stroke(); };
-     leg(-1,sw,liftL); leg(1,-sw,liftR);
+     if(pz.L) leg(-1,pz.L[0],pz.L[1]); else leg(-1,sw,liftL);
+     if(pz.R) leg(1,pz.R[0],pz.R[1]); else leg(1,-sw,liftR);
      ctx.strokeStyle='rgba(0,0,0,.2)'; ctx.lineWidth=1;            /* shade down the shorts */
      ctx.beginPath(); ctx.moveTo(hx*1.5,hipY); ctx.lineTo(hx*1.5-sw*0.3,thY-liftR*0.35); ctx.stroke();
      /* arms pump against the legs, bent at the elbow when he is running */
@@ -3719,6 +3780,9 @@ $('#fl').innerHTML=`<a class="btn p" href="mailto:${S.email}">${S.email}</a>`+
        else if(m.clap>0){                               /* applauding the stands, hands above the head */
          const c=Math.abs(Math.sin(post.t*0.45+p.x))*bw*0.3;
          HL[0]=-c-0.6; HL[1]=-bh*1.12; EL[0]=-bw*0.62; EL[1]=-bh*0.8; HR[0]=c+0.6; HR[1]=-bh*1.12; ER[0]=bw*0.62; ER[1]=-bh*0.8; } }
+     if(pz.arms){ const A2=pz.arms;
+       if(A2.HL){ HL[0]=A2.HL[0]; HL[1]=A2.HL[1]; if(A2.EL){ EL[0]=A2.EL[0]; EL[1]=A2.EL[1]; } else { EL[0]=(HL[0]-shX)/2; EL[1]=(HL[1]+shY)/2+1.5; } }
+       if(A2.HR){ HR[0]=A2.HR[0]; HR[1]=A2.HR[1]; if(A2.ER){ ER[0]=A2.ER[0]; ER[1]=A2.ER[1]; } else { ER[0]=(HR[0]+shX)/2; ER[1]=(HR[1]+shY)/2+1.5; } } }
      ctx.beginPath(); ctx.moveTo(-shX,shY); ctx.lineTo(EL[0],EL[1]); ctx.lineTo(HL[0],HL[1]); ctx.stroke();
      ctx.beginPath(); ctx.moveTo( shX,shY); ctx.lineTo(ER[0],ER[1]); ctx.lineTo(HR[0],HR[1]); ctx.stroke();
      /* short sleeves over the top of the arm */
