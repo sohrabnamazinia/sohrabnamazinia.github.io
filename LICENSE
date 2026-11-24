@@ -1,3 +1,28 @@
+Copyright (c) 2026 Sohrab Namazi Nia. All rights reserved.
+
+This repository is the source of my personal website, https://sohrabnamazinia.github.io.
+
+Everything I made for it is covered by this notice. That includes the page
+design, the text, the images of me, my CV and papers, and the original code:
+the homepage (index.html), the galaxy and its planet landings, the football
+game and its assets under assets/site/, and play.html.
+
+You are welcome to read the code and learn from it. You may not copy,
+republish, redistribute or reuse the design, code or content, in whole or in
+substantial part, without my written permission. To ask, email
+spencernamazinia@gmail.com.
+
+Not mine, and not covered by the notice above:
+
+- Club crests and league logos in assets/site/crest/ belong to their owners
+  and are used for identification only.
+- The site started from the Academic Pages template, itself a fork of
+  Minimal Mistakes. The template files that remain in this repository
+  (layouts, includes, Sass and scripts from that project) stay under the MIT
+  licence below.
+
+----------------------------------------------------------------------
+
 The MIT License (MIT)
 
 Copyright (c) 2016 Michael Rose

@@ -1,3 +1,11 @@
+# sohrabnamazinia.github.io
+
+Source of my personal website, https://sohrabnamazinia.github.io.
+
+© 2026 Sohrab Namazi Nia. All rights reserved. The design, content and original code are not free to reuse; see [LICENSE](LICENSE). The leftover template files from Academic Pages stay under their MIT licence, and its original README follows.
+
+---
+
 # Academic Pages
 **Academic Pages is a Github Pages template for academic websites.**
 
