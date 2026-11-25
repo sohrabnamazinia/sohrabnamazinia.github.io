@@ -170,6 +170,7 @@ header p.htag{font-size:16.6px;color:var(--mute);max-width:46ch;margin:0 0 26px;
 @media(max-width:1000px){.gmodal.land .gmfoot{display:none}}
 @media(max-width:640px){.gland{left:12px;right:12px;bottom:14px;width:auto;padding:16px 16px 14px}.gland h4{font-size:16.5px}.gld{font-size:12.6px;min-height:0}.glf div{grid-template-columns:78px 1fr}
  .gmodal.land .gmfoot{display:none}}
+@media(min-width:700px){.gmodal .gfocus{bottom:calc(var(--ckb,44px) + 14px)}.gmodal .gland{bottom:calc(var(--ckb,40px) + 12px)}.gmodal .gmfoot{bottom:9px}}
 .gmfoot{position:absolute;bottom:20px;left:0;right:0;text-align:center;z-index:3;pointer-events:none;
  font:500 10.6px/1.6 'IBM Plex Mono',monospace;color:var(--dim);letter-spacing:.1em;text-transform:uppercase}
 /* credentials strip */
@@ -606,7 +607,7 @@ footer p.copy{margin:44px auto 0;max-width:70ch;font:500 10.6px/1.6 'IBM Plex Mo
 <div class="rail"><i id="rl"></i></div>
 <div class="gmodal" id="gmodal">
   <canvas id="gcv2"></canvas>
-  <div class="gmhead"><div><h3>Jump into my galaxy!</h3><p>Grab any node and throw it, the rest reacts! Click a planet to fly to it, click it again to open that part of the site.</p>
+  <div class="gmhead"><div><h3>Jump into my galaxy!</h3><p>Grab any node and throw it, the rest reacts! Click a planet to fly to it, click it again to land on it.</p>
    <button class="gback" id="gback">&larr; Back to the galaxy</button></div>
    <button class="gmclose" id="gmclose" aria-label="Close">✕</button></div>
   <div class="gtip" id="gtip2"></div>
@@ -916,7 +917,7 @@ function drawPlanet(ctx,x,y,r,c,type,spin,L){
   /* a thin atmosphere catching the light on the day-side limb */
   const atm = type==='pub'?'120,180,255' : type==='area'?'255,236,206' : type==='venue'?'255,238,200' : '255,190,150';
   const atA = type==='pub'?.55 : type==='proj'?.18 : .28;
-  if(r>2.5&&l2>.05){ const ang=Math.atan2(dyu,dxu), spread=.5+1.1*Math.max(0,lz+.4), al=atA*Math.min(1,l2*1.4);
+  if(r>2.5&&r<420&&l2>.05){ const ang=Math.atan2(dyu,dxu), spread=.5+1.1*Math.max(0,lz+.4), al=atA*Math.min(1,l2*1.4);
     ctx.lineWidth=Math.max(.6,Math.min(r*.09,2+r*.03));
     if(r<16){ ctx.beginPath();ctx.arc(x,y,r*1.02,ang-spread,ang+spread);ctx.strokeStyle=`rgba(${atm},${al})`;ctx.lineCap='round';ctx.stroke(); }
     else { ctx.lineCap='butt';                      /* close up the glow thins out toward its ends */
@@ -1040,14 +1041,46 @@ function tnoise(x,y,per,s){ const x0=Math.floor(x),y0=Math.floor(y),fx=x-x0,fy=y
 function tfbm(u,v,per,oct,s){ let a=.5,sum=0,n=0; for(let o=0;o<oct;o++){ sum+=a*tnoise(u*per,v*per,per,s+o*17); n+=a; a*=.5; per*=2; } return sum/n; }
 const sstep=(a,b,x)=>{ const t=Math.max(0,Math.min(1,(x-a)/(b-a))); return t*t*(3-2*t); };
 const LANDDEF={
-  pub:  {zen:[20,70,148],hor:[178,210,234],haze:[170,202,228],sun:[255,246,224],sunR:.034,sunEl:.27,stars:0,  fog:.0023,clear:24,speed:74,clouds:.92,cloudCol:'255,255,255',az:.7,light:1.1,det:.9,shad:.36,fx:'birds',moons:[[1.05,.44,.03]],moonA:.26},
-  proj: {zen:[30,24,38], hor:[222,172,130],haze:[212,160,118],sun:[226,238,255],sunR:.017,sunEl:.2, stars:.3, fog:.0017,clear:22,speed:80,clouds:.16,cloudCol:'255,226,200',az:.6,light:1.25,det:1.15,shad:.2,fx:'sand',moons:[[.92,.4,.011],[-.3,.52,.006]],moonA:.85},
-  area: {zen:[6,10,26], hor:[226,202,164],haze:[218,194,156],sun:[255,246,226],sunR:.011,sunEl:.24,stars:.42,fog:.0032,clear:30,speed:104,clouds:0,az:.8,light:.75,moons:[[.95,.33,.036],[.2,.47,.012]],moonA:1,storm:1,det:.3,fx:'wisps'},
-  venue:{zen:[10,12,28], hor:[236,218,170],haze:[230,212,164],sun:[255,246,226],sunR:.009,sunEl:.3, stars:.36,fog:.0031,clear:28,speed:98,clouds:0,az:1.0,light:.6,rings:1,det:.26,fx:'wisps',moons:[[.78,.2,.008],[-.62,.15,.005]],moonA:.9},
-  hub:  {zen:[8,2,2],    hor:[255,158,56], haze:[255,172,74], sun:null,stars:.55,fog:.0022,clear:44,speed:118,clouds:0,az:.5,light:.35,emis:1,det:.4,fx:'embers'} };
+  pub:  {zen:[20,70,148],hor:[178,210,234],haze:[170,202,228],sun:[255,246,224],sunR:.034,sunEl:.27,stars:0,  fog:.0023,clear:24,speed:74,clouds:.95,az:.7,light:1.1,det:.9,shad:.36,fx:'birds',moons:[[1.05,.44,.03]],moonA:.26,
+         sea:1,amb:.5,ambC:[.76,.89,1.2],sunC:[1.07,1,.9],mist:.55,rock:[112,104,96],atm:[124,184,255],atmA:1,ocl:.9,oclC:[250,250,252],tint:['255,255,255','228,234,244','146,160,188']},
+  proj: {zen:[30,24,38], hor:[222,172,130],haze:[212,160,118],sun:[226,238,255],sunR:.017,sunEl:.2, stars:.3, fog:.0017,clear:22,speed:80,clouds:.3,az:.6,light:1.25,det:1.15,shad:.2,fx:'sand',moons:[[.92,.4,.011],[-.3,.52,.006]],moonA:.85,
+         amb:.46,ambC:[1.08,.84,.76],sunC:[1.04,1,.96],mist:.4,rock:[118,60,40],atm:[238,176,132],atmA:.55,ocl:.32,oclC:[230,186,146],tint:['255,236,214','238,202,172','178,132,106']},
+  area: {zen:[6,10,26], hor:[226,202,164],haze:[218,194,156],sun:[255,246,226],sunR:.011,sunEl:.24,stars:.42,fog:.0032,clear:30,speed:104,clouds:0,az:.8,light:.75,moons:[[.95,.33,.036],[.2,.47,.012]],moonA:1,storm:1,det:.3,fx:'wisps',
+         amb:.5,ambC:[.9,.94,1.12],sunC:[1.05,1,.92],soft:1,atm:[244,226,196],atmA:.8},
+  venue:{zen:[10,12,28], hor:[236,218,170],haze:[230,212,164],sun:[255,246,226],sunR:.009,sunEl:.3, stars:.36,fog:.0031,clear:28,speed:98,clouds:0,az:1.0,light:.6,rings:1,det:.26,fx:'wisps',moons:[[.78,.2,.008],[-.62,.15,.005]],moonA:.9,
+         amb:.54,ambC:[.92,.95,1.1],sunC:[1.05,1,.93],soft:1,atm:[246,232,192],atmA:.8},
+  hub:  {zen:[8,2,2],    hor:[255,158,56], haze:[255,172,74], sun:null,stars:.55,fog:.0022,clear:44,speed:118,clouds:0,az:.5,light:.35,emis:1,det:.4,fx:'embers',oms:.3,atm:[255,176,76],atmA:1} };
+const CB=2600;                                   /* clouds live in a box this wide that wraps around the ship */
+const FLARE=[[.45,.03,'130,180,255',.1,0],[.8,.016,'255,220,160',.14,0],[1.3,.07,'140,255,200',.05,0],[1.75,.13,'255,170,110',.05,1],[2.1,.05,'160,140,255',.06,0]];
+/* light bouncing around inside the lens: ghosts strung along the line from the source through the middle of the frame */
+function lensFlare(ctx,sx,sy,W,H,F,streak){ const vx=W/2-sx, vy=H/2-sy; ctx.save(); ctx.globalCompositeOperation='lighter';
+  if(streak){ ctx.save(); ctx.translate(sx,sy); ctx.scale(1,.014); const sg=ctx.createRadialGradient(0,0,0,0,0,W*.5); sg.addColorStop(0,`rgba(190,215,255,${.34*F})`); sg.addColorStop(.3,`rgba(150,190,255,${.12*F})`); sg.addColorStop(1,'rgba(120,170,255,0)');
+    ctx.fillStyle=sg; ctx.beginPath(); ctx.arc(0,0,W*.5,0,7); ctx.fill(); ctx.restore(); }
+  for(const [t,rr,c,a,ring] of FLARE){ const x=sx+vx*t, y=sy+vy*t, R=rr*H, rg=ctx.createRadialGradient(x,y,0,x,y,R);
+    if(ring){ rg.addColorStop(0,`rgba(${c},0)`); rg.addColorStop(.78,`rgba(${c},0)`); rg.addColorStop(.92,`rgba(${c},${a*F})`); rg.addColorStop(1,`rgba(${c},0)`); }
+    else { rg.addColorStop(0,`rgba(${c},${a*F})`); rg.addColorStop(.7,`rgba(${c},${a*F*.5})`); rg.addColorStop(1,`rgba(${c},0)`); }
+    ctx.fillStyle=rg; ctx.beginPath(); ctx.arc(x,y,R,0,7); ctx.fill(); }
+  ctx.restore(); }
+let GRAINCV=null;
+function grainCv(){ if(GRAINCV) return GRAINCV; const cv=document.createElement('canvas'); cv.width=cv.height=160; const g=cv.getContext('2d'), im=g.createImageData(160,160), d=im.data;
+  for(let i=0;i<d.length;i+=4){ const v=128+(Math.random()+Math.random()+Math.random()-1.5)*120; d[i]=d[i+1]=d[i+2]=v; d[i+3]=255; }
+  g.putImageData(im,0,0); return GRAINCV=cv; }
+/* cumulus with flat bases, lit from above; the last two of each set are thin high streaks */
+const CUMU={};
+function cumulus(key,tint){ if(CUMU[key]) return CUMU[key];
+  return CUMU[key]=[0,1,2,3,4,5].map(k=>{ const cv=document.createElement('canvas'); cv.width=384; cv.height=176; const g=cv.getContext('2d'), base=118, puff=k<4, n=puff?36:18;
+    for(let i=0;i<n;i++){ const u=lh(i,k,61), cx=192+(u-.5)*(puff?250:330), edge=Math.max(0,1-Math.abs(cx-192)/(puff?150:190)), top=puff?(22+lh(i,k,62)*72)*Math.max(.25,edge):10+lh(i,k,62)*12,
+        y=base-lh(i,k,63)*top, r=(puff?16+lh(i,k,64)*30:9+lh(i,k,64)*15)*Math.max(.45,edge);
+      const rg=g.createRadialGradient(cx,y,0,cx,y,r); rg.addColorStop(0,'rgba(255,255,255,.5)'); rg.addColorStop(.6,'rgba(255,255,255,.26)'); rg.addColorStop(1,'rgba(255,255,255,0)');
+      g.fillStyle=rg; g.beginPath(); g.arc(cx,y,r,0,7); g.fill(); }
+    g.globalCompositeOperation='destination-out'; const cg=g.createLinearGradient(0,base-4,0,base+24); cg.addColorStop(0,'rgba(0,0,0,0)'); cg.addColorStop(1,'rgba(0,0,0,1)');
+    g.fillStyle=cg; g.fillRect(0,base-4,384,80);
+    g.globalCompositeOperation='source-atop'; const sg=g.createLinearGradient(0,24,0,base+16); sg.addColorStop(0,`rgb(${tint[0]})`); sg.addColorStop(.55,`rgb(${tint[1]})`); sg.addColorStop(1,`rgb(${tint[2]})`);
+    g.fillStyle=sg; g.fillRect(0,0,384,176);
+    return cv; }); }
 function buildLand(type){
   if(LANDS[type]) return LANDS[type];
-  const D=LANDDEF[type], hm=new Float32Array(LM*LM), cm=new Uint8ClampedArray(LM*LM*3), wm=type==='pub'?new Uint8Array(LM*LM):null;
+  const D=LANDDEF[type], hm=new Float32Array(LM*LM), cm=new Uint8ClampedArray(LM*LM*3);
   const col=new Float32Array(LM*LM*3);
   const wd=(a,b)=>{ let d=Math.abs(a-b); return d>.5?1-d:d; };
   const CR=type==='proj'?Array.from({length:16},(_,i)=>({x:lh(i,3,71),y:lh(i,5,72),r:.018+Math.pow(lh(i,7,73),2)*.06})):null;
@@ -1057,8 +1090,8 @@ function buildLand(type){
     const u=x/LM, v=y/LM, o=y*LM+x; let h=0, c;
     if(type==='pub'){
       const w=tfbm(u,v,2,3,5)-.5, e0=tfbm(u+w*.1,v+w*.1,3,7,11), rd=1-Math.abs(tfbm(u,v,6,5,23)*2-1), e=e0*.8+rd*rd*.2*sstep(.42,.6,e0)+.02, sea=.5;
-      if(e<sea){ const dp=sea-e; h=0; wm[o]=1; c=mixc([40,112,170],[8,34,84],dp/.12); if(dp<.02) c=mixc([78,178,186],c,dp/.02); }
-      else { const t=(e-sea)/(1-sea), moist=tfbm(u,v,5,4,12); h=Math.pow(Math.min(1,t*2.1),1.5)*70;
+      if(e<sea){ const dp=sea-e; h=-Math.min(40,dp*420); c=mixc([40,112,170],[8,34,84],dp/.12); if(dp<.02) c=mixc([78,178,186],c,dp/.02); }
+      else { const t=(e-sea)/(1-sea), moist=tfbm(u,v,5,4,12); h=Math.pow(Math.min(1,t*2.1),1.5)*70+.05;
         c = moist<.4 ? mixc([188,166,112],[150,134,92],t*3) : mixc([58,116,46],[88,122,60],t*3);
         if(t>.27) c=mixc(c,[122,110,94],(t-.27)*7); if(t>.4) c=mixc(c,[240,244,250],(t-.4)*10);
         if(t<.022) c=mixc([220,204,158],c,t/.022); } }
@@ -1075,7 +1108,10 @@ function buildLand(type){
       const band=(J?v*8:v*5)+(tfbm(u,v,3,4,9)-.5)*(J?2.6:1.3);
       c=bandCol(J?[[238,228,206],[206,170,126],[232,214,182],[156,104,70],[236,224,198],[196,138,92],[242,236,224],[170,118,82]]
                  :[[232,212,164],[214,186,132],[236,220,180],[202,172,120],[226,204,154]],band);
-      c=mixc(c,[252,244,228],sstep(.5,.85,bl)*.4); c=mulc(c,.8+sstep(.2,.6,bl)*.22); }
+      c=mixc(c,[252,244,228],sstep(.5,.85,bl)*.4); c=mulc(c,.8+sstep(.2,.6,bl)*.22);
+      if(!J){ const q=(v-.3)/.36*1.05+1.24; let sd=0;                       /* the rings' shadow, lying across the cloud tops */
+        for(const [ri,ro,,al] of RINGS) sd=Math.max(sd,al*sstep(ri-.012,ri+.012,q)*(1-sstep(ro-.012,ro+.012,q)));
+        c=mulc(c,1-sd*.36); } }
     else {                                                     /* the star: bright granules, darker lanes between them */
       const gx=u*G, gy=v*G, ix=Math.floor(gx), iy=Math.floor(gy); let f1=9, f2=9;
       for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++){ const cx=((ix+i)%G+G)%G, cy=((iy+j)%G+G)%G, k=(cy*G+cx)*2;
@@ -1085,13 +1121,34 @@ function buildLand(type){
       c=mixc([168,44,6],[255,206,110],g); c=mixc(c,[255,246,214],sstep(.55,1,g)*.75); c=mulc(c,.82+big*.36); if(spot>0) c=mixc(c,[70,14,4],spot*.9); }
     hm[o]=h; col[o*3]=c[0]; col[o*3+1]=c[1]; col[o*3+2]=c[2];
   }
-  /* sunlight: slopes facing the sun are lit, the far side of a ridge is in shade */
-  const lx=Math.round(-Math.sin(D.az)*3), ly=Math.round(-Math.cos(D.az)*3);
-  for(let y=0;y<LM;y++)for(let x=0;x<LM;x++){ const o=y*LM+x; let s=1;
-    if(!(wm&&wm[o])){ const up=hm[((y+ly)&LMASK)*LM+((x+lx)&LMASK)]-hm[o], dn=hm[((y-ly)&LMASK)*LM+((x-lx)&LMASK)]-hm[o];
-      s=Math.max(.42,Math.min(1.32,1-(up-dn)*.06*D.light)); }
-    cm[o*3]=col[o*3]*s; cm[o*3+1]=col[o*3+1]*s; cm[o*3+2]=col[o*3+2]*s; }
-  return LANDS[type]={hm,cm,wm};
+  if(D.emis){
+    const lx=Math.round(-Math.sin(D.az)*3), ly=Math.round(-Math.cos(D.az)*3);
+    for(let y=0;y<LM;y++)for(let x=0;x<LM;x++){ const o=y*LM+x, up=hm[((y+ly)&LMASK)*LM+((x+lx)&LMASK)]-hm[o], dn=hm[((y-ly)&LMASK)*LM+((x-lx)&LMASK)]-hm[o],
+      s=Math.max(.42,Math.min(1.32,1-(up-dn)*.06*D.light)); cm[o*3]=col[o*3]*s; cm[o*3+1]=col[o*3+1]*s; cm[o*3+2]=col[o*3+2]*s; }
+    return LANDS[type]={hm,cm}; }
+  const n=LM*LM, hc=new Float32Array(n), t1=new Float32Array(n), bl=new Float32Array(n); let hmax=0;
+  for(let i=0;i<n;i++){ const v=hm[i]>0?hm[i]:0; hc[i]=v; if(v>hmax) hmax=v; }
+  const RB=6, nb=RB*2+1;
+  for(let y=0;y<LM;y++){ let s=0; const r=y*LM; for(let k=-RB;k<=RB;k++) s+=hc[r+(k&LMASK)];
+    for(let x=0;x<LM;x++){ t1[r+x]=s/nb; s+=hc[r+((x+RB+1)&LMASK)]-hc[r+((x-RB)&LMASK)]; } }
+  for(let x=0;x<LM;x++){ let s=0; for(let k=-RB;k<=RB;k++) s+=t1[(k&LMASK)*LM+x];
+    for(let y=0;y<LM;y++){ bl[y*LM+x]=s/nb; s+=t1[((y+RB+1)&LMASK)*LM+x]-t1[((y-RB)&LMASK)*LM+x]; } }
+  const el=Math.atan(D.sunEl/.84), tanE=Math.tan(el), sinE=Math.sin(el), cosE=Math.cos(el), sxd=-Math.sin(D.az), syd=-Math.cos(D.az),
+    soft=D.soft, pen=soft?.42:.14, A=D.amb, aC=D.ambC, sC=D.sunC, rock=D.rock, wrap=soft?.35:0, flat=(sinE+wrap)/(1+wrap);
+  for(let y=0;y<LM;y++)for(let x=0;x<LM;x++){ const o=y*LM+x, r=y*LM;
+    const gx=(hc[r+((x+1)&LMASK)]-hc[r+((x-1)&LMASK)])*.3+(hc[r+((x+3)&LMASK)]-hc[r+((x-3)&LMASK)])/15,
+          gy=(hc[((y+1)&LMASK)*LM+x]-hc[((y-1)&LMASK)*LM+x])*.3+(hc[((y+3)&LMASK)*LM+x]-hc[((y-3)&LMASK)*LM+x])/15;
+    const kx=gx*D.light, ky=gy*D.light, ndl=(-(kx*sxd+ky*syd)*cosE+sinE)/Math.sqrt(kx*kx+ky*ky+1);
+    let dif=Math.max(0,(ndl+wrap)/(1+wrap))/flat; if(dif>1.65) dif=1.65;
+    let sh=1; const h0=hc[o]+.8;
+    for(let s=1.6,k=0;k<64&&sh>0;k++,s*=1.075){ const hr=h0+s*tanE; if(hr>hmax) break;
+      const d=(hr-hc[(Math.round(y+syd*s)&LMASK)*LM+(Math.round(x+sxd*s)&LMASK)])/(s*pen); if(d<sh) sh=d<0?0:d; }
+    if(soft) sh=.5+.5*sh;
+    const ao=Math.max(.6,Math.min(1.06,1-(bl[o]-hc[o])*(soft?.012:.02)));
+    let cr=col[o*3], cg=col[o*3+1], cb=col[o*3+2];
+    if(rock&&hm[o]>0){ const q=sstep(1.25,2.5,Math.hypot(gx,gy))*.55; cr+=(rock[0]-cr)*q; cg+=(rock[1]-cg)*q; cb+=(rock[2]-cb)*q; }      /* bare rock where it is steep */
+    const dir=(1-A)*dif*sh; cm[o*3]=cr*ao*(A*aC[0]+dir*sC[0]); cm[o*3+1]=cg*ao*(A*aC[1]+dir*sC[1]); cm[o*3+2]=cb*ao*(A*aC[2]+dir*sC[2]); }
+  return LANDS[type]={hm,cm};
 }
 const DTN=128, DTM=DTN-1; let DTEX=null;
 function detailTex(){ if(DTEX) return DTEX; DTEX=new Float32Array(DTN*DTN);
@@ -1117,85 +1174,117 @@ function View(canvas,tipEl,opts){
     const {BW,BH}=V.sky, n=Math.round(BW*BH/9000);
     V.stars=Array.from({length:n},()=>({x:Math.random()*BW,y:Math.random()*BH,c:starCol(),
       r:.9+Math.pow(Math.random(),2)*1.3, a:.55+Math.random()*.4, ph:Math.random()*Math.PI*2, tw:.6+Math.random()*2.2}));
-    V.meteor=null; V.nextMeteor=performance.now()+3000+Math.random()*6000;};
+    V.meteor=null; V.nextMeteor=performance.now()+3000+Math.random()*6000;
+    if(opts.ship){ buildCk(); if(!V.dust){ V.dust=new Float32Array(DN*3); for(let i=0;i<DN*3;i++) V.dust[i]=Math.random()*DB; V.dprev=new Float32Array(DN*2).fill(NaN); } } };
+  const DN=300, DB=1100;
   /* the camera orbits a focus point: the star by default, or the planet you flew to */
   const FOC=620, D0=340, NEAR=26, lerp=(a,b,k)=>a+(b-a)*k;
-  V.fx=V.fy=V.fz=0; V.dist=D0; V.focus=null; V.fly=null; V.warp=0;
-  V.project=n=>{const cy=Math.cos(V.rotY),sy=Math.sin(V.rotY),cx=Math.cos(V.rotX),sx=Math.sin(V.rotX);
+  V.fx=V.fy=V.fz=0; V.dist=D0; V.focus=null; V.fly=null; V.warp=0; V.roll=0; V.arcY=0; V.fov=1; V.intro=0; V.oy=0;
+  V.project=n=>{const ry=V.rotY+V.arcY,cy=Math.cos(ry),sy=Math.sin(ry),cx=Math.cos(V.rotX),sx=Math.sin(V.rotX);
     const X=n.x-V.fx, Y=n.y-V.fy, Z=n.z-V.fz;
     let x=X*cy-Z*sy, z=X*sy+Z*cy;
     let y=Y*cx-z*sx;  z=Y*sx+z*cx;
-    const d=FOC+z+V.dist, s=(FOC/Math.max(d,NEAR))*V.scale;
+    const d=FOC+z+V.dist, s=(FOC/Math.max(d,NEAR))*V.scale*V.fov;
     return {sx:V.W/2+x*s, sy:V.H/2+y*s, s, z, d, vis:d>NEAR, cx:x, cy:y};};
   V.distFor=n=>{const R=Math.min(V.W,V.H)*(n===hub?.12:.15); return FOC*V.scale*n.r*(n===hub?1:.8)/R-FOC;};
-  V.flyTo=n=>{ if(n===V.focus) return;
-    V.fly={x:V.fx,y:V.fy,z:V.fz,D:FOC+V.dist,hop:!!(n&&V.focus),t0:performance.now(),dur:reduce?1:(n?(V.focus?1500:1700):1200)};
+  V.flyTo=n=>{ if(n===V.focus) return; let dir=V.focus?-.6:.5;
+    if(n&&V.W>2){ const p=V.project(n); dir=Math.max(-1,Math.min(1,(p.sx-V.W/2)/(V.W*.3))); if(Math.abs(dir)<.25) dir=dir<0?-.25:.25; }
+    V.intro=0; V.fly={x:V.fx,y:V.fy,z:V.fz,D:FOC+V.dist,hop:!!(n&&V.focus),dir,t0:performance.now(),dur:reduce?1:(n?(V.focus?2000:2300):1600)};
     V.focus=n; V.hover=null; tipEl.style.opacity=0; if(n) wantHi(n.type); if(opts.onFocus) opts.onFocus(n);
     if(n&&opts.onLand&&!LANDS[n.type]){ const t=n.type; setTimeout(()=>{ if(V.focus&&V.focus.type===t&&!V.land) buildLand(t); },V.fly.dur+250); } };
-  V.reset=()=>{ V.focus=null;V.fly=null;V.warp=0;V.fx=V.fy=V.fz=0;V.dist=D0; if(V.land){ V.land=null; if(opts.onLand) opts.onLand(null,'off'); } if(opts.onFocus) opts.onFocus(null); };
-  /* ---- landing ---- */
+  V.reset=()=>{ V.focus=null;V.fly=null;V.warp=0;V.roll=0;V.arcY=0;V.fov=1;V.intro=0;V.fx=V.fy=V.fz=0;V.dist=D0; if(V.land){ V.land=null; if(opts.onLand) opts.onLand(null,'off'); } if(opts.onFocus) opts.onFocus(null); };
+  /* ---- landing ----
+     dive: the planet swells until its limb is the horizon.  orb: low orbit, the ground curving away under a black sky.
+     desc: down through the air to the surface.  cruise: the low flight.  asc, up, out: the same road back. */
   V.land=null; const LR={};
   const ease=k=>k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;
+  const HS=1750, RP=9200, OMS=.1, DIP0=Math.sqrt(2*HS/RP);
   LR.q=1; LR.ema=0; LR.hold=0;
   const lrInit=()=>{ const RW=Math.max(300,Math.min(1150,Math.round(V.W*DPR*.82*LR.q))), RH=Math.max(130,Math.round(RW*V.H/V.W));
     if(LR.RW===RW&&LR.RH===RH) return; const cv=document.createElement('canvas'); cv.width=RW; cv.height=RH; const c2=cv.getContext('2d'), img=c2.createImageData(RW,RH);
-    Object.assign(LR,{RW,RH,cv,c2,img,buf:new Uint32Array(img.data.buffer),yb:new Int32Array(RW),gl:new Float32Array(RW),pc:new Float32Array(RW*3),ps:new Int32Array(RW)}); };
+    Object.assign(LR,{RW,RH,cv,c2,img,buf:new Uint32Array(img.data.buffer),yb:new Int32Array(RW),gl:new Float32Array(RW),pc:new Float32Array(RW*3),ps:new Int32Array(RW),fc:new Float32Array(RW*3),cfc:new Float32Array(RW),gt:new Uint32Array(256)}); };
+  /* one frame kept aside, so a change of scene can dissolve instead of cutting */
+  const takeSnap=()=>{ const s=V.snap||(V.snap=document.createElement('canvas')); if(s.width!==canvas.width||s.height!==canvas.height){ s.width=canvas.width; s.height=canvas.height; }
+    s.getContext('2d').drawImage(canvas,0,0); };
+  const drawSnap=a=>{ if(!V.snap||a<=0) return; ctx.save(); ctx.setTransform(1,0,0,1,0,0); ctx.globalAlpha=Math.min(1,a); ctx.drawImage(V.snap,0,0); ctx.restore(); };
   const phase=(G,p,now)=>{ G.phase=p; G.t0=now; if(opts.onLand) opts.onLand(G.n,p); };
   V.landOn=n=>{ if(V.land||V.fly||!n) return; const type=n.type, D=LANDDEF[type]; if(!D) return;
-    const Sc=buildLand(type), now=performance.now();
-    V.land={n,type,D,Sc,phase:'',t0:now,last:now,x:lh(N.indexOf(n),1,9)*LM,y:lh(N.indexOf(n),2,9)*LM,a:D.az+.42,h:430,hz:0,spd:6,turn:0,roll:0,panel:false,
-      clouds:Array.from({length:11},(_,i)=>({az:lh(i,3,N.indexOf(n))*6.283,el:.07+lh(i,4,7)*.34,sc:.55+lh(i,5,7)*.95,k:i%4})),bolt:null,nextBolt:now+5000,then:null,alt:0};
-    tipEl.style.opacity=0; V.hover=null; phase(V.land,'dive',now); };
+    const Sc=buildLand(type), now=performance.now(), sd=N.indexOf(n);
+    V.land={n,type,D,Sc,phase:'',t0:now,last:now,x:lh(sd,1,9)*LM,y:lh(sd,2,9)*LM,a:D.az+.62,h:HS,hz:0,hzf:0,spd:6,turn:0,roll:0,panel:false,flare:0,snapT:0,viaAsc:false,
+      cl:Array.from({length:18},(_,i)=>({x:lh(i,11,sd)*CB,y:lh(i,12,sd)*CB,alt:215+lh(i,13,sd)*190,w:520+lh(i,14,sd)*720,k:i%6})),bolt:null,nextBolt:now+9000,then:null,alt:0};
+    tipEl.style.opacity=0; V.hover=null; V.roll=0; phase(V.land,'dive',now); };
   V.launch=then=>{ const G=V.land, now=performance.now(); if(!G) return; if(then) G.then=then;
-    if(G.phase==='asc'||G.phase==='out') return;
-    if(G.phase==='dive'){ const k=Math.min(1,(now-G.t0)/1500); phase(G,'out',now); G.t0=now-(1-k)*1100; return; }
-    G.h0=G.h; G.hz0=G.hzf; G.spd0=G.spd; phase(G,'asc',now); };
+    if(G.phase==='asc'||G.phase==='up'||G.phase==='out') return;
+    if(G.phase==='dive'){ const k=Math.min(1,(now-G.t0)/2300); phase(G,'out',now); G.t0=now-(1-k)*1500; return; }
+    G.h0=G.h; G.hz0=G.hzf; G.spd0=G.spd; phase(G,G.phase==='orb'?'up':'asc',now); };
   const hAt=(Sc,x,y)=>Sc.hm[(Math.floor(y)&LMASK)*LM+(Math.floor(x)&LMASK)];
-  /* the ground, drawn front to back: each column keeps the highest point reached so far */
-  const lrTerrain=(G,far,fogK,ts)=>{ const {RW,RH,buf,yb,gl,pc,ps}=LR, {hm,cm,wm}=G.Sc, D=G.D, DT=detailTex(), det=D.det||0, shad=D.shad||0, sdx=ts*2.4, sdy=ts*.9;
+  /* the ground, drawn front to back: each column keeps the highest point reached so far.
+     O.ms shrinks the map step (in orbit one map cell is ten times wider), O.cf bends the ground away into a limb */
+  const lrTerrain=(G,far,fogK,ts,O)=>{ const {RW,RH,buf,yb,gl,pc,ps,fc,cfc}=LR, {hm,cm}=G.Sc, D=G.D, DT=detailTex(), ms=O.ms, orb=ms<1, hs=O.hs, det=orb?0:(D.det||0), shad=orb?0:(D.shad||0),
+      sdx=ts*2.4, sdy=ts*.9, sea=!!D.sea, mist=orb?0:(D.mist||0), cla=O.cla, oc=D.oclC||[250,250,252];
     buf.fill(0); yb.fill(RH); ps.fill(-9); let st=0;
-    const sn=Math.sin(G.a), cs=Math.cos(G.a), hz=G.hz, sH=Math.min(RH*.84,RW*.5), fr=D.haze[0], fg=D.haze[1], fb=D.haze[2], tick=Math.floor(ts*7), emis=D.emis, camH=G.h;
-    for(let i=0;i<RW;i++) gl[i]=D.sun?Math.max(0,1-Math.abs(angd(G.a+Math.atan(1-2*(i+.5)/RW),D.az))/.2):0;
-    let z=3, dz=.55;
+    const sn=Math.sin(G.a), cs=Math.cos(G.a), hz=G.hz, sH=Math.min(RH*.84,RW*.5), tick=Math.floor(ts*7), emis=D.emis, camH=G.h, hzc=D.haze, sc=D.sun||hzc, skr=D.hor[0], skg=D.hor[1], skb=D.hor[2];
+    for(let i=0;i<RW;i++){ const t=1-2*(i+.5)/RW, ad=D.sun?Math.abs(angd(G.a+Math.atan(t),D.az)):9, lb=ad<1.1?(1-ad/1.1)*(1-ad/1.1)*.5:0, j=i*3;     /* the haze is brighter and warmer toward the sun */
+      gl[i]=ad<.2?1-ad/.2:0; fc[j]=hzc[0]+(sc[0]-hzc[0])*lb; fc[j+1]=hzc[1]+(sc[1]-hzc[1])*lb; fc[j+2]=hzc[2]+(sc[2]-hzc[2])*lb; cfc[i]=O.cf*(1+t*t); }
+    const dts=(u,v)=>{ const a0=Math.floor(u), b0=Math.floor(v), ax=u-a0, ay=v-b0, ai=a0&DTM, bi=(b0&DTM)*DTN, aj=(a0+1)&DTM, bj=((b0+1)&DTM)*DTN;
+      return (DT[bi+ai]*(1-ax)+DT[bi+aj]*ax)*(1-ay)+(DT[bj+ai]*(1-ax)+DT[bj+aj]*ax)*ay; };
+    let z=Math.max(3,O.z0), dz=Math.max(.55,z*.0122);
     while(z<far){
-      let px=-cs*z-sn*z+G.x, py=sn*z-cs*z+G.y; const dx=2*cs*z/RW, dy=-2*sn*z/RW;
-      const iz=sH/z, fk=1-Math.exp(-z*D.fog*fogK), nk=1-fk, near=z<420, dw=det*Math.max(0,1-z/300);
+      const zm=z*ms; let px=(-cs-sn)*zm+G.x, py=(sn-cs)*zm+G.y; const dx=2*cs*zm/RW, dy=-2*sn*zm/RW;
+      const iz=sH/z, z2=z*z, fk=1-Math.exp(-z*D.fog*fogK), near=zm<420, dw=det*Math.max(0,1-z/300), dwb=z<130?dw:0, wv=sea&&z<240, fres=sea?.03+.9*Math.pow(1-camH/Math.sqrt(z2+camH*camH),5):0;
       for(let i=0;i<RW;i++,px+=dx,py+=dy){
         const top=yb[i]; if(top<=0) continue;
-        const x0=Math.floor(px), y0=Math.floor(py), xi=x0&LMASK, yi=y0&LMASK, o=yi*LM+xi; let h,r,g,b,d1=0;
-        const fx=px-x0, fy=py-y0, xj=(xi+1)&LMASK, yj=((yi+1)&LMASK)*LM, o1=yi*LM+xj, o2=yj+xi, o3=yj+xj, w0=(1-fx)*(1-fy), w1=fx*(1-fy), w2=(1-fx)*fy, w3=fx*fy;
-        h=near?hm[o]*w0+hm[o1]*w1+hm[o2]*w2+hm[o3]*w3:hm[o];
-        if(dw>0){ const ux=px*5.3, uy=py*5.3, a0=Math.floor(ux), b0=Math.floor(uy), ax=ux-a0, ay=uy-b0, ai=a0&DTM, bi=(b0&DTM)*DTN, aj=(a0+1)&DTM, bj=((b0+1)&DTM)*DTN;      /* small bumps up close */
-          d1=(DT[bi+ai]*(1-ax)+DT[bi+aj]*ax)*(1-ay)+(DT[bj+ai]*(1-ax)+DT[bj+aj]*ax)*ay; if(!(wm&&wm[o])) h+=d1*1.7*dw; }
-        let ys=((camH-h)*iz+hz)|0; if(ys>=top) continue; if(ys<0) ys=0;                /* hidden behind something nearer: no need to colour it */
-        if(near){ r=cm[o*3]*w0+cm[o1*3]*w1+cm[o2*3]*w2+cm[o3*3]*w3; g=cm[o*3+1]*w0+cm[o1*3+1]*w1+cm[o2*3+1]*w2+cm[o3*3+1]*w3; b=cm[o*3+2]*w0+cm[o1*3+2]*w1+cm[o2*3+2]*w2+cm[o3*3+2]*w3; }
+        const x0=Math.floor(px), y0=Math.floor(py), xi=x0&LMASK, yi=y0&LMASK, o=yi*LM+xi, j=i*3; let h,r,g,b,spk=0,d1=0,o1=0,o2=0,o3=0,w0=1,w1=0,w2=0,w3=0;
+        const hn=hm[o]; if((camH-(hn>0?hn*hs:0)-7+z2*cfc[i])*iz+hz>top+1) continue;                    /* far below the skyline already: skip it cheaply */
+        if(near){ const fx=px-x0, fy=py-y0, xj=(xi+1)&LMASK, yj=((yi+1)&LMASK)*LM; o1=yi*LM+xj; o2=yj+xi; o3=yj+xj; w0=(1-fx)*(1-fy); w1=fx*(1-fy); w2=(1-fx)*fy; w3=fx*fy;
+          h=hn*w0+hm[o1]*w1+hm[o2]*w2+hm[o3]*w3; } else h=hn;
+        const wat=sea&&h<0, dep=-h;
+        if(wat) h=0; else { h*=hs; if(dwb>0){ const ux=px*5.3, uy=py*5.3, a0=Math.floor(ux), b0=Math.floor(uy), ax=ux-a0, ay=uy-b0, ai=a0&DTM, bi=(b0&DTM)*DTN, aj=(a0+1)&DTM, bj=((b0+1)&DTM)*DTN;
+            d1=(DT[bi+ai]*(1-ax)+DT[bi+aj]*ax)*(1-ay)+(DT[bj+ai]*(1-ax)+DT[bj+aj]*ax)*ay; h+=d1*1.7*dw; } }                       /* small bumps up close */
+        let ys=((camH-h+z2*cfc[i])*iz+hz)|0; if(ys>=top) continue; if(ys<0) ys=0;                /* hidden behind something nearer: no need to colour it */
+        if(near){ const a=o*3, a1=o1*3, a2=o2*3, a3=o3*3; r=cm[a]*w0+cm[a1]*w1+cm[a2]*w2+cm[a3]*w3; g=cm[a+1]*w0+cm[a1+1]*w1+cm[a2+1]*w2+cm[a3+1]*w3; b=cm[a+2]*w0+cm[a1+2]*w1+cm[a2+2]*w2+cm[a3+2]*w3; }
         else { r=cm[o*3]; g=cm[o*3+1]; b=cm[o*3+2]; }
-        if(dw>0){ const n0=top-ys, d2=DT[((py*29)&DTM)*DTN+((px*29)&DTM)], m=1+(d1*.9+d2*.5*(n0>4?4/n0:1))*dw; r*=m; g*=m; b*=m; }      /* and grain, eased off on tall faces so it does not streak */
-        if(shad>0){ const ux=(px+sdx)*.3, uy=(py+sdy)*.3, a0=Math.floor(ux), b0=Math.floor(uy), ax=ux-a0, ay=uy-b0, ai=a0&DTM, bi=(b0&DTM)*DTN, aj=(a0+1)&DTM, bj=((b0+1)&DTM)*DTN;      /* cloud shadows drifting over the ground */
-          const sv=(DT[bi+ai]*(1-ax)+DT[bi+aj]*ax)*(1-ay)+(DT[bj+ai]*(1-ax)+DT[bj+aj]*ax)*ay, m=1-shad*(sv<.03?0:sv>.14?1:(sv-.03)/.11); r*=m; g*=m; b*=m; }
-        if(wm&&wm[o]){ const w=Math.sin(px*.83+py*.61+ts*2.1)*5+Math.sin(px*.21-py*.37+ts*1.3)*5; r+=w; g+=w; b+=w;      /* swell, and the sun on the water */
-          const a=gl[i]; if(a>0){ r+=a*46; g+=a*42; b+=a*30; if(lh(Math.floor(px*2.6),Math.floor(py*2.6),tick)>1-a*a*.24){ r=255; g=250; b=236; } } }
-        else if(emis){ const p=1+.12*Math.sin(ts*1.9+px*.21+py*.17)+.06*Math.sin(ts*4.3+px*.5-py*.3); r*=p; g*=p; b*=p; }
-        r=r*nk+fr*fk; g=g*nk+fg*fk; b=b*nk+fb*fk;
-        if(r>255) r=255; if(g>255) g=255; if(b>255) b=255;
-        const n=top-ys, j=i*3;
+        if(wat){ const w=wv?(Math.sin(px*.83+py*.61+ts*2.1+2.6*Math.sin(px*.137-py*.093+ts*.2))+Math.sin(px*.21-py*.37+ts*1.3+2.2*Math.sin(py*.071+px*.05)))*5*(1-z/240):0, F=fres*(1+w*.03); r+=w; g+=w; b+=w;      /* swell; far water mirrors the sky */
+          r+=((fc[j]+skr)*.5-r)*F; g+=((fc[j+1]+skg)*.5-g)*F; b+=((fc[j+2]+skb)*.5-b)*F;
+          if(dep<3&&near&&!orb){ const fo=(1-dep/3)*(.6+.4*Math.sin(ts*1.5+dep*3+px*.7+py*.45)); if(fo>.34){ const q=Math.min(1,(fo-.34)*2.2); r+=(240-r)*q; g+=(246-g)*q; b+=(244-b)*q; } }      /* surf on the shore */
+          const a=gl[i]; if(a>0){ r+=a*46; g+=a*42; b+=a*30; if(lh(Math.floor(px*2.6),Math.floor(py*2.6),tick)>1-a*a*.24) spk=1; } }
+        else { if(dw>0){ const n0=top-ys, d2=DT[((py*29)&DTM)*DTN+((px*29)&DTM)], m=1+(d1*.9+d2*.5*(n0>4?4/n0:1))*dw; r*=m; g*=m; b*=m; }      /* grain, eased off on tall faces so it does not streak */
+          if(emis){ const p=1+.12*Math.sin(ts*1.9+px*.21+py*.17)+.06*Math.sin(ts*4.3+px*.5-py*.3); r*=p; g*=p; b*=p; } }
+        if(shad>0){ const ux=(px+sdx)*.3, uy=(py+sdy)*.3, a0=Math.floor(ux), b0=Math.floor(uy), ax=ux-a0, ay=uy-b0, ai=a0&DTM, bi=(b0&DTM)*DTN, aj=(a0+1)&DTM, bj=((b0+1)&DTM)*DTN;
+          const sv=(DT[bi+ai]*(1-ax)+DT[bi+aj]*ax)*(1-ay)+(DT[bj+ai]*(1-ax)+DT[bj+aj]*ax)*ay, m=1-shad*(sv<.03?0:sv>.14?1:(sv-.03)/.11); r*=m; g*=m; b*=m; }      /* cloud shadows drifting over the ground */
+        if(orb){ const m=1+DT[((py*3.7)&DTM)*DTN+((px*3.7)&DTM)]*.34; r*=m; g*=m; b*=m;
+          if(cla>0){ const cv=dts(px*.61+ts*.02,py*.61)+dts(px*.23+9,py*.23)*.7;                              /* weather seen from above */
+            if(cv>.03){ const q=Math.min(1,(cv-.03)*8)*cla, s2=.82+cv*.9; r+=(oc[0]*s2-r)*q; g+=(oc[1]*s2-g)*q; b+=(oc[2]*s2-b)*q; } } }
+        let f=fk; if(mist>0&&h<46) f+=(1-fk)*fk*(1-h/46)*mist;                                               /* mist pools in the low ground */
+        r+=(fc[j]-r)*f; g+=(fc[j+1]-g)*f; b+=(fc[j+2]-b)*f;
+        if(r>255) r=255; else if(r<0) r=0; if(g>255) g=255; else if(g<0) g=0; if(b>255) b=255; else if(b<0) b=0;
+        const n=top-ys;
         if(n>2&&ps[i]===st-1){ const r1=pc[j], g1=pc[j+1], b1=pc[j+2];                  /* a tall strip on one unbroken slope: blend down to the sample in front. Across a skyline it stays a clean edge */
           for(let q=ys*RW+i, m=0; m<n; m++, q+=RW){ const t=m/n; buf[q]=0xff000000|((b+(b1-b)*t)<<16)|((g+(g1-g)*t)<<8)|(r+(r1-r)*t); } }
         else { const c=0xff000000|(b<<16)|(g<<8)|r; for(let q=ys*RW+i, e=top*RW+i; q<e; q+=RW) buf[q]=c; }
+        if(spk){ buf[ys*RW+i]=0xffecfaff; if(n>1) buf[(ys+1)*RW+i]=0xffecfaff; }                             /* a glint of sun on a wave top */
         pc[j]=r; pc[j+1]=g; pc[j+2]=b; yb[i]=ys; ps[i]=st;
       }
       z+=dz; dz*=1.0122; st++;
     }
+    if(O.cf>0&&D.atm){ const A=D.atm, K=Math.min(255,Math.max(8,Math.round(RH*.13))), gt=LR.gt;          /* the air, seen edge on: a thin bright line fading up into space */
+      for(let m=0;m<K;m++){ const a=Math.min(1,D.atmA*(.85*Math.exp(-m/(K*.06))+.4*Math.exp(-m/(K*.34)))*(1-m/K)), wt=m<3?.55:0;
+        gt[m]=((((a*255)|0)<<24)|((A[2]+(255-A[2])*wt)<<16)|((A[1]+(255-A[1])*wt)<<8)|((A[0]+(255-A[0])*wt)|0))>>>0; }
+      for(let i=0;i<RW;i++){ let q=(yb[i]-1)*RW+i; for(let m=0;m<K&&q>=0;m++,q-=RW) buf[q]=gt[m]; } }
     LR.c2.putImageData(LR.img,0,0); };
   const skyX=(G,az)=>{ const d=angd(az,G.a); return Math.abs(d)<1.25?V.W/2-Math.tan(d)*V.W/2:null; };
-  const lrSky=(G,now,hy)=>{ const D=G.D, W=V.W, H=V.H, ts=now/1000, rgb=c=>`${c[0]},${c[1]},${c[2]}`;
+  /* hy: where the horizon (or, in orbit, the limb) sits; hyF: the flat horizon things in the air are measured from; sp: 1 in space, 0 in daylight */
+  const lrSky=(G,now,hy,hyF,sp)=>{ const D=G.D, W=V.W, H=V.H, ts=now/1000, day=1-sp, rgb=c=>`${c[0]|0},${c[1]|0},${c[2]|0}`, dk=c=>mixc(c,[0,0,1],sp);
     const g=ctx.createLinearGradient(0,hy-H*1.05,0,hy);
-    g.addColorStop(0,`rgb(${rgb(D.zen)})`); g.addColorStop(.5,`rgb(${rgb(mixc(D.zen,D.hor,.2).map(Math.round))})`); g.addColorStop(.8,`rgb(${rgb(mixc(D.zen,D.hor,.62).map(Math.round))})`); g.addColorStop(1,`rgb(${rgb(D.hor)})`);
+    g.addColorStop(0,`rgb(${rgb(dk(D.zen))})`); g.addColorStop(.45,`rgb(${rgb(dk(mixc(D.zen,D.hor,.16)))})`); g.addColorStop(.74,`rgb(${rgb(dk(mixc(D.zen,D.hor,.46)))})`);
+    g.addColorStop(.92,`rgb(${rgb(dk(mixc(D.zen,D.hor,.82)))})`); g.addColorStop(1,`rgb(${rgb(dk(D.hor))})`);
     ctx.fillStyle=g; ctx.fillRect(-W*.3,-H*1.6,W*1.6,hy+H*1.6+1);
-    ctx.fillStyle=`rgb(${rgb(D.haze)})`; ctx.fillRect(-W*.3,hy,W*1.6,H*2.6);
-    if(D.stars&&V.stars&&V.sky){ const BW=V.sky.BW, sh=((G.a/(Math.PI*2))*BW%BW+BW)%BW;
-      for(const s of V.stars){ let x=s.x+sh; if(x>BW) x-=BW; if(x>W+4) continue; const y=hy-H*.1-s.y*.8; if(y<-H*.3) continue;
-        const a=D.stars*s.a*Math.min(1,(hy-y)/(H*.55))*(.7+.3*Math.sin(ts*s.tw+s.ph)); if(a<.03) continue;
+    ctx.fillStyle=`rgb(${rgb(dk(D.haze))})`; ctx.fillRect(-W*.3,hy,W*1.6,H*2.6);
+    const stA=Math.max(D.stars||0,sp);
+    if(stA>.02&&V.stars&&V.sky){ const {cv,BW,BH}=V.sky, sh=((G.a/(Math.PI*2))*BW%BW+BW)%BW;
+      if(sp>.03){ const ox=(BW-sh)%BW, y0=hy+H*.34-BH; ctx.globalAlpha=sp; ctx.drawImage(cv,-ox,y0,BW,BH); if(BW-ox<W*1.2) ctx.drawImage(cv,BW-ox,y0,BW,BH); ctx.globalAlpha=1; }      /* the Milky Way, while we are still above the air */
+      for(const s of V.stars){ let x=s.x+sh; if(x>BW) x-=BW; if(x>W+4) continue; const y=hy+H*.24*sp-H*.1*day-s.y*.8; if(y<-H*.3) continue;
+        const a=stA*s.a*(sp+day*Math.max(0,Math.min(1,(hy-y)/(H*.55))))*(.7+.3*Math.sin(ts*s.tw+s.ph)); if(a<.03) continue;
         ctx.fillStyle=`rgba(${s.c[0]},${s.c[1]},${s.c[2]},${a})`; ctx.beginPath(); ctx.arc(x,y,s.r*.7,0,7); ctx.fill(); } }
     if(D.rings){ const cx=W/2-angd(D.az+.5,G.a)*W*.55, cy=hy+H*.3;                 /* the rings, arching from horizon to horizon */
       ctx.save(); ctx.translate(cx,cy); ctx.rotate(-.2);
@@ -1204,15 +1293,22 @@ function View(canvas,tipEl,opts){
         ctx.strokeStyle=rg; ctx.beginPath(); ctx.ellipse(0,0,rx,ry,0,Math.PI,Math.PI*2); ctx.stroke(); }
       ctx.restore(); }
     if(D.sun){ const sx=skyX(G,D.az), sy=hy-D.sunEl*H, r=D.sunR*H;
-      if(sx!==null){ const c=rgb(D.sun), rg=ctx.createRadialGradient(sx,sy,0,sx,sy,r*14);
+      if(sx!==null){ const c=rgb(D.sun);
+        if(day>.05){ ctx.save(); ctx.translate(sx,hy); ctx.scale(1.8,1); const lg=ctx.createRadialGradient(0,0,0,0,0,H*.6);            /* low sun: the whole horizon under it glows */
+          lg.addColorStop(0,`rgba(${c},${.34*day})`); lg.addColorStop(.5,`rgba(${c},${.1*day})`); lg.addColorStop(1,`rgba(${c},0)`); ctx.fillStyle=lg; ctx.beginPath(); ctx.arc(0,0,H*.6,Math.PI,Math.PI*2); ctx.fill(); ctx.restore(); }
+        const rg=ctx.createRadialGradient(sx,sy,0,sx,sy,r*14);
         rg.addColorStop(0,`rgba(${c},.9)`); rg.addColorStop(.07,`rgba(${c},.55)`); rg.addColorStop(.3,`rgba(${c},.13)`); rg.addColorStop(1,`rgba(${c},0)`);
         ctx.fillStyle=rg; ctx.beginPath(); ctx.arc(sx,sy,r*14,0,7); ctx.fill();
         ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(sx,sy,r,0,7); ctx.fill(); } }
-    if(D.moons){ ctx.globalAlpha=D.moonA; D.moons.forEach(([az,el,rr])=>{ const mx=skyX(G,D.az+az); if(mx===null) return;
+    if(D.moons){ ctx.globalAlpha=D.moonA+(1-D.moonA)*sp; D.moons.forEach(([az,el,rr])=>{ const mx=skyX(G,D.az+az); if(mx===null) return;
         drawMoon(ctx,{x:mx,y:hy-el*H,r:rr*H},az>0?-.75:.75,-.6,.6); }); ctx.globalAlpha=1; }
-    if(D.clouds){ const spr=cloudSprites(); ctx.globalAlpha=D.clouds;
-      for(const c of G.clouds){ const x=skyX(G,c.az+ts*.004); if(x===null) continue; const w=c.sc*W*.36, hh=w*.375, y=hy-c.el*H*(1+c.el);
-        ctx.drawImage(spr[c.k],x-w/2,y-hh/2,w,hh); }
+    if(D.clouds&&sp<.6){ const spr=cumulus(G.type,D.tint), sn=Math.sin(G.a), cs=Math.cos(G.a), sHs=Math.min(H*.84,W*.5), ls=[];      /* clouds are real places in the air: they grow, pass overhead and fall behind */
+      for(const c of G.cl){ const rx=((c.x-G.x)%CB+CB*1.5)%CB-CB/2, ry=((c.y-G.y)%CB+CB*1.5)%CB-CB/2, f=-(rx*sn+ry*cs); if(f<70) continue;
+        ls.push([f,rx*cs-ry*sn,c,Math.min(1,(CB/2-Math.max(Math.abs(rx),Math.abs(ry)))/380)]); }
+      ls.sort((a,b)=>b[0]-a[0]);
+      for(const [f,l,c,ed] of ls){ const w=c.w/f*W/2, x=W/2*(1+l/f); if(x+w/2<-W*.2||x-w/2>W*1.2) continue; const hh=w*.458, y=hyF-(c.alt-G.h)/f*sHs;
+        const a=D.clouds*ed*Math.min(1,(f-70)/220)*(1-sp/.6)*Math.exp(-f*D.fog*.3); if(a<.02) continue;
+        ctx.globalAlpha=a; ctx.drawImage(spr[c.k],x-w/2,y-hh*.67,w,hh); }
       ctx.globalAlpha=1; }
     if(D.emis){ const rg=ctx.createRadialGradient(W/2,hy+H*.1,0,W/2,hy+H*.1,H*.95);                /* the corona, and loops of plasma on the horizon */
       rg.addColorStop(0,'rgba(255,214,130,.85)'); rg.addColorStop(.35,'rgba(255,132,40,.4)'); rg.addColorStop(1,'rgba(255,90,20,0)');
@@ -1223,12 +1319,21 @@ function View(canvas,tipEl,opts){
         for(const [lw,a] of [[40,.05],[22,.09],[10,.16],[4,.34]]){ ctx.strokeStyle=`rgba(255,${150+i*8},70,${a})`; ctx.lineWidth=lw*H/760; ctx.beginPath();
           ctx.moveTo(x-pw/2,hy+8); ctx.bezierCurveTo(x-pw*(.62+.1*Math.sin(i*3)),hy-ph*1.5,x+pw*.3,hy-ph*(1.1+.2*Math.cos(i*2)),x+pw/2,hy+8); ctx.stroke(); } });
       ctx.restore(); } };
-  const lrFx=(G,now,hy,A)=>{ const D=G.D, W=V.W, H=V.H, ts=now/1000, U=Math.min(W,H);
-    if(D.sun){ const sx=skyX(G,D.az), sy=hy-D.sunEl*H;                                    /* the sun's glare spills over the ridges in front of it */
+  const lrFx=(G,now,hy,A,wisp)=>{ const D=G.D, W=V.W, H=V.H, ts=now/1000, U=Math.min(W,H);
+    if(D.sun){ const sx=skyX(G,D.az), sy=hy-D.sunEl*H; let vis=0;                                    /* the sun's glare spills over the ridges in front of it */
       if(sx!==null){ const c=`${D.sun[0]},${D.sun[1]},${D.sun[2]}`, R=H*.66, rg=ctx.createRadialGradient(sx,sy,0,sx,sy,R);
         rg.addColorStop(0,`rgba(${c},.24)`); rg.addColorStop(.35,`rgba(${c},.07)`); rg.addColorStop(1,`rgba(${c},0)`);
-        ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.fillStyle=rg; ctx.fillRect(sx-R,sy-R,R*2,R*2); ctx.restore(); } }
-    if(A<.01||reduce) return;
+        ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.fillStyle=rg; ctx.fillRect(sx-R,sy-R,R*2,R*2); ctx.restore();
+        const ci=Math.floor(sx/W*LR.RW), ry=sy/H*LR.RH; vis=(ci>=0&&ci<LR.RW&&ry>-60&&ry<LR.yb[ci])?1:0; }
+      G.flare+=(vis-G.flare)*.14;
+      if(G.flare>.03&&sx!==null&&!reduce) lensFlare(ctx,sx,sy,W,H,G.flare,true); }
+    const wisps=a=>{ const spr=cloudSprites(), dg=Math.hypot(W,H);                                      /* loose cloud coming at you and sliding past */
+      for(let i=0;i<5;i++){ const per=5+lh(i,1,43)*4, u=ts/per+lh(i,2,43), ph=u%1, an=lh(i,3,43+Math.floor(u))*6.283, d=ph*ph*dg*.75, w=W*.3*(.25+ph*ph*7), hh=w*.375;
+        ctx.globalAlpha=a*Math.sin(Math.PI*ph)*.5*(ph<.5?ph*2:1); ctx.drawImage(spr[i%4],W/2+Math.cos(an)*d-w/2,hy+H*.08+Math.sin(an)*d*.55-hh/2,w,hh); }
+      ctx.globalAlpha=1; };
+    if(reduce) return;
+    if(wisp>.01) wisps(wisp*1.5);
+    if(A<.01) return;
     if(D.fx==='birds'){ const base=D.az-.5+Math.sin(ts*.05)*.5+ts*.012;                    /* a small flock, gliding in a V */
       ctx.globalAlpha=A; ctx.strokeStyle='rgba(22,30,44,.72)'; ctx.lineCap='round'; ctx.lineWidth=Math.max(1,U*.0022);
       for(let i=0;i<7;i++){ const k=(i+1)>>1, sd=i%2?1:-1, x=skyX(G,base+(i?sd*k*.022:0)); if(x===null) continue;
@@ -1239,10 +1344,7 @@ function View(canvas,tipEl,opts){
       for(let i=0;i<56;i++){ const sp=.25+lh(i,1,41)*.5, ph=((ts*sp+lh(i,2,41)+G.a*.6)%1+1)%1, dy=.02+lh(i,3,41)*.62, y=hy+H*dy, x=(ph*1.3-.15)*W, ln=W*(.03+lh(i,4,41)*.06)*(.5+dy);
         ctx.strokeStyle=`rgba(246,208,170,${(.05+.13*Math.sin(Math.PI*ph))*(.4+dy)})`; ctx.lineWidth=1+dy*2; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+ln,y+ln*.04); ctx.stroke(); }
       ctx.globalAlpha=1; }
-    else if(D.fx==='wisps'){ const spr=cloudSprites(), dg=Math.hypot(W,H);                     /* loose cloud coming at you and sliding past */
-      for(let i=0;i<5;i++){ const per=5+lh(i,1,43)*4, u=ts/per+lh(i,2,43), ph=u%1, an=lh(i,3,43+Math.floor(u))*6.283, d=ph*ph*dg*.75, w=W*.3*(.25+ph*ph*7), hh=w*.375;
-        ctx.globalAlpha=A*Math.sin(Math.PI*ph)*.5*(ph<.5?ph*2:1); ctx.drawImage(spr[i%4],W/2+Math.cos(an)*d-w/2,hy+H*.08+Math.sin(an)*d*.55-hh/2,w,hh); }
-      ctx.globalAlpha=1; }
+    else if(D.fx==='wisps') wisps(A);
     else if(D.fx==='embers'){ ctx.save(); ctx.globalCompositeOperation='lighter';             /* sparks lifting off the surface */
       for(let i=0;i<70;i++){ const sp=.12+lh(i,1,47)*.3, ph=(ts*sp+lh(i,2,47))%1, bx=lh(i,3,47), x=(bx+Math.sin(ts*.7+i)*.012+(bx-.5)*ph*.4)*W, y=hy+H*.6-ph*H*(.5+lh(i,4,47)*.7);
         ctx.fillStyle=`rgba(255,${190+(i%5)*12},${90+(i%7)*14},${A*Math.sin(Math.PI*ph)*.75})`; ctx.beginPath(); ctx.arc(x,y,(1+lh(i,5,47)*2.2)*(1.2-ph*.6)*U/760,0,7); ctx.fill(); }
@@ -1250,64 +1352,189 @@ function View(canvas,tipEl,opts){
   /* one frame of the flight; returns true while it owns the whole screen */
   V.landStep=now=>{ const G=V.land; if(!G) return false; const D=G.D, W=V.W, H=V.H;
     const dt=Math.min(.05,Math.max(0,(now-G.last)/1000)); G.last=now; let k=(now-G.t0);
-    if(G.phase==='dive'||G.phase==='out'){ const dur=reduce?1:(G.phase==='dive'?1500:1100); k=Math.min(1,k/dur);
-      G.zoom=G.phase==='dive'?k:1-k; V.warp=Math.sin(Math.PI*Math.min(1,G.zoom))*.9;
-      if(k>=1){ if(G.phase==='dive'){ lrInit(); phase(G,'desc',now); G.h=430; }
+    if(G.phase==='dive'||G.phase==='out'){ const dur=reduce?1:(G.phase==='dive'?2300:1500); k=Math.min(1,k/dur);
+      G.zoom=G.phase==='dive'?k:1-k; V.warp=Math.sin(Math.PI*Math.min(1,G.zoom))*.5;
+      if(k>=1){ if(G.phase==='dive'){ takeSnap(); G.snapT=now; lrInit(); phase(G,'orb',now); G.h=HS; }
         else { const then=G.then; V.land=null; V.warp=0; if(opts.onLand) opts.onLand(null,'off'); if(then) then(); } }
       return false; }
-    lrInit(); const {RW,RH}=LR, ts=now/1000;
-    let far=640, fogK=1, heat=0, veil=0, shake=0, hzf=.45, fxA=1;
-    const ground=Math.max(hAt(G.Sc,G.x,G.y),hAt(G.Sc,G.x-Math.sin(G.a)*22,G.y-Math.cos(G.a)*22),hAt(G.Sc,G.x-Math.sin(G.a)*48,G.y-Math.cos(G.a)*48),hAt(G.Sc,G.x-Math.sin(G.a)*80,G.y-Math.cos(G.a)*80))+D.clear;
-    if(G.phase==='desc'){ const dur=reduce?1:4200, k0=Math.min(1,k/dur), e=1-Math.pow(1-k0,3);
+    lrInit(); const {RW,RH}=LR, ts=now/1000, sR=Math.min(RH*.84,RW*.5)/RH, hzo=.38-sR*DIP0;
+    let far=640, fogK=1, heat=0, veil=0, shake=0, hzf=.45, fxA=1, sp=0, wisp=0; const O={ms:1,hs:1,cf:0,z0:3,cla:0};
+    const gAt=d=>Math.max(0,hAt(G.Sc,G.x-Math.sin(G.a)*d,G.y-Math.cos(G.a)*d)), ground=Math.max(gAt(0),gAt(22),gAt(48),gAt(80))+D.clear;
+    if(G.phase==='orb'){ const dur=reduce?1:3600, k0=Math.min(1,k/dur), e=ease(k0);                 /* low orbit, then the air starts to glow */
+      G.h=HS*(1-.74*e); hzf=hzo+.26*e; heat=sstep(.34,.8,k0); veil=sstep(.82,1,k0); shake=heat*.8; G.spd=560+500*heat;
+      if(k0>=1){ phase(G,'desc',now); k=0; } }
+    else if(G.phase==='up'){ const dur=reduce?1:2000, k0=Math.min(1,k/dur), e=ease(k0);              /* back above the air, the ground rounding into a ball again */
+      G.h=G.h0+(HS-G.h0)*e; hzf=G.hz0+(hzo-G.hz0)*e; if(G.viaAsc){ veil=Math.max(0,1-k/520); heat=Math.max(0,1-k/800)*.7; } shake=heat*.6; G.spd=700;
+      if(k0>=1){ takeSnap(); G.snapT=now; phase(G,'out',now); G.zoom=1; return false; } }
+    const orbit=G.phase==='orb'||G.phase==='up';
+    if(orbit){ sp=1; O.ms=D.oms||OMS; O.hs=.8; O.cf=1/(2*RP); O.z0=G.h*sR*.5; O.cla=D.ocl||0; far=Math.sqrt(2*RP*G.h)*1.12; fogK=.07; fxA=0; }
+    else if(G.phase==='desc'){ const dur=reduce?1:4000, k0=Math.min(1,k/dur), e=1-Math.pow(1-k0,3);
       G.h=430+(ground-430)*e; hzf=-.6+1.05*ease(k0); G.spd=D.speed*(4.6-3.6*e); far=1150-510*e; fogK=.4+.6*e;
-      heat=Math.max(0,1-k/1700); veil=Math.max(0,1-k/900); shake=heat; fxA=sstep(.55,.92,k0);
+      heat=Math.max(0,1-k/1500); veil=Math.max(0,1-k/900); shake=heat; fxA=sstep(.55,.92,k0); sp=Math.max(0,.45-k0*1.3);
+      wisp=(D.clouds||0)>.5?Math.sin(Math.PI*Math.max(0,Math.min(1,(G.h-170)/260))):0;               /* falling through the cloud layer */
       if(!G.panel&&k0>.72){ G.panel=true; if(opts.onLand) opts.onLand(G.n,'panel'); }
       if(k0>=1) phase(G,'cruise',now); }
     else if(G.phase==='cruise'){ G.h+=(ground-G.h)*Math.min(1,dt*(ground>G.h?3.2:1.1)); G.spd+=(D.speed-G.spd)*Math.min(1,dt*2);
       hzf=.45+.012*Math.sin(ts*.7)+.006*Math.sin(ts*1.9); }
     else { const dur=reduce?1:1700, k0=Math.min(1,k/dur), e=k0*k0;                                   /* nose up and climb out */
-      G.h=G.h0+e*520; hzf=G.hz0+(1.75-G.hz0)*ease(k0); G.spd=G.spd0*(1+e*5); far=640+e*500; fogK=1-.5*e; shake=k0*.6; fxA=1-k0; heat=Math.max(0,(k0-.45)/.55); veil=Math.max(0,(k0-.62)/.38);
-      if(k0>=1){ phase(G,'out',now); G.zoom=1; return false; } }
+      G.h=G.h0+e*520; hzf=G.hz0+(1.75-G.hz0)*ease(k0); G.spd=G.spd0*(1+e*5); far=640+e*500; fogK=1-.5*e; shake=k0*.6; fxA=1-k0; heat=Math.max(0,(k0-.45)/.55); veil=Math.max(0,(k0-.62)/.38); sp=.45*e;
+      if(k0>=1){ G.viaAsc=true; G.h0=HS*.26; G.hz0=hzo+.26; phase(G,'up',now); } }
     G.hzf=hzf;
     const wander=(Math.sin(ts*.13+G.x*.01)*.05+Math.sin(ts*.31)*.028)*(G.phase==='cruise'?1:.3);
     G.turn*=Math.pow(.12,dt); const rate=wander+G.turn; G.a+=rate*dt; G.roll+=((-rate*1.25)-G.roll)*Math.min(1,dt*2.4);
-    G.x-=Math.sin(G.a)*G.spd*dt; G.y-=Math.cos(G.a)*G.spd*dt; G.alt=G.h-hAt(G.Sc,G.x,G.y);
-    G.hz=hzf*RH; const hy=hzf*H;
-    const tA=performance.now(); lrTerrain(G,far,fogK,ts);
-    LR.ema=LR.ema*.9+Math.min(30,performance.now()-tA)*.1; V.landMs=LR.ema; V.landRW=LR.RW; if(LR.hold>0) LR.hold--;
+    const mv=G.spd*dt*O.ms; G.x-=Math.sin(G.a)*mv; G.y-=Math.cos(G.a)*mv; G.alt=orbit?G.h:G.h-Math.max(0,hAt(G.Sc,G.x,G.y));
+    G.hz=hzf*RH; const hyF=hzf*H, hy=orbit?(hzf+sR*Math.sqrt(2*G.h/RP))*H:hyF;
+    const tA=performance.now(); lrTerrain(G,far,fogK,ts,O);
+    LR.ema=LR.ema*.9+Math.min(30,performance.now()-tA)*.1; V.landMs=LR.ema; V.landRW=LR.RW; if(orbit){} else if(LR.hold>0) LR.hold--;
     else if(LR.ema>8.5&&LR.q>.42){ LR.q*=.84; LR.hold=40; } else if(LR.ema<3.5&&LR.q<1){ LR.q=Math.min(1,LR.q*1.12); LR.hold=90; }
-    ctx.save(); ctx.fillStyle=`rgb(${D.haze[0]},${D.haze[1]},${D.haze[2]})`; ctx.fillRect(0,0,W,H);
+    ctx.save(); ctx.fillStyle=orbit?'#01020a':`rgb(${D.haze[0]},${D.haze[1]},${D.haze[2]})`; ctx.fillRect(0,0,W,H);
     const sx=shake?(lh(now|0,1,3)-.5)*9*shake:0, sy=shake?(lh(now|0,2,3)-.5)*9*shake:0;
     ctx.translate(W/2+sx,H/2+sy); ctx.rotate(Math.max(-.2,Math.min(.2,G.roll))); ctx.scale(1.13,1.13); ctx.translate(-W/2,-H/2);
-    lrSky(G,now,hy);
+    lrSky(G,now,hy,hyF,sp);
     ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high'; ctx.drawImage(LR.cv,0,0,W,H);
-    lrFx(G,now,hy,fxA);
-    if(D.storm){ if(!G.bolt&&now>G.nextBolt) G.bolt={t0:now,az:G.a+(lh(now|0,5,5)-.5)*1.3,d:lh(now|0,6,5)};          /* lightning, far off in the cloud deck */
+    lrFx(G,now,hy,fxA,wisp);
+    if(D.storm&&!orbit){ if(!G.bolt&&now>G.nextBolt) G.bolt={t0:now,az:G.a+(lh(now|0,5,5)-.5)*1.3,d:lh(now|0,6,5)};          /* lightning, far off in the cloud deck */
       if(G.bolt){ const b=(now-G.bolt.t0)/420; if(b>=1){ G.bolt=null; G.nextBolt=now+2600+lh(now|0,7,5)*6000; }
         else { const x=skyX(G,G.bolt.az); if(x!==null){ const a=(b<.18?1:b<.3?.25:b<.42?.9:Math.max(0,1-(b-.42)/.58))*.55, y=hy+H*(.03+G.bolt.d*.1);
             const rg=ctx.createRadialGradient(x,y,0,x,y,H*.3); rg.addColorStop(0,`rgba(232,238,255,${a})`); rg.addColorStop(1,'rgba(200,214,255,0)');
             ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.scale(1,.42); ctx.fillStyle=rg; ctx.beginPath(); ctx.arc(x,y/.42,H*.3,0,7); ctx.fill(); ctx.restore(); } } } }
     ctx.restore();
     if(heat>.01){ ctx.save(); ctx.globalCompositeOperation='lighter';                                         /* the air glowing as we come through it */
-      const vg=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.22,W/2,H/2,Math.hypot(W,H)*.56);
-      vg.addColorStop(0,'rgba(255,150,60,0)'); vg.addColorStop(1,`rgba(255,${D.emis?190:140},60,${.6*heat})`); ctx.fillStyle=vg; ctx.fillRect(0,0,W,H);
+      const fl=reduce?1:.82+.18*Math.sin(ts*31)*Math.sin(ts*17.3), vg=ctx.createRadialGradient(W/2,H*.56,Math.min(W,H)*.2,W/2,H*.56,Math.hypot(W,H)*.58);
+      vg.addColorStop(0,'rgba(255,150,60,0)'); vg.addColorStop(.7,`rgba(255,${D.emis?190:128},56,${.34*heat*fl})`); vg.addColorStop(1,`rgba(255,${D.emis?220:186},${D.emis?120:150},${.7*heat*fl})`); ctx.fillStyle=vg; ctx.fillRect(0,0,W,H);
       ctx.lineCap='round';
-      for(let i=0;i<46;i++){ const an=lh(i,1,17)*6.283, sp=.6+lh(i,2,17)*1.2, ph=(ts*sp*1.6+lh(i,3,17))%1, r0=Math.hypot(W,H)*(.1+ph*.55), ln=Math.hypot(W,H)*.09*(.4+ph);
+      for(let i=0;i<46;i++){ const an=lh(i,1,17)*6.283, sp2=.6+lh(i,2,17)*1.2, ph=(ts*sp2*1.6+lh(i,3,17))%1, r0=Math.hypot(W,H)*(.1+ph*.55), ln=Math.hypot(W,H)*.09*(.4+ph);
         ctx.strokeStyle=`rgba(255,${200+((i*7)%50)},${150+((i*13)%80)},${heat*.5*ph})`; ctx.lineWidth=1+ph*1.6;
-        ctx.beginPath(); ctx.moveTo(W/2+Math.cos(an)*r0,H/2+Math.sin(an)*r0); ctx.lineTo(W/2+Math.cos(an)*(r0+ln),H/2+Math.sin(an)*(r0+ln)); ctx.stroke(); }
+        ctx.beginPath(); ctx.moveTo(W/2+Math.cos(an)*r0,H*.56+Math.sin(an)*r0); ctx.lineTo(W/2+Math.cos(an)*(r0+ln),H*.56+Math.sin(an)*(r0+ln)); ctx.stroke(); }
       ctx.restore(); }
     if(veil>.01){ ctx.fillStyle=`rgba(${D.haze[0]},${D.haze[1]},${D.haze[2]},${Math.min(1,veil)})`; ctx.fillRect(0,0,W,H); }
     const vg=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.45,W/2,H/2,Math.hypot(W,H)*.62);
     vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,.34)'); ctx.fillStyle=vg; ctx.fillRect(0,0,W,H);
+    if(G.phase==='orb'&&G.snapT) drawSnap(1-(now-G.snapT)/700);
+    V.overlay(now);
     return true; };
+  /* ---- the ship: a window frame, a line of readouts, a little film grain ---- */
+  const rr=(g,x,y,w,h,r)=>{ g.beginPath(); g.moveTo(x+r,y); g.lineTo(x+w-r,y); g.quadraticCurveTo(x+w,y,x+w,y+r); g.lineTo(x+w,y+h-r); g.quadraticCurveTo(x+w,y+h,x+w-r,y+h); g.lineTo(x+r,y+h); g.quadraticCurveTo(x,y+h,x,y+h-r); g.lineTo(x,y+r); g.quadraticCurveTo(x,y,x+r,y); g.closePath(); };
+  /* laid out like a glass cockpit: a glareshield with its row of knobs and readout windows, three display units with
+     edge keys, key blocks between them, and toggle switches and caution lights out on the wings of the panel */
+  const buildCk=()=>{ const W=V.W, H=V.H, d=Math.min(DPR,2), cv=document.createElement('canvas'); cv.width=Math.round(W*d); cv.height=Math.round(H*d); const g=cv.getContext('2d'); g.scale(d,d);
+    const u=Math.min(W,H), wide=W>=700, pw=Math.max(9,W*.026), th=Math.max(14,H*.04), ph=wide?Math.round(Math.max(118,Math.min(185,H*.22))):Math.max(34,H*.1), L=pw, R=W-pw, T=th, B=H-ph,
+      cr=Math.min(u*.2,(R-L)*.3,(B-T)*.3), cb=wide?cr*.4:cr, sw=Math.max(7,W*.0085), dip=wide?ph*.05:ph*.5;
+    const win=()=>{ g.moveTo(L,T+cr); g.quadraticCurveTo(L,T,L+cr,T); g.quadraticCurveTo(W/2,T-th*.6,R-cr,T); g.quadraticCurveTo(R,T,R,T+cr); g.lineTo(R,B-cb);
+      g.quadraticCurveTo(R,B,R-cb,B); g.quadraticCurveTo(W/2,B+dip,L+cb,B); g.quadraticCurveTo(L,B,L,B-cb); g.closePath(); };
+    const fg=g.createLinearGradient(0,0,0,H); fg.addColorStop(0,'#0a0e18'); fg.addColorStop(.5,'#04060b'); fg.addColorStop(1,'#0b0f19');
+    g.save(); g.shadowColor='rgba(0,0,0,.95)'; g.shadowBlur=u*.04; g.fillStyle=fg; g.beginPath(); g.rect(-60,-60,W+120,H+120); win(); g.fill('evenodd'); g.restore();
+    if(wide) for(const sd of [-1,1]){ const xb=W/2+sd*W*.385, xt=W/2+sd*W*.3;                          /* two canopy struts, leaning in toward the top */
+      g.save(); g.beginPath(); win(); g.clip(); g.shadowColor='rgba(0,0,0,.9)'; g.shadowBlur=u*.022; g.fillStyle='#070a12';
+      g.beginPath(); g.moveTo(xb-sw,B+ph); g.lineTo(xt-sw*.7,T-th); g.lineTo(xt+sw*.7,T-th); g.lineTo(xb+sw,B+ph); g.closePath(); g.fill(); g.restore();
+      g.save(); g.beginPath(); win(); g.clip(); g.strokeStyle='rgba(165,200,250,.2)'; g.lineWidth=1; g.beginPath(); g.moveTo(xb-sd*sw,B+ph); g.lineTo(xt-sd*sw*.7,T-th); g.stroke(); g.restore(); }
+    g.strokeStyle='rgba(255,255,255,.05)'; g.lineWidth=1;                                             /* panel seams running out to the top corners */
+    for(const [x0,y0,x1,y1] of [[L+cr*.3,T+cr*.3,0,0],[R-cr*.3,T+cr*.3,W,0]]){ g.beginPath(); g.moveTo(x0,y0); g.lineTo(x1,y1); g.stroke(); }
+    g.beginPath(); win(); g.strokeStyle='rgba(150,190,245,.07)'; g.lineWidth=4; g.stroke();
+    g.beginPath(); win(); g.strokeStyle='rgba(165,200,250,.3)'; g.lineWidth=1; g.stroke();
+    V.ckG={ph}; V.oy=0; canvas.parentElement.style.setProperty('--ckb',(wide?ph:40)+'px');
+    if(wide){ V.oy=-Math.round((ph-th)*.42);
+      g.strokeStyle='#171d2b'; g.lineWidth=7; g.beginPath(); g.moveTo(R-cb,B+4.5); g.quadraticCurveTo(W/2,B+dip+4.5,L+cb,B+4.5); g.stroke(); g.lineWidth=1;      /* the glareshield's padded lip */
+      const fx=L+6, fw=R-L-12, fy=B+12, fh=ph-12-30, pg=g.createLinearGradient(0,fy,0,fy+fh); pg.addColorStop(0,'#111622'); pg.addColorStop(1,'#0a0d15');
+      g.fillStyle=pg; rr(g,fx,fy,fw,fh,8); g.fill(); g.strokeStyle='rgba(255,255,255,.07)'; g.stroke();
+      for(const [x,y] of [[fx+8,fy+8],[fx+fw-8,fy+8],[fx+8,fy+fh-8],[fx+fw-8,fy+fh-8]]){ g.fillStyle='rgba(255,255,255,.16)'; g.beginPath(); g.arc(x,y,2.2,0,7); g.fill(); g.fillStyle='rgba(0,0,0,.6)'; g.fillRect(x-1.8,y-.4,3.6,.8); }
+      /* the strip under the glareshield: knobs, readout windows, mode keys */
+      const my=fy+5, mh=20, items=['k','w','b','b','k','w','b','b','k','w'], wd={k:18,w:56,b:18}, tot=items.reduce((a,t)=>a+wd[t]+7,-7), mcp=[]; let mx=W/2-tot/2;
+      g.fillStyle='#070a10'; rr(g,mx-10,my-3,tot+20,mh+6,5); g.fill(); g.strokeStyle='rgba(255,255,255,.09)'; g.stroke();
+      items.forEach((t,i)=>{ const cw=wd[t], cy=my+mh/2;
+        if(t==='k'){ const kg=g.createRadialGradient(mx+cw/2-2,cy-2,1,mx+cw/2,cy,8); kg.addColorStop(0,'#566076'); kg.addColorStop(1,'#141924'); g.fillStyle=kg; g.beginPath(); g.arc(mx+cw/2,cy,7.5,0,7); g.fill(); g.strokeStyle='rgba(0,0,0,.7)'; g.stroke();
+          const a=-1.9+i*.5; g.strokeStyle='rgba(235,240,250,.85)'; g.lineWidth=1.4; g.beginPath(); g.moveTo(mx+cw/2,cy); g.lineTo(mx+cw/2+Math.cos(a)*6.5,cy+Math.sin(a)*6.5); g.stroke(); g.lineWidth=1; }
+        else if(t==='w'){ g.fillStyle='#020306'; rr(g,mx,my+2,cw,mh-4,2); g.fill(); g.strokeStyle='rgba(255,255,255,.16)'; g.stroke(); mcp.push([mx,my+2,cw,mh-4]); }
+        else { g.fillStyle='#1a2030'; rr(g,mx+1,my+4,cw-2,mh-8,2); g.fill(); g.strokeStyle='rgba(255,255,255,.13)'; g.stroke(); g.fillStyle=i%3?'rgba(74,222,128,.9)':'rgba(120,130,150,.35)'; g.fillRect(mx+4,my+6.5,cw-8,2); }
+        mx+=cw+7; });
+      /* three display units, each with a row of edge keys above and below */
+      const yM=fy+33, hM=fy+fh-7-yM, cw=Math.min(290,W*.225), s2=Math.min(215,W*.168), gp=9, bc=38, xs=[W/2-cw/2-gp-bc-gp-s2,W/2-cw/2,W/2+cw/2+gp+bc+gp], ws=[s2,cw,s2], scr=[], bz=8;
+      xs.forEach((x,i)=>{ const w=ws[i]; g.fillStyle='#171c28'; rr(g,x,yM,w,hM,5); g.fill(); g.strokeStyle='rgba(170,195,240,.22)'; g.stroke();
+        g.fillStyle='#02040a'; rr(g,x+bz,yM+bz,w-2*bz,hM-2*bz,2); g.fill();
+        g.fillStyle='rgba(190,205,230,.32)'; const nb=Math.max(4,Math.floor((w-2*bz)/26)); for(let k=0;k<nb;k++){ const bx=x+bz+(w-2*bz)*(k+.5)/nb-4; g.fillRect(bx,yM+2.5,8,3); g.fillRect(bx,yM+hM-5.5,8,3); }
+        scr.push([x+bz,yM+bz,w-2*bz,hM-2*bz]); });
+      for(const bx0 of [W/2-cw/2-gp-bc,W/2+cw/2+gp]) for(let r0=0;r0<4;r0++) for(let c0=0;c0<2;c0++){ const bw=(bc-4)/2, bh=(hM-9)/4, x=bx0+c0*(bw+4), y=yM+r0*(bh+3), lit=lh(r0,c0,bx0|0);      /* key blocks */
+        g.fillStyle='#1a2030'; rr(g,x,y,bw,bh,2.5); g.fill(); g.strokeStyle='rgba(255,255,255,.11)'; g.stroke();
+        g.fillStyle=lit>.62?'rgba(74,222,128,.88)':lit>.5?'rgba(251,191,36,.88)':'rgba(125,140,165,.3)'; g.fillRect(x+3,y+3,bw-6,2); g.fillStyle='rgba(255,255,255,.17)'; g.fillRect(x+3,y+bh-5,bw-8,1.2); }
+      const side=(x0,x1,flip)=>{ const w=x1-x0; if(w<36) return; const nt=Math.max(2,Math.min(7,Math.floor(w/24))), y1=yM+13;      /* toggle switches over a block of caution and warning lights */
+        for(let i=0;i<nt;i++){ const x=x0+w*(i+.5)/nt, up=lh(i,flip,77)>.4;
+          if(flip&&i===nt-1){ g.fillStyle='rgba(214,58,48,.88)'; rr(g,x-7,y1-11,14,21,2); g.fill(); g.fillStyle='rgba(0,0,0,.4)'; g.fillRect(x-7,y1-3,14,1.5); g.fillRect(x-7,y1+3,14,1.5); continue; }      /* one switch under a red guard */
+          g.fillStyle='#262d3e'; g.beginPath(); g.arc(x,y1,5,0,7); g.fill(); g.strokeStyle='rgba(0,0,0,.7)'; g.stroke();
+          g.strokeStyle='#c6cede'; g.lineWidth=2.6; g.lineCap='round'; g.beginPath(); g.moveTo(x,y1); g.lineTo(x,y1+(up?-8:8)); g.stroke(); g.lineWidth=1; g.lineCap='butt';
+          g.fillStyle='rgba(255,255,255,.2)'; g.fillRect(x-6,y1+14,12,1.3); }
+        const cols=Math.max(2,Math.min(5,Math.floor(w/34))), aw=(w-(cols-1)*4)/cols, ah=Math.max(6,Math.min(13,(hM-42)/2-3)), y2=yM+35;
+        for(let r0=0;r0<2;r0++)for(let c0=0;c0<cols;c0++){ const x=x0+c0*(aw+4), y=y2+r0*(ah+4), v=lh(r0*7+c0,flip,91);
+          g.fillStyle=v>.82?'rgba(251,191,36,.82)':v>.55?'rgba(74,222,128,.72)':'#151a25'; rr(g,x,y,aw,ah,1.5); g.fill(); g.strokeStyle='rgba(255,255,255,.1)'; g.stroke();
+          g.fillStyle=v>.55?'rgba(0,0,0,.45)':'rgba(255,255,255,.13)'; g.fillRect(x+3,y+ah/2-.8,aw-6,1.6); } };
+      side(fx+14,xs[0]-14,0); side(xs[2]+s2+14,fx+fw-14,1);
+      V.ckG={ph,scr,mcp}; }
+    V.ck=cv; };
+  V.overlay=now=>{ if(!opts.ship||V.W<2) return; const W=V.W, H=V.H;
+    if(!reduce){ const gp=V.gp||(V.gp=ctx.createPattern(grainCv(),'repeat')); ctx.save(); ctx.globalAlpha=.05; ctx.globalCompositeOperation='overlay';
+      ctx.translate(-((lh(now|0,1,5)*160)|0),-((lh(now|0,2,5)*160)|0)); ctx.fillStyle=gp; ctx.fillRect(0,0,W+160,H+160); ctx.restore(); }
+    if(V.ck) ctx.drawImage(V.ck,0,0,W,H);
+    const K=V.ckG; if(!K||!K.scr) return;
+    /* the instruments are live: they read the same numbers the flight runs on */
+    const G=V.land, ld=!!(G&&G.phase!=='dive'&&G.phase!=='out'), orb=ld&&(G.phase==='orb'||G.phase==='up'), ts=now/1000, f=x=>Math.round(x).toLocaleString('en-US'), mono=s=>`${s} 'IBM Plex Mono',monospace`;
+    const hd=ld?((-G.a*180/Math.PI)%360+360)%360:(((V.rotY+V.arcY)*180/Math.PI)%360+360)%360, hs=String(Math.round(hd)%360).padStart(3,'0'),
+      spd=ld?G.spd*(orb?26:4.2):(V.vel||0)*90, alt=ld?Math.max(0,G.alt*(orb?.25:4)):(V.rng||0)*120, GRN='74,222,128', CY='125,211,252';
+    ctx.save(); ctx.textBaseline='middle'; ctx.textAlign='center'; ctx.font=mono('600 9.5px'); ctx.fillStyle='rgba(251,191,36,.92)';
+    [hs,f(spd),f(alt)].forEach((t,i)=>{ const r=K.mcp[i]; ctx.fillText(t,r[0]+r[2]/2,r[1]+r[3]/2+.5); });
+    { const [x,y,w,h]=K.scr[0], cx=x+w/2, cy=y+h/2;                                                   /* left: attitude, with speed and height tapes */
+      const roll=ld?Math.max(-.2,Math.min(.2,G.roll))*2.2:V.roll*3+Math.sin(ts*.4)*.012, pit=ld?(G.hzf-.45)*h*.9:V.rotX*h*.5;
+      ctx.save(); ctx.beginPath(); ctx.rect(x,y,w,h); ctx.clip(); ctx.translate(cx,cy); ctx.rotate(roll);
+      ctx.fillStyle='#1c5aa6'; ctx.fillRect(-w,-h*3+pit,w*2,h*3); ctx.fillStyle='#6b4423'; ctx.fillRect(-w,pit,w*2,h*3);
+      ctx.strokeStyle='rgba(255,255,255,.88)'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(-w,pit); ctx.lineTo(w,pit);
+      for(let i=-3;i<=3;i++){ if(!i) continue; const yy=pit-i*h*.17, l=i%2?w*.05:w*.1; ctx.moveTo(-l,yy); ctx.lineTo(l,yy); } ctx.stroke();
+      ctx.rotate(-roll); ctx.strokeStyle='#fbbf24'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(-w*.2,0); ctx.lineTo(-w*.07,0); ctx.lineTo(-w*.07,4); ctx.moveTo(w*.2,0); ctx.lineTo(w*.07,0); ctx.lineTo(w*.07,4); ctx.stroke();
+      ctx.fillStyle='#fbbf24'; ctx.fillRect(-1.5,-1.5,3,3); ctx.translate(-cx,-cy);
+      const tw=Math.max(26,w*.2); ctx.fillStyle='rgba(3,6,12,.74)'; ctx.fillRect(x,y,tw,h); ctx.fillRect(x+w-tw,y,tw,h);
+      ctx.strokeStyle='rgba(255,255,255,.4)'; ctx.lineWidth=1; ctx.beginPath();
+      for(const [tx,v,sg] of [[x+tw,spd*.05,-1],[x+w-tw,alt*.05,1]]){ const o=((v%9)+9)%9; for(let yy=y-9+o;yy<y+h+9;yy+=9){ ctx.moveTo(tx,yy); ctx.lineTo(tx+sg*4,yy); } } ctx.stroke();
+      ctx.font=mono('600 8px'); ctx.fillStyle='#02040a'; ctx.fillRect(x+1,cy-6,tw-2,12); ctx.fillRect(x+w-tw+1,cy-6,tw-2,12);
+      ctx.fillStyle='#eaf2ff'; const sh=v=>v>=1e5?Math.round(v/1e3)+'k':f(v); ctx.fillText(sh(spd),x+tw/2,cy+.5); ctx.fillText(sh(alt),x+w-tw/2,cy+.5);
+      ctx.restore(); }
+    { const [x,y,w,h]=K.scr[1], cx=x+w/2, by=y+h-5, hn=h-13;                                            /* centre: what is ahead. A scope of the system in space, the ground profile in the air */
+      ctx.save(); ctx.beginPath(); ctx.rect(x,y,w,h); ctx.clip(); ctx.lineWidth=1; ctx.font=mono('600 7.5px'); ctx.textAlign='left';
+      if(!ld){ ctx.strokeStyle=`rgba(${GRN},.3)`; for(const q of [.34,.67,1]){ ctx.beginPath(); ctx.arc(cx,by,hn*q,Math.PI,Math.PI*2); ctx.stroke(); }
+        ctx.beginPath(); for(const a of [-1.05,-.52,0,.52,1.05]){ ctx.moveTo(cx,by); ctx.lineTo(cx+Math.sin(a)*hn*1.6,by-Math.cos(a)*hn*1.6); } ctx.stroke();
+        if(!reduce){ const a=((ts*.5)%1)*Math.PI-Math.PI/2; ctx.strokeStyle=`rgba(${GRN},.55)`; ctx.beginPath(); ctx.moveTo(cx,by); ctx.lineTo(cx+Math.sin(a)*hn*1.6,by-Math.cos(a)*hn*1.6); ctx.stroke(); }
+        const Dc=FOC+V.dist, RG=Math.max(420,Dc*1.7), k=hn/RG;
+        if(V.lastP) for(const n of N){ const p=V.lastP.get(n); if(!p||p.d<=0||p.d>RG) continue; const bx=cx+p.cx*k, yy=by-p.d*k;
+          if(n===V.focus){ ctx.strokeStyle=`rgba(${CY},.9)`; ctx.beginPath(); ctx.moveTo(cx,by); ctx.lineTo(bx,yy); ctx.stroke(); ctx.strokeRect(bx-4,yy-4,8,8); }
+          ctx.fillStyle=n===hub?'#ffd27a':C[n.type]; ctx.beginPath(); ctx.arc(bx,yy,n===hub?3:n.type==='area'?2.2:1.6,0,7); ctx.fill(); }
+        ctx.fillStyle=`rgba(${GRN},.85)`; ctx.fillText('NAV',x+4,y+7); ctx.textAlign='right'; ctx.fillText(f(RG*120)+' km',x+w-4,y+7); }
+      else if(orb){ const rp=h*2.4, yy=by+rp-h*.3; ctx.strokeStyle=`rgba(${GRN},.75)`; ctx.fillStyle=`rgba(${GRN},.14)`; ctx.beginPath(); ctx.arc(cx,yy,rp,0,7); ctx.fill(); ctx.stroke();      /* in orbit: the limb, and how high we still are */
+        const sy2=yy-rp-6-(h*.5)*Math.min(1,G.h/HS); ctx.setLineDash([2,3]); ctx.beginPath(); ctx.moveTo(cx,sy2); ctx.lineTo(cx,yy-rp); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle='#eaf2ff'; ctx.beginPath(); ctx.moveTo(cx-5,sy2-3); ctx.lineTo(cx+6,sy2); ctx.lineTo(cx-5,sy2+3); ctx.closePath(); ctx.fill();
+        ctx.fillStyle=`rgba(${GRN},.85)`; ctx.fillText('ORBIT',x+4,y+7); ctx.textAlign='right'; ctx.fillText('ALT '+f(alt)+' km',x+w-4,y+7); }
+      else { const sn=Math.sin(G.a), cs=Math.cos(G.a), n=40, sc=(h-16)/170, x0=x+16; ctx.beginPath(); ctx.moveTo(x0,by);                      /* terrain ahead, with the ship's height over it */
+        for(let i=0;i<=n;i++){ const dd=i*9, hh=Math.max(0,hAt(G.Sc,G.x-sn*dd,G.y-cs*dd)); ctx.lineTo(x0+(w-22)*i/n,by-hh*sc); }
+        ctx.lineTo(x+w-6,by); ctx.closePath(); ctx.fillStyle=`rgba(${GRN},.2)`; ctx.fill(); ctx.strokeStyle=`rgba(${GRN},.85)`; ctx.stroke();
+        const sy2=Math.max(y+12,by-G.h*sc); ctx.strokeStyle=`rgba(${CY},.6)`; ctx.setLineDash([3,3]); ctx.beginPath(); ctx.moveTo(x0,sy2); ctx.lineTo(x+w-6,sy2); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle='#eaf2ff'; ctx.beginPath(); ctx.moveTo(x0-9,sy2-3); ctx.lineTo(x0+2,sy2); ctx.lineTo(x0-9,sy2+3); ctx.closePath(); ctx.fill();
+        ctx.fillStyle=`rgba(${GRN},.85)`; ctx.fillText('TERRAIN',x+4,y+7); ctx.textAlign='right'; ctx.fillText('ALT '+f(alt)+' m',x+w-4,y+7); }
+      ctx.restore(); }
+    { const [x,y,w,h]=K.scr[2], thr=ld?Math.min(1,.22+G.spd/(orb?1100:G.D.speed*4.6)*.75):Math.min(1,.16+V.warp*.8), bw=Math.max(7,w*.05), bh=h-20;      /* right: engines, tanks, and the numbers */
+      ctx.save(); ctx.beginPath(); ctx.rect(x,y,w,h); ctx.clip(); ctx.font=mono('600 6.5px'); ctx.textAlign='center';
+      [['E1',thr*(.92+.08*Math.sin(ts*3.1))],['E2',thr*(.92+.08*Math.sin(ts*2.7+1.7))],['FU',.72],['PW',.9+.03*Math.sin(ts*.9)]].forEach(([lb,v],i)=>{ const bx=x+7+i*(bw+7);
+        ctx.fillStyle='rgba(255,255,255,.09)'; ctx.fillRect(bx,y+5,bw,bh); ctx.fillStyle=v>.88&&i<2?'rgba(251,191,36,.9)':`rgba(${GRN},.85)`; ctx.fillRect(bx,y+5+bh*(1-v),bw,bh*v);
+        ctx.fillStyle=`rgba(${CY},.75)`; ctx.fillText(lb,bx+bw/2,y+h-6); });
+      const tx=x+7+4*(bw+7)+6, rows=ld?[['SPD',f(spd)+' km/h'],['ALT',f(alt)+(orb?' km':' m')],['HDG',hs+'°']]:[['VEL',f(spd)+' km/s'],['RNG',f(alt)+' km'],['HDG',hs+'°']];
+      ctx.textAlign='left'; rows.forEach(([a,b],i)=>{ const yy=y+h*(i+.5)/3; ctx.font=mono('600 6.5px'); ctx.fillStyle=`rgba(${CY},.7)`; ctx.fillText(a,tx,yy); ctx.font=mono('600 8.5px'); ctx.fillStyle='#eaf2ff'; ctx.fillText(b,tx+22,yy+.5); });
+      ctx.restore(); }
+    ctx.restore(); };
   V.cam=now=>{ if(V.W<2) return;
     const T=V.focus, tx=T?T.x:0, ty=T?T.y:0, tz=T?T.z:0, D1=FOC+(T?V.distFor(T):D0), f=V.fly;
     if(f){ const k0=Math.min(1,(now-f.t0)/f.dur), kz=k0<.5?4*k0*k0*k0:1-Math.pow(-2*k0+2,3)/2,
         kp=(T&&!f.hop)?1-Math.pow(1-Math.min(1,k0/.6),3):kz;      /* turn toward it first, then dive */
       V.fx=lerp(f.x,tx,kp); V.fy=lerp(f.y,ty,kp); V.fz=lerp(f.z,tz,kp);
       V.dist=f.D*Math.pow(D1/f.D,kz)*(f.hop?1+2.2*Math.sin(Math.PI*k0):1)-FOC; V.warp=Math.sin(Math.PI*k0);
-      if(k0>=1){V.fly=null;V.warp=0;} }
-    else { V.fx=tx;V.fy=ty;V.fz=tz;V.dist=D1-FOC; } };
+      if(opts.ship&&!reduce){ V.fov=1-.1*V.warp; V.arcY=f.dir*.2*Math.sin(Math.PI*kz); V.roll=f.dir*.07*Math.sin(2*Math.PI*k0)*(1-.45*k0); }      /* a curved approach, banking in and levelling out */
+      if(k0>=1){V.fly=null;V.warp=0;V.fov=1;V.arcY=0;V.roll=0;} }
+    else { V.fx=tx;V.fy=ty;V.fz=tz;V.dist=D1-FOC;
+      if(V.intro){ const k=Math.max(0,Math.min(1,(now-V.intro)/2100)), e=1-Math.pow(1-k,4);
+        if(T||reduce) V.intro=0; else { V.dist=D1*(1+3.4*(1-e))-FOC; V.warp=Math.pow(1-k,1.3)*.9; V.fov=1-.1*V.warp; if(k>=1){ V.intro=0; V.warp=0; V.fov=1; } } } } };
   V.camToWorld=(vx,vy)=>{const cy=Math.cos(V.rotY),sy=Math.sin(V.rotY),cx=Math.cos(V.rotX),sx=Math.sin(V.rotX);
     const y=vy*cx, z1=-vy*sx;
     return {x:vx*cy+z1*sy, y, z:-vx*sy+z1*cy};};
@@ -1321,15 +1548,18 @@ function View(canvas,tipEl,opts){
     ctx.clearRect(0,0,V.W,V.H);
     /* deep space: the sky sheet turns with the camera */
     V.cam(now);
+    const ship=!!opts.ship;
+    if(ship){ ctx.fillStyle='#03040a'; ctx.fillRect(0,0,V.W,V.H); ctx.save(); const sk=reduce?0:V.warp*V.warp*1.7, sc=1+Math.abs(V.roll)*.7;      /* the view banks with the ship and trembles at speed */
+      ctx.translate(V.W/2+(lh(now|0,1,3)-.5)*sk,V.H/2+V.oy+(lh(now|0,2,3)-.5)*sk); ctx.rotate(V.roll); ctx.scale(sc,sc); ctx.translate(-V.W/2,-V.H/2); }
     if(V.sky){ const {cv,BW,BH}=V.sky;
-      const ox=(((V.rotY/(Math.PI*2))*BW*.7)%BW+BW)%BW, oy=Math.max(0,Math.min(BH-V.H,(BH-V.H)/2+V.rotX*(BH-V.H)*.45));
+      const ox=((((V.rotY+V.arcY)/(Math.PI*2))*BW*.7)%BW+BW)%BW, oy=Math.max(0,Math.min(BH-V.H,(BH-V.H)/2+V.rotX*(BH-V.H)*.45));
       ctx.drawImage(cv,-ox,-oy,BW,BH); if(BW-ox<V.W) ctx.drawImage(cv,BW-ox,-oy,BW,BH);
       for(const s of V.stars){ let x=s.x-ox; if(x<-6) x+=BW; if(x>V.W+6) continue; const y=s.y-oy; if(y<-6||y>V.H+6) continue;
         const a=s.a*(.62+.38*Math.sin(tms*s.tw+s.ph)), [r,g,b]=s.c;
         ctx.fillStyle=`rgba(${r},${g},${b},${a*.09})`; ctx.beginPath(); ctx.arc(x,y,s.r*2,0,7); ctx.fill();
         ctx.fillStyle=`rgba(${Math.min(255,r+30)},${Math.min(255,g+30)},${Math.min(255,b+30)},${a})`; ctx.beginPath(); ctx.arc(x,y,s.r*.75,0,7); ctx.fill();
         if(V.warp>.02){ ctx.strokeStyle=`rgba(${r},${g},${b},${a*.55*V.warp})`; ctx.lineWidth=s.r*.8; ctx.beginPath(); ctx.moveTo(x,y);
-          ctx.lineTo(x+(x-V.W/2)*V.warp*.32,y+(y-V.H/2)*V.warp*.32); ctx.stroke(); }
+          ctx.lineTo(x+(x-V.W/2)*V.warp*.09,y+(y-V.H/2)*V.warp*.09); ctx.stroke(); }
         if(s.r>1.8){ ctx.fillStyle=`rgba(${r},${g},${b},${a*.35})`; ctx.fillRect(x-s.r*3.2,y-.35,s.r*6.4,.7); ctx.fillRect(x-.35,y-s.r*3.2,.7,s.r*6.4); } }
       /* now and then a meteor */
       if(!V.meteor&&now>V.nextMeteor&&!reduce){ const a=.35+Math.random()*.5, dir=Math.random()<.5?1:-1;
@@ -1341,8 +1571,21 @@ function View(canvas,tipEl,opts){
           mg.addColorStop(0,`rgba(255,255,255,${.85*fa})`); mg.addColorStop(1,'rgba(180,200,255,0)');
           ctx.strokeStyle=mg; ctx.lineWidth=1.3; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(hx,hy); ctx.lineTo(hx-m.vx*tl,hy-m.vy*tl); ctx.stroke(); } }
     } else { ctx.fillStyle='#03040a'; ctx.fillRect(0,0,V.W,V.H); }
-    const P=new Map(N.map(n=>[n,V.project(n)]));
-    const SN=FOC/NEAR*V.scale, cut=(A,B)=>{const t=(NEAR-A.d)/(B.d-A.d);
+    /* dust and ice near the ship: fixed in space, so it streams past when we move and gives the stars behind it depth */
+    if(ship&&V.dust){ const B=DB, hb=B/2, Dc=FOC+V.dist, ry=V.rotY+V.arcY, cy=Math.cos(ry), sy=Math.sin(ry), cx=Math.cos(V.rotX), sx=Math.sin(V.rotX);
+      const cwx=V.fx-Dc*cx*sy, cwy=V.fy-Dc*sx, cwz=V.fz-Dc*cx*cy, ps=FOC*V.scale*V.fov, dt=Math.max(.008,Math.min(.05,(now-(V.tPrev||now))/1000));
+      if(V.cwp){ const v=Math.hypot(cwx-V.cwp[0],cwy-V.cwp[1],cwz-V.cwp[2])/dt; V.vel=(V.vel||0)*.85+v*.15; } V.cwp=[cwx,cwy,cwz]; V.tPrev=now; V.rng=Dc;
+      const st=V.warp>.04&&!reduce, m=1+2.2*V.warp; ctx.lineCap='round';
+      for(let i=0,j=0,q=0;i<DN;i++,j+=3,q+=2){ const rx=((V.dust[j]-cwx)%B+B+hb)%B-hb, ryy=((V.dust[j+1]-cwy)%B+B+hb)%B-hb, rz=((V.dust[j+2]-cwz)%B+B+hb)%B-hb;
+        const x=rx*cy-rz*sy, z0=rx*sy+rz*cy, y=ryy*cx-z0*sx, d=ryy*sx+z0*cx; if(d<10){ V.dprev[q]=NaN; continue; }
+        const s=ps/d, X=V.W/2+x*s, Y=V.H/2+y*s, fd=1-Math.max(Math.abs(rx),Math.abs(ryy),Math.abs(rz))/hb, a=Math.min(1,fd*5)*Math.min(1,d/50)*(.2+.5*((i*7)%10)/10), rad=Math.max(.35,Math.min(1.8,s*.34));
+        const pX=V.dprev[q], pY=V.dprev[q+1]; V.dprev[q]=X; V.dprev[q+1]=Y;
+        if(X<-20||X>V.W+20||Y<-20||Y>V.H+20||a<.02) continue;
+        const ddx=X-pX, ddy=Y-pY, len=Math.hypot(ddx,ddy);
+        if(st&&len>1.2&&len<V.W*.3){ ctx.strokeStyle=`rgba(200,220,255,${a*Math.min(1,.5+3/len)})`; ctx.lineWidth=rad*1.3; ctx.beginPath(); ctx.moveTo(X,Y); ctx.lineTo(X-ddx*m,Y-ddy*m); ctx.stroke(); }
+        else { ctx.fillStyle=`rgba(200,220,255,${a})`; ctx.beginPath(); ctx.arc(X,Y,rad,0,7); ctx.fill(); } } }
+    const P=new Map(N.map(n=>[n,V.project(n)])); V.lastP=P;
+    const SN=FOC/NEAR*V.scale*V.fov, cut=(A,B)=>{const t=(NEAR-A.d)/(B.d-A.d);
       return {sx:V.W/2+(A.cx+(B.cx-A.cx)*t)*SN, sy:V.H/2+(A.cy+(B.cy-A.cy)*t)*SN};};
     L.map(([a,b])=>({a,b,z:(P.get(a).z+P.get(b).z)/2})).sort((p,q)=>q.z-p.z).forEach(({a,b})=>{
       let A=P.get(a),B=P.get(b); if(!A.vis&&!B.vis) return;
@@ -1374,30 +1617,43 @@ function View(canvas,tipEl,opts){
       }
       const clash=hp.vis&&Math.hypot(p.sx-hp.sx,p.sy-hp.sy)<(hub.r*hp.s+42);
       const mine=V.focus&&linked(n,V.focus);
-      const under=V.focus&&opts.onFocus&&p.sy>V.H-175&&Math.abs(p.sx-V.W/2)<340;   /* keep the caption clear */
+      const under=V.focus&&opts.onFocus&&p.sy>V.H-175-(V.ckG?V.ckG.ph-44:0)-V.oy&&Math.abs(p.sx-V.W/2)<340;   /* keep the caption clear */
       if(!off&&!under&&n!==V.focus&&((n.type==='area'&&!clash)||n===V.hover||mine||(V.scale>1&&n.type!=='pub'&&!clash))){
         ctx.fillStyle=`rgba(${GC.label},.95)`;ctx.textAlign='center';
         ctx.font=`500 ${Math.min(15,Math.max(9.5,11.5*p.s))}px Sora,sans-serif`;
         ctx.fillText(n.label.length>28?n.label.slice(0,26)+'…':n.label,p.sx,p.sy+Math.min(r,rd+8)+13);}
       ctx.globalAlpha=1;});
-    /* diving in (or climbing back out): the planet swells until its air is all there is */
+    if(ship){
+      if(hp.vis&&!reduce){ const hr=hub.r*hp.s;                                                    /* the star flares in the lens when it sits off to one side */
+        if(hp.sx>-hr&&hp.sx<V.W+hr&&hp.sy>-hr&&hp.sy<V.H+hr){ let occ=0;
+          for(const n of N){ if(n===hub) continue; const p=P.get(n); if(!p.vis||p.d>=hp.d) continue; const rr=Math.max(3,n.r*p.s*.8), dd=Math.hypot(p.sx-hp.sx,p.sy-hp.sy);
+            if(dd<rr+hr) occ=Math.max(occ,Math.min(1,(rr+hr-dd)/(hr*1.4))); }
+          const F=(1-occ)*Math.min(1,.35+hr/90)*Math.min(1,Math.hypot(V.W/2-hp.sx,V.H/2-hp.sy)/(Math.min(V.W,V.H)*.3))*(V.hover?.4:1)*(V.land?1-Math.min(1,(V.land.zoom||0)*2):1);
+          if(F>.03) lensFlare(ctx,hp.sx,hp.sy,V.W,V.H,F,false); } }
+      if(V.focus&&!V.land){ const n=V.focus, p=P.get(n);                                           /* target brackets on the planet we are flying to */
+        if(p.vis){ const rr=(n===hub?n.r*p.s:Math.max(3,n.r*p.s*.8))*(n.type==='venue'?2.36:1)+Math.max(8,Math.min(V.W,V.H)*.022), t=tms*.25;
+          ctx.strokeStyle=`rgba(125,211,252,${V.fly?.75:.36})`; ctx.lineWidth=1.2; ctx.lineCap='round';
+          for(let q=0;q<4;q++){ const a0=t+q*Math.PI/2+.5; ctx.beginPath(); ctx.arc(p.sx,p.sy,rr,a0,a0+.56); ctx.stroke(); } } } }
+    /* diving in (or climbing back out): the planet swells until its limb is a horizon across the window */
     const G=V.land;
     if(G&&(G.phase==='dive'||G.phase==='out')){ const n=G.n, p=P.get(n), z=ease(Math.max(0,Math.min(1,G.zoom||0))), D=G.D;
-      const r0=n===hub?n.r*p.s:Math.max(3,n.r*p.s*.8), R=r0*Math.pow(Math.hypot(V.W,V.H)*1.5/r0,z);
-      const x=p.sx+(V.W/2-p.sx)*z, y=p.sy+(V.H/2-p.sy)*z+R*.22*z;
+      const r0=n===hub?n.r*p.s:Math.max(3,n.r*p.s*.8), sag=Math.min(V.H*.84,V.W*.5)*DIP0*.4142*1.13, ch=V.W*.565, RE=(ch*ch+sag*sag)/(2*sag), limb=V.H*.3644-V.oy;
+      const R=r0*Math.pow(RE/r0,z), q=(R-r0)/(RE-r0), x=p.sx+(V.W/2-p.sx)*z, y=p.sy-r0+(limb-(p.sy-r0))*q+R;
       if(n===hub){ drawStar(ctx,x,y,R); const sg=ctx.createRadialGradient(x,y,0,x,y,R); sg.addColorStop(0,'#fff6dc'); sg.addColorStop(.7,'#ffc468'); sg.addColorStop(1,'#ff9a3c');
         ctx.globalAlpha=Math.min(1,z*2.2); ctx.fillStyle=sg; ctx.beginPath(); ctx.arc(x,y,R,0,7); ctx.fill(); ctx.globalAlpha=1; }
       else { let lx=hp.cx-p.cx, ly=hp.cy-p.cy, lz=-(hp.z-p.z); const ll=Math.hypot(lx,ly,lz)||1;
-        drawPlanet(ctx,x,y,R,C[n.type],n.type,n.spin,{x:lx/ll*(1-z),y:ly/ll*(1-z)-z*.3,z:lz/ll*(1-z)+z}); }
-      const a=Math.max(0,Math.min(1,(z-.5)/.42)); if(a>0){ ctx.fillStyle=`rgba(${D.haze[0]},${D.haze[1]},${D.haze[2]},${a})`; ctx.fillRect(0,0,V.W,V.H); } } };
+        drawPlanet(ctx,x,y,R,C[n.type],n.type,n.spin,{x:lx/ll*(1-z),y:ly/ll*(1-z)-z*.3,z:lz/ll*(1-z)+z});
+        if(D.atm){ const gw=Math.max(5,R*.03), c=D.atm.join(','), ag=ctx.createRadialGradient(x,y,Math.max(0,R-gw*.6),x,y,R+gw*1.7);      /* its air, lit along the limb */
+          ag.addColorStop(0,`rgba(${c},0)`); ag.addColorStop(.26,`rgba(${c},${.6*D.atmA*z})`); ag.addColorStop(1,`rgba(${c},0)`); ctx.fillStyle=ag; ctx.beginPath(); ctx.arc(x,y,R+gw*1.7,0,7); ctx.fill(); } } }
+    if(ship){ ctx.restore(); if(G&&G.phase==='out'&&G.snapT) drawSnap(1-(now-G.snapT)/600); V.overlay(now); } };
   canvas.addEventListener('pointerdown',e=>{
-    const r=canvas.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+    const r=canvas.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top-V.oy;
     V.px=e.clientX;V.py=e.clientY;V.moved=0;
     const n=opts.dragNodes&&!V.focus?V.pick(mx,my):null;
     if(n&&n!==hub){V.dragNode=n;V.wasPin=n.pin;n.pin=true} else V.orbit=true;
     canvas.setPointerCapture(e.pointerId);});
   canvas.addEventListener('pointermove',e=>{
-    const r=canvas.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+    const r=canvas.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top-V.oy;
     const dx=e.clientX-V.px, dy=e.clientY-V.py;
     if(V.dragNode){V.moved+=Math.abs(dx)+Math.abs(dy);
       const p=V.project(V.dragNode), w=V.camToWorld(dx/p.s,dy/p.s);
@@ -1409,13 +1665,13 @@ function View(canvas,tipEl,opts){
       V.px=e.clientX;V.py=e.clientY;V.last=performance.now();V.hover=null;tipEl.style.opacity=0;return;}
     const n=V.pick(mx,my);V.hover=n;
     if(n&&n.meta){tipEl.style.opacity=1;
-      tipEl.style.left=Math.min(mx+14,V.W-280)+'px';tipEl.style.top=Math.max(my-8,6)+'px';
+      tipEl.style.left=Math.min(mx+14,V.W-280)+'px';tipEl.style.top=Math.max(my+V.oy-8,6)+'px';
       tipEl.innerHTML=`<span>${n.meta.sub}</span><b>${n.meta.t}</b>`;}
     else tipEl.style.opacity=0;});
   const end=e=>{
     if(V.moved<5 && e.type==='pointerup'){
       const r=canvas.getBoundingClientRect();
-      const n=V.pick(e.clientX-r.left,e.clientY-r.top);
+      const n=V.pick(e.clientX-r.left,e.clientY-r.top-V.oy);
       if(V.dragNode) V.dragNode.pin=V.wasPin;
       /* first click flies to the planet, a second click on it opens that part of the site */
       if(n){ if(opts.onNode) opts.onNode(n);
@@ -1453,7 +1709,7 @@ function landMore(n){ const t=n.meta.t, find=q=>[...document.querySelectorAll(q)
   setTimeout(()=>{ el.classList.add('in'); el.scrollIntoView({behavior:'smooth',block:sec?'start':'center'});
     if(!sec){ el.classList.add('glhit'); setTimeout(()=>el.classList.remove('glhit'),3200); } },140); }
 const v1=View($('#gcv'),$('#gtip'),{scale:1,dragNodes:false,onNode:n=>{openModal();v2.flyTo(n);}});
-const v2=View($('#gcv2'),$('#gtip2'),{scale:1.5,dragNodes:true,clickNav:n=>{closeModal();
+const v2=View($('#gcv2'),$('#gtip2'),{scale:1.5,dragNodes:true,ship:true,clickNav:n=>{closeModal();
   const el=document.querySelector(n.go); if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth'}),120);},
   onFocus:n=>{ $('#gmodal').classList.toggle('foc',!!n); $('#gmfoot').textContent=GFOOT[n?1:0];
     if(n){ $('#gfsub').textContent=n.meta.sub; $('#gftit').textContent=n.meta.t; } },
@@ -1479,6 +1735,7 @@ frame();
 addEventListener('resize',()=>{v1.resize();if(modalOpen)v2.resize()});
 function openModal(){modalOpen=true;$('#gmodal').classList.add('on');document.body.style.overflow='hidden';
   ['proj','venue','area','pub'].forEach(wantHi);
+  v2.intro=performance.now()+90;
   requestAnimationFrame(()=>v2.resize());}
 function closeModal(){modalOpen=false;v2.reset();$('#gmodal').classList.remove('on');document.body.style.overflow='';$('#gtip2').style.opacity=0;}
 $('#gexp').onclick=openModal; $('#gmclose').onclick=closeModal; $('#gback').onclick=()=>{ if(v2.land) v2.launch(()=>v2.flyTo(null)); else v2.flyTo(null); };
